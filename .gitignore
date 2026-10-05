@@ -1,0 +1,17 @@
+# Game data — copyrighted and very large; obtain the leak yourself.
+res/
+extracted/
+
+# Third-party emulator binaries (Cxbx-Reloaded) — fetch separately, see README.
+emulator/
+
+# Runtime output: Cxbx/Wine logs, emulated console state, Proton logs.
+logs/
+*.log
+
+# Python
+__pycache__/
+*.pyc
+
+# Scratch / screenshots
+*.png
