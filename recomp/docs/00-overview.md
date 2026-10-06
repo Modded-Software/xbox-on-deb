@@ -83,4 +83,6 @@ naming and locating functions — from weeks of Ghidra work into a data join. Se
   parallelisation opportunities.
 - [10-architecture.md](10-architecture.md) — the whole system in one place:
   context, build pipeline, runtime, frame and input paths, concurrency,
-  verification, and a complexity and problem analysis.
+  verification, and the debugging loop.
+- [11-audit.md](11-audit.md) — complexity, coupling, open defects, technical
+  debt, and ranked recommendations.
