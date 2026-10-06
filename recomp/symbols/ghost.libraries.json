@@ -1,0 +1,382 @@
+{
+ "libraries": [
+  {
+   "name": "XAPILIB",
+   "version": "1.0.5659",
+   "flags": "0x4001"
+  },
+  {
+   "name": "D3D8",
+   "version": "1.0.5659",
+   "flags": "0x4004"
+  },
+  {
+   "name": "D3DX8",
+   "version": "1.0.5659",
+   "flags": "0x4001"
+  },
+  {
+   "name": "DSOUND",
+   "version": "1.0.5659",
+   "flags": "0x4001"
+  },
+  {
+   "name": "XACTENG",
+   "version": "1.0.5659",
+   "flags": "0x4004"
+  },
+  {
+   "name": "XBOXKRNL",
+   "version": "1.0.5659",
+   "flags": "0x4001"
+  },
+  {
+   "name": "LIBCMT",
+   "version": "1.0.5659",
+   "flags": "0x4001"
+  },
+  {
+   "name": "LIBC",
+   "version": "1.0.5659",
+   "flags": "0x4001"
+  },
+  {
+   "name": "XGRAPHC",
+   "version": "1.0.5659",
+   "flags": "0x4001"
+  },
+  {
+   "name": "XKBD",
+   "version": "1.0.5659",
+   "flags": "0x0001"
+  },
+  {
+   "name": "XNET",
+   "version": "1.0.5659",
+   "flags": "0x0001"
+  }
+ ],
+ "sections": [
+  {
+   "name": ".text",
+   "virtual_addr": "0x00012000",
+   "virtual_size": 2811036,
+   "raw_addr": "0x00002000",
+   "raw_size": 2811036,
+   "flags": "PRE, X, HRO",
+   "writable": false,
+   "executable": true
+  },
+  {
+   "name": "D3D",
+   "virtual_addr": "0x002C04A0",
+   "virtual_size": 83120,
+   "raw_addr": "0x002B1000",
+   "raw_size": 68584,
+   "flags": "W, PRE, X",
+   "writable": true,
+   "executable": true
+  },
+  {
+   "name": "D3DX",
+   "virtual_addr": "0x002D4960",
+   "virtual_size": 118056,
+   "raw_addr": "0x002C2000",
+   "raw_size": 118048,
+   "flags": "W, PRE, X",
+   "writable": true,
+   "executable": true
+  },
+  {
+   "name": "DSOUND",
+   "virtual_addr": "0x002F16A0",
+   "virtual_size": 124412,
+   "raw_addr": "0x002DF000",
+   "raw_size": 123796,
+   "flags": "W, PRE, X",
+   "writable": true,
+   "executable": true
+  },
+  {
+   "name": "XACTENG",
+   "virtual_addr": "0x0030FCA0",
+   "virtual_size": 44632,
+   "raw_addr": "0x002FE000",
+   "raw_size": 44548,
+   "flags": "W, PRE, X",
+   "writable": true,
+   "executable": true
+  },
+  {
+   "name": "BINK",
+   "virtual_addr": "0x0031AB00",
+   "virtual_size": 53904,
+   "raw_addr": "0x00309000",
+   "raw_size": 53904,
+   "flags": "PRE, X, TRO",
+   "writable": false,
+   "executable": true
+  },
+  {
+   "name": "BINK32",
+   "virtual_addr": "0x00327DA0",
+   "virtual_size": 4709,
+   "raw_addr": "0x00317000",
+   "raw_size": 4708,
+   "flags": "PRE, X, HRO, TRO",
+   "writable": false,
+   "executable": true
+  },
+  {
+   "name": "BINK32A",
+   "virtual_addr": "0x00329020",
+   "virtual_size": 5497,
+   "raw_addr": "0x00319000",
+   "raw_size": 5496,
+   "flags": "PRE, X, HRO, TRO",
+   "writable": false,
+   "executable": true
+  },
+  {
+   "name": "BINK16",
+   "virtual_addr": "0x0032A5A0",
+   "virtual_size": 4892,
+   "raw_addr": "0x0031B000",
+   "raw_size": 4892,
+   "flags": "PRE, X, HRO, TRO",
+   "writable": false,
+   "executable": true
+  },
+  {
+   "name": "BINK4444",
+   "virtual_addr": "0x0032B8C0",
+   "virtual_size": 5536,
+   "raw_addr": "0x0031D000",
+   "raw_size": 5536,
+   "flags": "PRE, X, HRO, TRO",
+   "writable": false,
+   "executable": true
+  },
+  {
+   "name": "BINK5551",
+   "virtual_addr": "0x0032CE60",
+   "virtual_size": 4404,
+   "raw_addr": "0x0031F000",
+   "raw_size": 4404,
+   "flags": "PRE, X, HRO, TRO",
+   "writable": false,
+   "executable": true
+  },
+  {
+   "name": "BINKYUY2",
+   "virtual_addr": "0x0032DFA0",
+   "virtual_size": 3244,
+   "raw_addr": "0x00321000",
+   "raw_size": 3244,
+   "flags": "PRE, X, HRO, TRO",
+   "writable": false,
+   "executable": true
+  },
+  {
+   "name": "BINKYUY2",
+   "virtual_addr": "0x0032EC60",
+   "virtual_size": 156,
+   "raw_addr": "0x00322000",
+   "raw_size": 156,
+   "flags": "PRE, X, HRO, TRO",
+   "writable": false,
+   "executable": true
+  },
+  {
+   "name": "BINKYUY2",
+   "virtual_addr": "0x0032ED00",
+   "virtual_size": 184,
+   "raw_addr": "0x00323000",
+   "raw_size": 184,
+   "flags": "PRE, X, HRO, TRO",
+   "writable": false,
+   "executable": true
+  },
+  {
+   "name": "BINKYUY2",
+   "virtual_addr": "0x0032EDC0",
+   "virtual_size": 136,
+   "raw_addr": "0x00324000",
+   "raw_size": 136,
+   "flags": "PRE, X, HRO, TRO",
+   "writable": false,
+   "executable": true
+  },
+  {
+   "name": "BINK16MX",
+   "virtual_addr": "0x0032EE60",
+   "virtual_size": 304,
+   "raw_addr": "0x00325000",
+   "raw_size": 304,
+   "flags": "PRE, X, HRO, TRO",
+   "writable": false,
+   "executable": true
+  },
+  {
+   "name": "BINK16X2",
+   "virtual_addr": "0x0032EFA0",
+   "virtual_size": 1368,
+   "raw_addr": "0x00326000",
+   "raw_size": 1368,
+   "flags": "PRE, X, HRO",
+   "writable": false,
+   "executable": true
+  },
+  {
+   "name": "BINK16M",
+   "virtual_addr": "0x0032F500",
+   "virtual_size": 504,
+   "raw_addr": "0x00327000",
+   "raw_size": 504,
+   "flags": "PRE, X",
+   "writable": false,
+   "executable": true
+  },
+  {
+   "name": "BINK32MX",
+   "virtual_addr": "0x0032F700",
+   "virtual_size": 444,
+   "raw_addr": "0x00328000",
+   "raw_size": 444,
+   "flags": "PRE, X",
+   "writable": false,
+   "executable": true
+  },
+  {
+   "name": "BINK32X2",
+   "virtual_addr": "0x0032F8C0",
+   "virtual_size": 1420,
+   "raw_addr": "0x00329000",
+   "raw_size": 1420,
+   "flags": "PRE, X",
+   "writable": false,
+   "executable": true
+  },
+  {
+   "name": "BINK32M",
+   "virtual_addr": "0x0032FE60",
+   "virtual_size": 332,
+   "raw_addr": "0x0032A000",
+   "raw_size": 332,
+   "flags": "PRE, X",
+   "writable": false,
+   "executable": true
+  },
+  {
+   "name": "XGRPH",
+   "virtual_addr": "0x0032FFC0",
+   "virtual_size": 8984,
+   "raw_addr": "0x0032B000",
+   "raw_size": 8984,
+   "flags": "W, PRE, X",
+   "writable": true,
+   "executable": true
+  },
+  {
+   "name": "WMADEC",
+   "virtual_addr": "0x003322E0",
+   "virtual_size": 102524,
+   "raw_addr": "0x0032E000",
+   "raw_size": 102524,
+   "flags": "W, PRE, X",
+   "writable": true,
+   "executable": true
+  },
+  {
+   "name": "XNET",
+   "virtual_addr": "0x0034B360",
+   "virtual_size": 57408,
+   "raw_addr": "0x00348000",
+   "raw_size": 57408,
+   "flags": "PRE, X",
+   "writable": false,
+   "executable": true
+  },
+  {
+   "name": "XPP",
+   "virtual_addr": "0x003593A0",
+   "virtual_size": 33672,
+   "raw_addr": "0x00357000",
+   "raw_size": 33672,
+   "flags": "W, PRE, X",
+   "writable": true,
+   "executable": true
+  },
+  {
+   "name": ".rdata",
+   "virtual_addr": "0x00361740",
+   "virtual_size": 470544,
+   "raw_addr": "0x00360000",
+   "raw_size": 470528,
+   "flags": "PRE, X",
+   "writable": false,
+   "executable": true
+  },
+  {
+   "name": ".data",
+   "virtual_addr": "0x003D4560",
+   "virtual_size": 1006104,
+   "raw_addr": "0x003D3000",
+   "raw_size": 76640,
+   "flags": "W, PRE, X",
+   "writable": true,
+   "executable": true
+  },
+  {
+   "name": "DOLBY",
+   "virtual_addr": "0x004C9F80",
+   "virtual_size": 29056,
+   "raw_addr": "0x003E6000",
+   "raw_size": 29036,
+   "flags": "PRE, X",
+   "writable": false,
+   "executable": true
+  },
+  {
+   "name": "BINKDATA",
+   "virtual_addr": "0x004D1100",
+   "virtual_size": 63316,
+   "raw_addr": "0x003EE000",
+   "raw_size": 63312,
+   "flags": "W, PRE, X",
+   "writable": true,
+   "executable": true
+  },
+  {
+   "name": "$$XTIMAGE",
+   "virtual_addr": "0x004E0860",
+   "virtual_size": 67584,
+   "raw_addr": "0x003FE000",
+   "raw_size": 67584,
+   "flags": "INS, TRO",
+   "writable": false,
+   "executable": false
+  },
+  {
+   "name": "$$XSIMAGE",
+   "virtual_addr": "0x004F1060",
+   "virtual_size": 18432,
+   "raw_addr": "0x0040F000",
+   "raw_size": 18432,
+   "flags": "INS, HRO, TRO",
+   "writable": false,
+   "executable": false
+  },
+  {
+   "name": ".XTLID",
+   "virtual_addr": "0x004F5860",
+   "virtual_size": 2128,
+   "raw_addr": "0x00414000",
+   "raw_size": 2128,
+   "flags": "INS, HRO, TRO",
+   "writable": false,
+   "executable": false
+  }
+ ],
+ "xdk_version": 5659
+}

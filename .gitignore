@@ -15,3 +15,10 @@ __pycache__/
 
 # Scratch / screenshots
 *.png
+
+# Third-party reference repos cloned for study (not ours; see docs/).
+refs/
+
+# Recomp work: analysis/build artifacts are regenerable from the user's own XBE.
+recomp/build/
+.venv-recomp/
