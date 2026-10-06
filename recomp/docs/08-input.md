@@ -131,7 +131,8 @@ Small, surgical; most of it exists.
 2. **Rumble**: in `ohci.c`, when an OUT transfer targets the pad's interrupt
    endpoint, decode the XID output report (2-byte left/right actuator, scaled
    to 0–65535) and call `xbox_InputSetState(0, ...)` instead of discarding.
-   Record as a toolkit patch (like `xboxrecomp-mmio.patch`).
+   This now lives in `refs/xboxrecomp` as a commit on `Modded-Software/xboxrecomp`
+   main (see `scripts/19-setup-toolkit.sh`), not as a patch.
 3. **Reachability**: after a live pad session, harvest unresolved ICALL targets
    with `tools.recomp.icall_feedback.py`, merge, and add any USB/XID/report
    entry points to `recomp/config/seed_functions.json`; re-run the seeded

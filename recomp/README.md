@@ -20,9 +20,12 @@ recomp/
   src/                    generated C + manual overrides (generated is gitignored)
 ```
 
-The `build/` directory holds output from the upstream `xboxrecomp` toolkit
-(`refs/xboxrecomp`, gitignored). It is regenerable from your own copy of the
-game; it is not committed.
+The `build/` directory holds output from the `xboxrecomp` toolkit
+(`refs/xboxrecomp`). The toolkit is its own repository, a fork of upstream at
+`Modded-Software/xboxrecomp` that carries this project's runtime work as commits
+on `main`; `scripts/19-setup-toolkit.sh` (or `make toolkit`) clones or
+fast-forwards it. `refs/` is gitignored because it is a separate clone, not
+because the work is uncommitted.
 
 ## Readable generated code
 

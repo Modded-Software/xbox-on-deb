@@ -6,9 +6,11 @@ them, and what to avoid.
 ## 1. `aknavj/scghost-recomp` (the existing attempt)
 
 A tiny project (14 files). It is **not** self-contained: it is the game-specific
-half of a two-repo setup and requires `aknavj/xboxrecomp` on the
-**`impl-scghost`** branch. The default branch of `xboxrecomp` is not a supported
-substitute.
+half of a two-repo setup and originally required `aknavj/xboxrecomp` on the
+**`impl-scghost`** branch. That work now lives on **`Modded-Software/xboxrecomp`**
+main, where impl-scghost has been imported on top of upstream so the fork is the
+supported base. `scripts/19-setup-toolkit.sh` clones or fast-forwards it into
+`refs/xboxrecomp`; this project no longer carries patches against it.
 
 Shape:
 

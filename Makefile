@@ -62,22 +62,9 @@ kill: stop ## Alias for stop.
 log: ## Show the tail of the runtime boot log: make log LINES=500
 	bash scripts/17-show-log.sh "$(LINES)"
 
-.PHONY: patch
-patch: ## Regenerate the toolkit patch from refs/xboxrecomp.
-	git -C refs/xboxrecomp diff -- \
-		src/input/xinput_device.c \
-		src/kernel/kernel_bridge.c \
-		src/kernel/kernel_hal.c \
-		src/kernel/nv2a_gpu.h \
-		src/kernel/nv2a_gpu_d3d11.cpp \
-		src/kernel/nv2a_pb_exec.c \
-		src/kernel/xbox_memory_layout.c \
-		src/usb/ohci.c \
-		src/usb/usb_gamepad.c \
-		src/usb/usb_gamepad.h \
-		src/video/fb_present.c \
-		src/video/video_player.h \
-		> recomp/patches/xboxrecomp-input-perf.patch
+.PHONY: toolkit
+toolkit: ## Clone or fast-forward the toolkit fork into refs/xboxrecomp.
+	bash scripts/19-setup-toolkit.sh
 
 .PHONY: clean
 clean: ## Remove build output (keeps generated sources).
@@ -97,6 +84,6 @@ help: ## List the targets.
 	@echo "  stop           stop the game and its wineserver (alias: kill)"
 	@echo "  relaunch       stop then launch a fresh game"
 	@echo "  log            tail the latest runtime log (LINES=200)"
-	@echo "  patch          regenerate the toolkit patch"
+	@echo "  toolkit        clone/update the toolkit fork (refs/xboxrecomp)"
 	@echo "  clean          remove build output"
 	@echo "  help           this list"
