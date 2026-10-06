@@ -37,3 +37,32 @@ print(f"kernel imports: {len(a['kernel_imports'])}  missing: {len(missing)}")
 for i in missing:
     print(f"  MISSING #{i['ordinal']} {i['name']}")
 print("libraries:", [l.get("name") for l in a["libraries"]])
+
+# Unimplemented instructions, bucketed by section. Most entries in data-heavy
+# sections (BINK*, DOLPHIN-like tables) are decode noise from disassembling
+# data; the real ones are port I/O (in/out) and the privileged interrupt
+# sequence (cli/sti/int/int1) -- exactly the hardware+preemption escape hatch.
+summary_path = os.path.join(BUILD, "recomp_all", "summary.json")
+if os.path.exists(summary_path):
+    s = json.load(open(summary_path))
+    secs = [(int(x["virtual_addr"], 16), int(x["virtual_addr"], 16) + x["virtual_size"], x["name"])
+            for x in a["sections"]]
+
+    def section_of(va):
+        for lo, hi, name in secs:
+            if lo <= va < hi:
+                return name
+        return "?"
+
+    real_mnemonics = {"in", "out", "insb", "insd", "outsb", "outsd", "cli", "sti", "int", "int1"}
+    with open(os.path.join(SYMBOLS, "ghost.unimplemented.txt"), "w") as fh:
+        fh.write("# mnemonic  section  va  (in/out are port I/O -> GPU/APU MMIO)\n")
+        for mn, addrs in sorted(s["unimplemented"].items()):
+            for va in sorted(set(addrs)):
+                fh.write(f"{mn:8} {section_of(va):10} 0x{va:08X}\n")
+    real = [(mn, va) for mn, addrs in s["unimplemented"].items()
+            if mn in real_mnemonics for va in addrs]
+    in_text = [(mn, va) for mn, va in real if section_of(va) in (".text", "D3D", "XACTENG", "WMADEC")]
+    print(f"unimplemented instructions: {sum(len(v) for v in s['unimplemented'].values())} total, "
+          f"{len(real)} hardware/int, {len(in_text)} in code sections")
+

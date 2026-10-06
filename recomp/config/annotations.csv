@@ -1,0 +1,10 @@
+# Address,note  -- hand annotations keyed by Xbox VA.
+# Injected as "NOTE:" lines in the generated C by tools/annotate_gen.py.
+# This is where knowledge lives that the MAP/PDB cannot give us; regeneration
+# never clobbers it because it is never written into the generated files.
+address,note
+0x001B3FBB,CRT entry point; declared as the XBE entry (mainCRTStartup).
+0x00012000,cShell::IsHacking - gates hack-system rendering on two instance flags.
+0x002C99B0,D3D::CMiniport::SoftwareMethod - the reference port hooks this to route GPU commands (main.c xbox_Nv2aSoftwareMethodHandler).
+0x002D2148,NV2A fence/counter address used by the reference port (xbox_Nv2aMirrorFence / FrameCounter).
+0x00361740,Kernel thunk table base (137 ordinal stubs live here).

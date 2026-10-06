@@ -73,3 +73,6 @@ naming and locating functions — from weeks of Ghidra work into a data join. Se
 - [05-strategy.md](05-strategy.md) — the plan, phased, with the readability and
   source-map mechanics.
 - [06-open-questions.md](06-open-questions.md) — unknowns and risks.
+- [07-decomp-workflow.md](07-decomp-workflow.md) — the readability pipeline
+  (names → banners → per-source-file grouping), the annotations file, and the
+  matching-decomp path.

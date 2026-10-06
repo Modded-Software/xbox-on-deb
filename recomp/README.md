@@ -13,9 +13,9 @@ a separate direction.
 recomp/
   README.md              this file
   docs/                   research notes and the plan (read these first)
-  tools/                  our scripts (symbol map builder, catalogues)
+  tools/                  our scripts (symbol map, annotator, source grouping)
   symbols/                our source-mapping files (committed)
-  config/                 seeds, coalescing bounds, per-title fixups (committed)
+  config/                 seeds, annotations, fixups (committed)
   build/                  regenerable pipeline output (gitignored)
   src/                    generated C + manual overrides (generated is gitignored)
 ```
@@ -23,6 +23,17 @@ recomp/
 The `build/` directory holds output from the upstream `xboxrecomp` toolkit
 (`refs/xboxrecomp`, gitignored). It is regenerable from your own copy of the
 game; it is not committed.
+
+## Readable generated code
+
+The generated C is named, annotated and grouped by original source file:
+
+1. `tools/apply_symbol_map.py` — real names onto the function database.
+2. `tools/annotate_gen.py` — per-function banner with source file + signature
+   + hand notes from `config/annotations.csv`.
+3. `tools/group_by_source.py` — one `.c` per original `.cpp`.
+
+See [docs/07-decomp-workflow.md](docs/07-decomp-workflow.md).
 
 ## Why this is unusually well-set-up
 

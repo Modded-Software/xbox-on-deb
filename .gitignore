@@ -21,4 +21,6 @@ refs/
 
 # Recomp work: analysis/build artifacts are regenerable from the user's own XBE.
 recomp/build/
+# Generated MinGW import libs (recomp/toolchain/make_import_libs.sh rebuilds them).
+recomp/toolchain/lib/
 .venv-recomp/

@@ -145,22 +145,30 @@ def batch_demangle(names):
 
 
 def demangled_to_c(demangled, mangled, va):
-    """Best-effort readable C identifier: Class::method -> Class__method__VA."""
+    """Readable, C-legal identifier: Class::method -> Class_method__VA.
+
+    The demangled string looks like
+      "public: virtual void __thiscall cAITerranLightInfantry::Foo(int)"
+    We want the declarator only -- `cAITerranLightInfantry::Foo` -- with the
+    return type / cv qualifiers dropped, because the name should say *what* the
+    function is, not its signature (that lives in `demangled`).
+    """
     d = demangled or mangled
     d = re.sub(r"^(public|private|protected):\s*", "", d)
     d = re.sub(r"\b(__thiscall|__cdecl|__stdcall|__fastcall|__vectorcall)\b", "", d)
-    m = re.search(r"([A-Za-z_][\w:<>~ ]*?(?:::[\w~<>]+)+)\s*\(", d)
-    if m:
-        core = m.group(1)
-    else:
-        m = re.search(r"([A-Za-z_]\w*)\s*\(", d)
-        core = m.group(1) if m else d
-    core = core.strip().replace("::", "__")
-    core = re.sub(r"[<>~,*&\s]+", "_", core)
-    core = re.sub(r"[^0-9A-Za-z_]", "_", core).strip("_")
-    if not core or core[0].isdigit():
-        core = "sub_" + core
-    return f"{core}__{va:08X}"
+    # Everything before the argument list is the declarator; take its last token
+    # (the qualified function name), e.g. "int  cShell::IsHacking".
+    head = d.split("(", 1)[0].strip()
+    token = head.split()[-1] if head.split() else d
+    if token in ("new", "delete"):
+        token = "operator_" + token
+    token = token.replace("::", "_")
+    token = re.sub(r"<[^>]*>", "", token)          # drop template args
+    token = re.sub(r"[^0-9A-Za-z_]", "_", token)
+    token = re.sub(r"_+", "_", token).strip("_")
+    if not token or token[0].isdigit():
+        token = "sub_" + token
+    return f"{token}_{va:08X}"
 
 
 def main():
@@ -194,9 +202,33 @@ def main():
                 e["object"] = obj
                 if basename in obj_src:
                     e["source_file"] = obj_src[basename]
+                    e["source_origin"] = "direct"
         else:
             e["name"] = f"sub_{va:08X}"
         entries[e["va"]] = e
+
+    # Source-file interpolation. The linker emits each object file's functions
+    # contiguously, so an unattributed run bracketed by two functions that agree
+    # on one source file almost certainly belongs to that file too. Only fill
+    # when both endpoints agree and live in the same section (different sections
+    # are different link units and adjacency means nothing across them). Same
+    # rule as tools.debug_symbols; direct evidence always wins.
+    ordered = sorted(entries.values(), key=lambda e: int(e["va"], 16))
+    known = [i for i, e in enumerate(ordered) if "source_file" in e]
+    filled = 0
+    for ia, ib in zip(known, known[1:]):
+        if ib - ia < 2:
+            continue
+        a, b = ordered[ia], ordered[ib]
+        if a["source_file"] != b["source_file"] or a.get("section") != b.get("section"):
+            continue
+        for k in range(ia + 1, ib):
+            e = ordered[k]
+            if "source_file" in e or e.get("section") != a.get("section"):
+                continue
+            e["source_file"] = a["source_file"]
+            e["source_origin"] = "interpolated"
+            filled += 1
 
     named = sum(1 for e in entries.values() if "mangled" in e)
     sourced = sum(1 for e in entries.values() if "source_file" in e)
@@ -205,6 +237,8 @@ def main():
         "functions_detected": total,
         "functions_named_from_map": named,
         "functions_with_source_file": sourced,
+        "functions_with_source_direct": sum(1 for e in entries.values() if e.get("source_origin") == "direct"),
+        "functions_with_source_interpolated": sum(1 for e in entries.values() if e.get("source_origin") == "interpolated"),
         "named_percent": round(100.0 * named / total, 2),
         "sourced_percent": round(100.0 * sourced / total, 2),
         "distinct_source_files": len({e["source_file"] for e in entries.values() if "source_file" in e}),

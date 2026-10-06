@@ -68,14 +68,35 @@ Command log and the exact scripts are in [../README.md](../README.md). Results:
 |---|---|
 | Detected functions | 17,307 |
 | Named from `Ghost.map` | **16,114 (93.1%)** |
-| Tied to a source file via `Ghost.pdb` | **8,188 (47.3%)** |
+| Tied to a source file (direct) | 8,188 |
+| Tied to a source file (interpolated) | 879 |
+| **Tied to a source file (total)** | **9,067 (52.4%)** |
 | Distinct source files | **222** |
 | Unnamed functions | 1,193 (1,132 in `.text`) |
+
+Source interpolation: the linker emits each object's functions contiguously, so
+an unattributed run bracketed by two functions that agree on one source file is
+attributed to that file (same rule as `tools.debug_symbols`, guarded by section).
+That adds 879 functions over direct object→source joins.
 
 Top source files by function count: `ai/aiclass.cpp` (293),
 `sim/simphysics.cpp` (239), `sim/simcontrol.cpp` (235),
 `ui/vuiconsole.cpp` (211), `ai/aiclassbasewalker.cpp` (200), … — the whole
 game subsystem tree.
+
+### Full generation (first pass)
+
+`tools.recomp --all --split 250` on the named database:
+
+- **17,308 functions translated, 0 failed, 2,202,842 lines of C** across 70
+  chunk files; grouped to 223 source-file units. ~87 MB each form.
+- **215 unresolved call targets** stubbed (`recomp_stubs_unresolved.c`) — called
+  but not detected as functions; these are the first seeds for
+  `--coalesce-functions` and for runtime ICALL feedback.
+- **238 unimplemented instructions** (36 mnemonics). 104 are hardware/privileged
+  — `in`/`out` port I/O and `cli`/`sti`/`int`/`int1` — and 94 of those sit in
+  code sections. The rest are decode noise from data-heavy sections decoded as
+  code (BINK tables). Full list: `symbols/ghost.unimplemented.txt`.
 
 ## Notes on PDB tooling on Linux
 

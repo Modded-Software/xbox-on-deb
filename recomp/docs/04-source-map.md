@@ -59,9 +59,10 @@ original translation unit.
 4. Join onto `disasm/functions.json` by start address; leave `sub_XXXX` where
    the MAP has no symbol.
 
-Coverage: 16,114 / 17,307 named (93.1%), 8,188 / 17,307 sourced (47.3%), 222
-source files. The named-but-not-sourced remainder is the statically linked XDK
-code (D3D, DSOUND, …), which has no game source by definition.
+Coverage: 16,114 / 17,307 named (93.1%), 9,067 / 17,307 sourced (52.4%;
+8,188 direct + 879 interpolated), 222 source files. The named-but-not-sourced
+remainder is the statically linked XDK code (D3D, DSOUND, …), which has no game
+source by definition.
 
 ## How it plugs into the pipeline
 
