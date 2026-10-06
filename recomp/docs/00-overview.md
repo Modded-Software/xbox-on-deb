@@ -81,3 +81,6 @@ naming and locating functions — from weeks of Ghidra work into a data join. Se
 - [09-performance.md](09-performance.md) — measured frame-time budget, the
   draw/present pipeline, the two guest threads, and ranked quick wins and
   parallelisation opportunities.
+- [10-architecture.md](10-architecture.md) — the whole system in one place:
+  context, build pipeline, runtime, frame and input paths, concurrency,
+  verification, and a complexity and problem analysis.

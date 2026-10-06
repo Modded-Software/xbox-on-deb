@@ -36,7 +36,9 @@ The generated C is named, annotated and grouped by original source file:
    + hand notes from `config/annotations.csv`.
 3. `tools/group_by_source.py` — one `.c` per original `.cpp`.
 
-See [docs/07-decomp-workflow.md](docs/07-decomp-workflow.md).
+See [docs/07-decomp-workflow.md](docs/07-decomp-workflow.md), and
+[docs/10-architecture.md](docs/10-architecture.md) for the whole system, its
+complexity, and the known problems.
 
 ## Why this is unusually well-set-up
 
