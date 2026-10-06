@@ -13,6 +13,10 @@ SHELL := /bin/bash
 launch: ## Launch the game for manual testing (keyboard+mouse, repeat watchdog).
 	bash scripts/18-launch-user.sh
 
+.PHONY: relaunch
+relaunch: ## Stop any running game and launch a fresh one.
+	bash scripts/18-launch-user.sh
+
 # ── build & test ────────────────────────────────────────────────────────
 .PHONY: build
 build: ## Build ghost.exe from the recompiled sources.
@@ -43,9 +47,12 @@ scene: ## Print and record the current scene fingerprint.
 	recomp/tests/run.py --scene --record
 
 # ── inspect & maintain ──────────────────────────────────────────────────
+.PHONY: stop
+stop: ## Stop the running game and its wineserver.
+	bash scripts/16-stop-recomp.sh
+
 .PHONY: kill
-kill: ## Stop any running game and its wineserver.
-	bash scripts/16-kill-recomp.sh
+kill: stop ## Alias for stop.
 
 .PHONY: log
 log: ## Show the tail of the runtime boot log: make log LINES=500
@@ -82,8 +89,9 @@ help: ## List the targets.
 	@echo "  test-gameplay  mission/gameplay tests only"
 	@echo "  test-one       one test: make test-one T=<substring>"
 	@echo "  scene          print + record the current scene fingerprint"
-	@echo "  kill           stop the game and its wineserver"
-	@echo "  log            tail the runtime boot log (LINES=200)"
+	@echo "  stop           stop the game and its wineserver (alias: kill)"
+	@echo "  relaunch       stop then launch a fresh game"
+	@echo "  log            tail the latest runtime log (LINES=200)"
 	@echo "  patch          regenerate the toolkit patch"
 	@echo "  clean          remove build output"
 	@echo "  help           this list"
