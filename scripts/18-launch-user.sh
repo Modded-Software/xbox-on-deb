@@ -31,7 +31,8 @@ if [ "${VBLANK:-0}" != "0" ]; then
 fi
 
 # RESOLUTION=WxH is forwarded to the launcher as --resolution=WxH.
-export RESOLUTION="${RESOLUTION:-}"
+# Default to 720p; override with RESOLUTION=1920x1080 (or empty for native).
+export RESOLUTION="${RESOLUTION-1280x720}"
 
 env KBM=1 DIAG=1 RECOMP_KEY_TRACE=1 RECOMP_LOG="$RUNLOG" $EXTRA \
     setsid bash scripts/14-launch-recomp.sh > logs/launch.out 2>&1 &
