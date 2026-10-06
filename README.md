@@ -180,6 +180,8 @@ Start at [`docs/00-overview.md`](docs/00-overview.md).
 | [02-inventory](docs/02-inventory.md) | What is in the leak (with MD5s) |
 | [03-plan](docs/03-plan.md) | Approach and decision log |
 | [04-cxbx-wine-crash](docs/04-cxbx-wine-crash.md) | The `0xC0000005` init crash and fix |
+| [05-research-archive](docs/05-research-archive.md) | Archive of official/leaked/community sources (links + gitignored artifacts) |
+| [06-vision-vs-build-gap-analysis](docs/06-vision-vs-build-gap-analysis.md) | Stated vision vs. what the May 2004 build contains |
 
 ## Legal
 

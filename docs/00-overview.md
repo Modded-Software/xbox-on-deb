@@ -35,3 +35,10 @@ Vulkan on the Arc GPUs.
 
 See [`03-plan.md`](03-plan.md) for the decision log and
 [`04-cxbx-wine-crash.md`](04-cxbx-wine-crash.md) for the init-crash fix.
+
+## Research
+
+| Doc | Contents |
+|-----|----------|
+| [05-research-archive](05-research-archive.md) | Archive of official, leaked and community sources (links + gitignored artifacts) |
+| [06-vision-vs-build-gap-analysis](06-vision-vs-build-gap-analysis.md) | Stated vision vs. what the May 2004 build actually contains |
