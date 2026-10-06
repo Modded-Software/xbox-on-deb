@@ -205,6 +205,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     (void)lpCmdLine;
     (void)nCmdShow;
 
+    /* Detach the console before redirecting stdio. Under Proton the console's
+     * X window stays mapped and competes with the framebuffer window for
+     * keyboard focus -- input then only works when the right window happens to
+     * be focused. FreeConsole closes the console handles, so it has to come
+     * first; freopen then binds stdout/stderr to the log file. */
+    FreeConsole();
+
     /* Proton/Wine gives a console-subsystem exe its own console, so stdio does
      * not reach the launching terminal. Send both streams to a file instead --
      * this also captures the runtime's [KERNEL]/[ICALL]/crash diagnostics. */
@@ -215,14 +222,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
         freopen(log, "a", stderr);
         setvbuf(stdout, NULL, _IONBF, 0);
         setvbuf(stderr, NULL, _IONBF, 0);
-    }
-
-    /* stdio already goes to the log file, so the console window is dead weight
-     * and only competes for the keyboard with the framebuffer window. Hide it. */
-    {
-        HWND console = GetConsoleWindow();
-        if (console)
-            ShowWindow(console, SW_HIDE);
+        fprintf(stderr, "[BOOT] console detached; logging to %s\n", log);
     }
 
     /* Runtime configuration. These are the settings the known-working

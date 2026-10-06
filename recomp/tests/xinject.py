@@ -70,6 +70,36 @@ def _declare():
     _xtst.XTestFakeRelativeMotionEvent.restype = ctypes.c_int
     _xtst.XTestFakeRelativeMotionEvent.argtypes = [c_void_p, ctypes.c_int, ctypes.c_int, ctypes.c_ulong]
 
+    _x11.XInternAtom.restype = ctypes.c_ulong
+    _x11.XInternAtom.argtypes = [c_void_p, ctypes.c_char_p, ctypes.c_int]
+    _x11.XSendEvent.restype = ctypes.c_int
+    _x11.XSendEvent.argtypes = [c_void_p, ctypes.c_ulong, ctypes.c_int, ctypes.c_long, c_void_p]
+    _x11.XGetInputFocus.restype = ctypes.c_int
+    _x11.XGetInputFocus.argtypes = [c_void_p, ctypes.POINTER(ctypes.c_ulong),
+                                    ctypes.POINTER(ctypes.c_int)]
+
+
+ClientMessage = 33
+SubstructureRedirectMask = 1 << 20
+SubstructureNotifyMask = 1 << 19
+
+
+class _XClientMessageEvent(ctypes.Structure):
+    _fields_ = [
+        ("type", ctypes.c_int),
+        ("serial", ctypes.c_ulong),
+        ("send_event", ctypes.c_int),
+        ("display", c_void_p),
+        ("window", ctypes.c_ulong),
+        ("message_type", ctypes.c_ulong),
+        ("format", ctypes.c_int),
+        ("data", ctypes.c_long * 5),
+    ]
+
+
+class _XEvent(ctypes.Union):
+    _fields_ = [("xclient", _XClientMessageEvent), ("pad", ctypes.c_long * 24)]
+
 
 _declare()
 
@@ -161,6 +191,49 @@ def do_btn(number, action):
     return 0
 
 
+def do_activate(needle):
+    """Ask the window manager to activate a window (EWMH _NET_ACTIVE_WINDOW).
+
+    XSetInputFocus alone is not enough: a focus-policy WM (mutter) reverts it,
+    so the window never becomes the active window and never receives WM_KEYDOWN
+    -- mouse motion works, keyboard does not. A pager-sourced activation
+    request is what the WM actually honours."""
+    win = find_window(_x11.XDefaultRootWindow(_dpy), needle)
+    if not win:
+        print(f"xinject: no window matching '{needle}'", file=sys.stderr)
+        return 4
+    root = _x11.XDefaultRootWindow(_dpy)
+    atom = _x11.XInternAtom(_dpy, b"_NET_ACTIVE_WINDOW", 0)
+    ev = _XEvent()
+    ctypes.memset(ctypes.byref(ev), 0, ctypes.sizeof(ev))
+    ev.xclient.type = ClientMessage
+    ev.xclient.send_event = 1
+    ev.xclient.display = _dpy
+    ev.xclient.window = win
+    ev.xclient.message_type = atom
+    ev.xclient.format = 32
+    ev.xclient.data[0] = 2  # source indication: pager
+    ev.xclient.data[1] = CurrentTime
+    ev.xclient.data[2] = 0
+    _x11.XSendEvent(_dpy, root, 0,
+                    SubstructureRedirectMask | SubstructureNotifyMask, ctypes.byref(ev))
+    _x11.XRaiseWindow(_dpy, win)
+    _x11.XSetInputFocus(_dpy, win, RevertToParent, CurrentTime)
+    _x11.XFlush(_dpy)
+    print(f"activated 0x{win:08x}")
+    return 0
+
+
+def do_getfocus():
+    win = ctypes.c_ulong()
+    revert = ctypes.c_int()
+    _x11.XGetInputFocus(_dpy, ctypes.byref(win), ctypes.byref(revert))
+    _x11.XFlush(_dpy)
+    name = window_name(win.value)
+    print(f"focus 0x{win.value:08x} revert={revert.value} name='{name}'")
+    return 0
+
+
 def main(argv):
     global _dpy
     if len(argv) < 2:
@@ -185,6 +258,10 @@ def main(argv):
         _x11.XFlush(_dpy)
         w, h = window_size(win)
         print(f"focused 0x{win:08x} {w}x{h}")
+    elif cmd == "activate" and len(argv) >= 3:
+        return do_activate(argv[2])
+    elif cmd == "getfocus":
+        return do_getfocus()
     elif cmd == "title" and len(argv) >= 3:
         win = find_window(_x11.XDefaultRootWindow(_dpy), argv[2])
         if not win:

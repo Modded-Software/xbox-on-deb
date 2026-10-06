@@ -17,6 +17,10 @@ launch: ## Launch the game for manual testing (keyboard+mouse, repeat watchdog).
 relaunch: ## Stop any running game and launch a fresh one.
 	bash scripts/18-launch-user.sh
 
+.PHONY: watch
+watch: ## Launch with the repeating hang watchdog (diagnosis only).
+	WATCH=1 bash scripts/18-launch-user.sh
+
 # ── build & test ────────────────────────────────────────────────────────
 .PHONY: build
 build: ## Build ghost.exe from the recompiled sources.

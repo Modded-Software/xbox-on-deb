@@ -30,7 +30,7 @@ if [ "${VBLANK:-0}" != "0" ]; then
     EXTRA="$EXTRA RECOMP_VBLANK=1"
 fi
 
-env KBM=1 DIAG=1 RECOMP_LOG="$RUNLOG" $EXTRA \
+env KBM=1 DIAG=1 RECOMP_KEY_TRACE=1 RECOMP_LOG="$RUNLOG" $EXTRA \
     setsid bash scripts/14-launch-recomp.sh > logs/launch.out 2>&1 &
 
 echo "launched; window title is 'StarCraft: Ghost'"
