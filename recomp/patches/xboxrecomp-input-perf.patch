@@ -1,8 +1,8 @@
 diff --git a/src/input/xinput_device.c b/src/input/xinput_device.c
-index 2907904..c51f2c6 100644
+index 2907904..2d91133 100644
 --- a/src/input/xinput_device.c
 +++ b/src/input/xinput_device.c
-@@ -222,6 +222,124 @@ static void keyboard_state(XBOX_INPUT_STATE *pState)
+@@ -222,6 +222,189 @@ static void keyboard_state(XBOX_INPUT_STATE *pState)
      pState->dwPacketNumber = ++packet;
  }
  
@@ -56,6 +56,55 @@ index 2907904..c51f2c6 100644
 +    return (SHORT)v;
 +}
 +
++/* Face/back buttons, on the modern desktop convention: confirm on Enter, use
++ * on E, jump on Space. A pad is expected to be the primary device, so this is
++ * the "there is no pad" scheme and stays out of the way when one is plugged
++ * in. Override any binding with
++ *   RECOMP_KBM_MAP="A=Space,B=E,X=Control,Y=R,BLACK=F,WHITE=Q,START=Return,BACK=Escape" */
++static int k_a = VK_RETURN, k_b = 'E', k_x = VK_SPACE, k_y = 'R',
++           k_black = 'F', k_white = 'Q', k_start = VK_TAB, k_back = VK_ESCAPE;
++
++struct kbm_bind { const char *name; int *vk; };
++static struct kbm_bind kbm_binds[] = {
++    { "A", &k_a }, { "B", &k_b }, { "X", &k_x }, { "Y", &k_y },
++    { "BLACK", &k_black }, { "WHITE", &k_white },
++    { "START", &k_start }, { "BACK", &k_back },
++};
++
++static int kbm_vk_name(const char *name)
++{
++    if (!strcmp(name, "Return"))  return VK_RETURN;
++    if (!strcmp(name, "Space"))   return VK_SPACE;
++    if (!strcmp(name, "Tab"))     return VK_TAB;
++    if (!strcmp(name, "Escape"))  return VK_ESCAPE;
++    if (!strcmp(name, "Back"))    return VK_BACK;
++    if (!strcmp(name, "Shift"))   return VK_SHIFT;
++    if (!strcmp(name, "Control")) return VK_CONTROL;
++    if (!strcmp(name, "Alt"))     return VK_MENU;
++    if (name[0] && !name[1])      return (unsigned char)name[0];
++    return 0;
++}
++
++static void kbm_load_map(void)
++{
++    char *spec = getenv("RECOMP_KBM_MAP");
++    char *tok;
++    if (!spec || !*spec) return;
++    spec = strdup(spec);
++    for (tok = strtok(spec, ","); tok; tok = strtok(NULL, ",")) {
++        char *eq = strchr(tok, '=');
++        unsigned i;
++        int vk;
++        if (!eq) continue;
++        *eq = '\0';
++        vk = kbm_vk_name(eq + 1);
++        if (!vk) continue;
++        for (i = 0; i < sizeof(kbm_binds) / sizeof(kbm_binds[0]); i++)
++            if (!strcmp(kbm_binds[i].name, tok)) *kbm_binds[i].vk = vk;
++    }
++    free(spec);
++}
++
 +static void kbm_state(XBOX_INPUT_STATE *pState)
 +{
 +    static DWORD packet;
@@ -73,9 +122,12 @@ index 2907904..c51f2c6 100644
 +        deadzone = kbm_number("RECOMP_KBM_DEADZONE", 64, 1);
 +        invert_y = kbm_number("RECOMP_KBM_INVERT_Y", 1, 0);
 +        maxdelta = kbm_number("RECOMP_KBM_MAXDELTA", 8192, 1024);
++        kbm_load_map();
 +        configured = 1;
-+        fprintf(stderr, "[KBM] profile: sens=%u deadzone=%u invert_y=%u maxdelta=%u\n",
-+                sens, deadzone, invert_y, maxdelta);
++        fprintf(stderr, "[KBM] profile: sens=%u deadzone=%u invert_y=%u maxdelta=%u "
++                "A=%d B=%d X=%d Y=%d BLACK=%d WHITE=%d START=%d BACK=%d\n",
++                sens, deadzone, invert_y, maxdelta,
++                k_a, k_b, k_x, k_y, k_black, k_white, k_start, k_back);
 +    }
 +
 +    memset(pState, 0, sizeof(*pState));
@@ -96,28 +148,41 @@ index 2907904..c51f2c6 100644
 +    if (dy > -(int)deadzone && dy < (int)deadzone) dy = 0;
 +    pState->Gamepad.sThumbRX = kbm_clamp((long)dx * sens);
 +    pState->Gamepad.sThumbRY = kbm_clamp((invert_y ? (long)dy : -(long)dy) * sens);
++    if (dx || dy) {
++        static int trace = -1;
++        static unsigned long moves;
++        if (trace < 0) {
++            const char *v = getenv("RECOMP_KBM_TRACE");
++            trace = (v && *v && *v != '0') ? 1 : 0;
++        }
++        moves++;
++        if (trace)
++            fprintf(stderr, "[KBM] mouse dx=%d dy=%d rx=%d ry=%d moves=%lu\n",
++                    dx, dy, pState->Gamepad.sThumbRX, pState->Gamepad.sThumbRY, moves);
++    }
 +
-+    /* Digital: d-pad on the arrows (and 1-4), Start/Back on Enter/Esc. */
++    /* Digital: d-pad on the arrows (and 1-4); Start/Back from the map. */
 +    if (key_down(VK_UP)    || key_down('1')) b |= XBOX_GAMEPAD_DPAD_UP;
 +    if (key_down(VK_DOWN)  || key_down('2')) b |= XBOX_GAMEPAD_DPAD_DOWN;
 +    if (key_down(VK_LEFT)  || key_down('3')) b |= XBOX_GAMEPAD_DPAD_LEFT;
 +    if (key_down(VK_RIGHT) || key_down('4')) b |= XBOX_GAMEPAD_DPAD_RIGHT;
-+    if (key_down(VK_RETURN)) b |= XBOX_GAMEPAD_START;
-+    if (key_down(VK_ESCAPE) || key_down(VK_BACK)) b |= XBOX_GAMEPAD_BACK;
 +    wheel = xbox_FramebufferMouseWheel();
 +    if (wheel > 0) b |= XBOX_GAMEPAD_DPAD_UP;
 +    if (wheel < 0) b |= XBOX_GAMEPAD_DPAD_DOWN;
++    if (key_down(k_start)) b |= XBOX_GAMEPAD_START;
++    /* BackSpace stays a Back alias regardless of the configured Back key. */
++    if (key_down(k_back) || key_down(VK_BACK)) b |= XBOX_GAMEPAD_BACK;
 +    pState->Gamepad.wButtons = b;
 +
 +    /* Analog face buttons and triggers. */
-+    pState->Gamepad.bAnalogButtons[XBOX_BUTTON_A]     = key_down(VK_SPACE) ? 255 : 0;
-+    pState->Gamepad.bAnalogButtons[XBOX_BUTTON_B]     = key_down(VK_SHIFT) ? 255 : 0;
-+    pState->Gamepad.bAnalogButtons[XBOX_BUTTON_X]     = key_down(VK_CONTROL) ? 255 : 0;
-+    pState->Gamepad.bAnalogButtons[XBOX_BUTTON_Y]     = key_down('R') ? 255 : 0;
-+    pState->Gamepad.bAnalogButtons[XBOX_BUTTON_BLACK] = key_down('F') ? 255 : 0;
-+    pState->Gamepad.bAnalogButtons[XBOX_BUTTON_WHITE] = key_down('Q') ? 255 : 0;
++    pState->Gamepad.bAnalogButtons[XBOX_BUTTON_A]     = key_down(k_a) ? 255 : 0;
++    pState->Gamepad.bAnalogButtons[XBOX_BUTTON_B]     = key_down(k_b) ? 255 : 0;
++    pState->Gamepad.bAnalogButtons[XBOX_BUTTON_X]     = key_down(k_x) ? 255 : 0;
++    pState->Gamepad.bAnalogButtons[XBOX_BUTTON_Y]     = key_down(k_y) ? 255 : 0;
++    pState->Gamepad.bAnalogButtons[XBOX_BUTTON_BLACK] = key_down(k_black) ? 255 : 0;
++    pState->Gamepad.bAnalogButtons[XBOX_BUTTON_WHITE] = key_down(k_white) ? 255 : 0;
 +    pState->Gamepad.bAnalogButtons[XBOX_BUTTON_LTRIGGER] =
-+        (xbox_FramebufferMouseButton(1) || key_down('E')) ? 255 : 0;
++        xbox_FramebufferMouseButton(1) ? 255 : 0;
 +    pState->Gamepad.bAnalogButtons[XBOX_BUTTON_RTRIGGER] =
 +        xbox_FramebufferMouseButton(0) ? 255 : 0;
 +
@@ -127,7 +192,7 @@ index 2907904..c51f2c6 100644
  static DWORD poll_host(DWORD port, XINPUT_STATE *state, DWORD *host_slot)
  {
      DWORD connected = 0;
-@@ -280,8 +398,9 @@ DWORD xbox_InputGetState(DWORD dwPort, XBOX_INPUT_STATE *pState)
+@@ -280,8 +463,9 @@ DWORD xbox_InputGetState(DWORD dwPort, XBOX_INPUT_STATE *pState)
  
      result = poll_host(dwPort, &xi_state, &host_slot);
      if (result != ERROR_SUCCESS) {
@@ -139,7 +204,7 @@ index 2907904..c51f2c6 100644
              return ERROR_SUCCESS;
          }
          return result;
-@@ -316,10 +435,11 @@ DWORD xbox_InputGetState(DWORD dwPort, XBOX_INPUT_STATE *pState)
+@@ -316,10 +500,11 @@ DWORD xbox_InputGetState(DWORD dwPort, XBOX_INPUT_STATE *pState)
       * Merging is also the better rule. A real pad keeps working -- its
       * buttons are already in pState and the keyboard only adds to them --
       * and there is no special case left to get wrong. */
@@ -153,7 +218,7 @@ index 2907904..c51f2c6 100644
          pState->Gamepad.wButtons |= kb.Gamepad.wButtons;
          for (i = 0; i < 8; i++)
              if (kb.Gamepad.bAnalogButtons[i] > pState->Gamepad.bAnalogButtons[i])
-@@ -358,7 +478,7 @@ BOOL xbox_InputIsConnected(DWORD dwPort)
+@@ -358,7 +543,7 @@ BOOL xbox_InputIsConnected(DWORD dwPort)
      DWORD slot;
      if (dwPort >= XBOX_MAX_CONTROLLERS) return FALSE;
      return poll_host(dwPort, &state, &slot) == ERROR_SUCCESS ||
@@ -241,10 +306,55 @@ index 84f0eda..09643ca 100644
  void nv2a_gpu_invalidate(void);
  void nv2a_gpu_report(void);
 diff --git a/src/kernel/nv2a_gpu_d3d11.cpp b/src/kernel/nv2a_gpu_d3d11.cpp
-index b9aa5d3..d3d6b02 100644
+index b9aa5d3..7f9dffb 100644
 --- a/src/kernel/nv2a_gpu_d3d11.cpp
 +++ b/src/kernel/nv2a_gpu_d3d11.cpp
-@@ -302,6 +302,7 @@ struct CachedTexture {
+@@ -27,6 +27,7 @@ static struct {
+     double draw_setup, draw_textures, draw_streams, draw_shaders, draw_submit, draw_bookkeeping;
+     double vertex_compile, pixel_compile;
+     uint64_t vertex_shader_hits, vertex_shader_misses, pixel_shader_hits, pixel_shader_misses, shader_evictions;
++    uint64_t vertex_shader_failures, pixel_shader_failures;
+     uint64_t hash_bytes;
+     uint64_t blend_created, depth_created, sampler_created;
+     uint64_t color_created, depth_surface_created, color_refreshed, depth_refreshed;
+@@ -40,6 +41,7 @@ static struct {
+     uint64_t color_clear_publications, depth_clear_publications, clear_readback_bytes_avoided;
+     uint64_t texture_created, texture_updated, texture_update_bytes;
+     uint64_t texture_evicted, texture_cache_entries, texture_cache_bytes;
++    uint64_t texture_decode_failures, texture_create_failures;
+     uint64_t fixed_draws, lit_draws, skinned_draws, texgen_draws, texture_matrix_draws;
+     uint64_t signed_texture_stages, packed_texture_stages;
+     uint64_t window_clip_draws, window_scissor_draws, window_shader_draws, window_exclusive_draws;
+@@ -78,9 +80,11 @@ extern "C" void nv2a_gpu_report(void)
+     std::fprintf(stderr, "[GPU-D3D11] states created: %llu blend, %llu depth, %llu sampler\n",
+                  (unsigned long long)gpu_timing.blend_created, (unsigned long long)gpu_timing.depth_created,
+                  (unsigned long long)gpu_timing.sampler_created);
+-    std::fprintf(stderr, "[GPU-D3D11] texture uploads: %llu created, %llu updated; %.3f GiB updated\n",
++    std::fprintf(stderr, "[GPU-D3D11] texture uploads: %llu created, %llu updated; %.3f GiB updated; %llu decode failures, %llu create failures\n",
+                  (unsigned long long)gpu_timing.texture_created, (unsigned long long)gpu_timing.texture_updated,
+-                 (double)gpu_timing.texture_update_bytes / 1073741824.0);
++                 (double)gpu_timing.texture_update_bytes / 1073741824.0,
++                 (unsigned long long)gpu_timing.texture_decode_failures,
++                 (unsigned long long)gpu_timing.texture_create_failures);
+     std::fprintf(stderr, "[GPU-D3D11] texture cache: %llu entries, %.1f MiB, %llu evictions\n",
+                  (unsigned long long)gpu_timing.texture_cache_entries,
+                  (double)gpu_timing.texture_cache_bytes / 1048576.0,
+@@ -120,10 +124,12 @@ extern "C" void nv2a_gpu_report(void)
+     std::fprintf(stderr, "[GPU-D3D11] constants: %llu uploads, %llu unchanged reuses, %.3fs\n",
+                  (unsigned long long)gpu_timing.constant_uploads,
+                  (unsigned long long)gpu_timing.constant_reuses, gpu_timing.constants);
+-    std::fprintf(stderr, "[GPU-D3D11] shaders: vertex %llu hits/%llu misses, %.3fs compile; pixel %llu hits/%llu misses, %.3fs compile; %llu evictions\n",
++    std::fprintf(stderr, "[GPU-D3D11] shaders: vertex %llu hits/%llu misses/%llu failures, %.3fs compile; pixel %llu hits/%llu misses/%llu failures, %.3fs compile; %llu evictions\n",
+                  (unsigned long long)gpu_timing.vertex_shader_hits, (unsigned long long)gpu_timing.vertex_shader_misses,
++                 (unsigned long long)gpu_timing.vertex_shader_failures,
+                  gpu_timing.vertex_compile, (unsigned long long)gpu_timing.pixel_shader_hits,
+-                 (unsigned long long)gpu_timing.pixel_shader_misses, gpu_timing.pixel_compile,
++                 (unsigned long long)gpu_timing.pixel_shader_misses,
++                 (unsigned long long)gpu_timing.pixel_shader_failures, gpu_timing.pixel_compile,
+                  (unsigned long long)gpu_timing.shader_evictions);
+     std::fprintf(stderr, "[GPU-D3D11] fixed function: %llu draws, %llu lit, %llu skinned, %llu texgen, %llu texture-matrix\n",
+                  (unsigned long long)gpu_timing.fixed_draws, (unsigned long long)gpu_timing.lit_draws,
+@@ -302,6 +308,7 @@ struct CachedTexture {
      uint32_t width, height, format, cube, pitch, linear, face_stride, depth;
      uint32_t mip_levels;
      uint64_t bytes;
@@ -252,7 +362,23 @@ index b9aa5d3..d3d6b02 100644
      std::vector<uint8_t> source_snapshot;
      ComPtr<ID3D11ShaderResourceView> view;
  };
-@@ -1068,11 +1069,59 @@ static void publish_known_clear(SurfaceType &surface, uint32_t bytes)
+@@ -587,6 +594,7 @@ static VertexVariant *get_vertex_shader(const Nv2aGpuDraw &state)
+     HRESULT result = D3DCompile(source.data(), source.size(), "NV2A-vertex", nullptr, nullptr, "vs_guest", "vs_5_0",
+                                D3DCOMPILE_OPTIMIZATION_LEVEL3 | D3DCOMPILE_IEEE_STRICTNESS, 0, &code, &errors);
+     if (FAILED(result)) {
++        gpu_timing.vertex_shader_failures++;
+         std::fprintf(stderr, "[GPU-D3D11] vertex compile: %s\n", errors ? (const char *)errors->GetBufferPointer() : "failed");
+         return nullptr;
+     }
+@@ -723,6 +731,7 @@ static ID3D11PixelShader *get_pixel_shader(const Nv2aGpuDraw &state, uint32_t wi
+     HRESULT result = D3DCompile(nv2a_gpu_shader_source, sizeof nv2a_gpu_shader_source - 1, "NV2A-guest", definitions, nullptr,
+                                "ps_main", "ps_5_0", D3DCOMPILE_OPTIMIZATION_LEVEL3 | D3DCOMPILE_IEEE_STRICTNESS, 0, &code, &errors);
+     if (FAILED(result)) {
++        gpu_timing.pixel_shader_failures++;
+         std::fprintf(stderr, "[GPU-D3D11] guest shader compile: %s\n", errors ? (const char *)errors->GetBufferPointer() : "failed");
+         return nullptr;
+     }
+@@ -1068,11 +1077,59 @@ static void publish_known_clear(SurfaceType &surface, uint32_t bytes)
      surface.dirty = false;
  }
  
@@ -313,7 +439,7 @@ index b9aa5d3..d3d6b02 100644
      ID3D11RenderTargetView *empty = nullptr;
      context->OMSetRenderTargets(1, &empty, nullptr);
      bool has_readback = false;
-@@ -1242,6 +1291,19 @@ extern "C" void nv2a_gpu_sync(void)
+@@ -1242,6 +1299,19 @@ extern "C" void nv2a_gpu_sync(void)
          surface.dirty = false;
      }
      pending_draws = false;
@@ -333,7 +459,7 @@ index b9aa5d3..d3d6b02 100644
  }
  
  extern "C" void nv2a_gpu_flush(void)
-@@ -1581,24 +1643,37 @@ static ID3D11ShaderResourceView *get_texture(const Nv2aGpuTexture &binding, cons
+@@ -1581,24 +1651,37 @@ static ID3D11ShaderResourceView *get_texture(const Nv2aGpuTexture &binding, cons
      }
      if (direct) {
          direct->last_used = ++surface_use_serial;
@@ -382,7 +508,23 @@ index b9aa5d3..d3d6b02 100644
      }
      GpuTimer upload_timer(gpu_timing.upload);
      uint32_t faces = binding.cube ? 6 : 1;
-@@ -1661,6 +1736,7 @@ static ID3D11ShaderResourceView *get_texture(const Nv2aGpuTexture &binding, cons
+@@ -1642,7 +1725,14 @@ static ID3D11ShaderResourceView *get_texture(const Nv2aGpuTexture &binding, cons
+                             binding.decode_level ? binding.decode_level(binding.decode_context, face, level, column, row, pixel) :
+                             binding.cube ? binding.decode_face(binding.decode_context, face, column, row, pixel) :
+                                            binding.decode(binding.decode_context, column, row, pixel);
+-                        if (!decoded) return nullptr;
++                        if (!decoded) {
++                            static unsigned logged;
++                            if (logged++ < 16)
++                                std::fprintf(stderr, "[GPU-D3D11] texture decode failed: fmt 0x%X %ux%u depth %u face %u level %u linear %u\n",
++                                             binding.format, binding.width, binding.height, binding.depth, face, level, binding.linear);
++                            gpu_timing.texture_decode_failures++;
++                            return nullptr;
++                        }
+                         if (binding.depth) *pixel = (*pixel & 0xFF00FF00u) | ((*pixel & 255u) << 16) | ((*pixel >> 16) & 255u);
+                     }
+                 data[subresource].pSysMem = image.data(); data[subresource].SysMemPitch = width * 4;
+@@ -1661,6 +1751,7 @@ static ID3D11ShaderResourceView *get_texture(const Nv2aGpuTexture &binding, cons
              context->UpdateSubresource(resource.Get(), subresource, nullptr,
                                        data[subresource].pSysMem, data[subresource].SysMemPitch, data[subresource].SysMemSlicePitch);
          refresh->source_snapshot.assign(binding.source, binding.source + binding.source_bytes);
@@ -390,7 +532,7 @@ index b9aa5d3..d3d6b02 100644
          gpu_timing.texture_updated++;
          gpu_timing.texture_update_bytes += resource_bytes;
          return refresh->view.Get();
-@@ -1677,6 +1753,7 @@ static ID3D11ShaderResourceView *get_texture(const Nv2aGpuTexture &binding, cons
+@@ -1677,6 +1768,7 @@ static ID3D11ShaderResourceView *get_texture(const Nv2aGpuTexture &binding, cons
      entry.cube = binding.cube;
      entry.depth = binding.depth;
      entry.mip_levels = levels; entry.bytes = resource_bytes;
@@ -398,6 +540,24 @@ index b9aa5d3..d3d6b02 100644
      if (binding.depth) {
          D3D11_TEXTURE3D_DESC volume_description = {};
          volume_description.Width = binding.width; volume_description.Height = binding.height;
+@@ -1684,9 +1776,15 @@ static ID3D11ShaderResourceView *get_texture(const Nv2aGpuTexture &binding, cons
+         volume_description.Format = format; volume_description.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+         ComPtr<ID3D11Texture3D> volume;
+         if (FAILED(device->CreateTexture3D(&volume_description, data.data(), &volume)) ||
+-            FAILED(device->CreateShaderResourceView(volume.Get(), nullptr, &entry.view))) return nullptr;
++            FAILED(device->CreateShaderResourceView(volume.Get(), nullptr, &entry.view))) {
++            gpu_timing.texture_create_failures++;
++            return nullptr;
++        }
+     } else if (FAILED(device->CreateTexture2D(&description, data.data(), &texture)) ||
+-        FAILED(device->CreateShaderResourceView(texture.Get(), nullptr, &entry.view))) return nullptr;
++        FAILED(device->CreateShaderResourceView(texture.Get(), nullptr, &entry.view))) {
++        gpu_timing.texture_create_failures++;
++        return nullptr;
++    }
+     gpu_timing.texture_created++;
+     entry.source_snapshot.assign(binding.source, binding.source + binding.source_bytes);
+     entry.bytes += entry.source_snapshot.size();
 diff --git a/src/kernel/nv2a_pb_exec.c b/src/kernel/nv2a_pb_exec.c
 index e0fa00b..c1179d2 100644
 --- a/src/kernel/nv2a_pb_exec.c
@@ -569,17 +729,18 @@ index 9be8998..11ea672 100644
      xbox_worker_stack_free(slot);
      return (int)(g_eax & 1u);
 diff --git a/src/usb/usb_gamepad.c b/src/usb/usb_gamepad.c
-index 3643253..2eca1da 100644
+index 3643253..a3c8e92 100644
 --- a/src/usb/usb_gamepad.c
 +++ b/src/usb/usb_gamepad.c
-@@ -315,12 +315,20 @@ int usb_gamepad_report(uint8_t *out, int max)
+@@ -315,12 +315,28 @@ int usb_gamepad_report(uint8_t *out, int max)
                  XBOX_INPUT_STATE probe;
                  DWORD rc = xbox_InputGetState(0, &probe);
                  last = now;
 -                fprintf(stderr, "  [INPUT] kbd_env=%s window_has_RETURN=%d "
 -                        "InputGetState=%lu buttons=0x%04X\n",
 +                fprintf(stderr, "  [INPUT] t=%lu kbd_env=%s window_has_RETURN=%d "
-+                        "window_has_SPACE=%d InputGetState=%lu buttons=0x%04X A=%u "
++                        "window_has_SPACE=%d InputGetState=%lu buttons=0x%04X "
++                        "A=%u B=%u X=%u Y=%u BL=%u WH=%u LT=%u RT=%u "
 +                        "LX=%d LY=%d RX=%d RY=%d\n",
 +                        now,
                          getenv("RECOMP_KEYBOARD") ? getenv("RECOMP_KEYBOARD") : "(unset)",
@@ -589,6 +750,13 @@ index 3643253..2eca1da 100644
 -                        rc == 0 ? probe.Gamepad.wButtons : 0);
 +                        rc == 0 ? probe.Gamepad.wButtons : 0,
 +                        rc == 0 ? probe.Gamepad.bAnalogButtons[0] : 0,
++                        rc == 0 ? probe.Gamepad.bAnalogButtons[1] : 0,
++                        rc == 0 ? probe.Gamepad.bAnalogButtons[2] : 0,
++                        rc == 0 ? probe.Gamepad.bAnalogButtons[3] : 0,
++                        rc == 0 ? probe.Gamepad.bAnalogButtons[4] : 0,
++                        rc == 0 ? probe.Gamepad.bAnalogButtons[5] : 0,
++                        rc == 0 ? probe.Gamepad.bAnalogButtons[6] : 0,
++                        rc == 0 ? probe.Gamepad.bAnalogButtons[7] : 0,
 +                        rc == 0 ? probe.Gamepad.sThumbLX : 0,
 +                        rc == 0 ? probe.Gamepad.sThumbLY : 0,
 +                        rc == 0 ? probe.Gamepad.sThumbRX : 0,
@@ -596,7 +764,7 @@ index 3643253..2eca1da 100644
                  fflush(stderr);
              }
          }
-@@ -346,3 +354,38 @@ int usb_gamepad_report(uint8_t *out, int max)
+@@ -346,3 +362,38 @@ int usb_gamepad_report(uint8_t *out, int max)
      out[19] = (uint8_t)((g->sThumbRY >> 8) & 0xFF);
      return 20;
  }
@@ -652,7 +820,7 @@ index 7169c32..efc603f 100644
  uint8_t usb_gamepad_address(void);
  
 diff --git a/src/video/fb_present.c b/src/video/fb_present.c
-index 8b200d7..1c568ea 100644
+index 8b200d7..3e3ce31 100644
 --- a/src/video/fb_present.c
 +++ b/src/video/fb_present.c
 @@ -18,6 +18,7 @@
@@ -740,7 +908,7 @@ index 8b200d7..1c568ea 100644
  static void fb_exit_process(void)
  {
      InterlockedExchange(&s_fb_running, 0);
-@@ -175,9 +246,56 @@ static LRESULT CALLBACK fb_wndproc(HWND h, UINT m, WPARAM w, LPARAM l)
+@@ -175,9 +246,61 @@ static LRESULT CALLBACK fb_wndproc(HWND h, UINT m, WPARAM w, LPARAM l)
              s_key_down[w] = 0;
          return m == WM_SYSKEYUP ? DefWindowProcA(h, m, w, l) : 0;
  
@@ -754,6 +922,11 @@ index 8b200d7..1c568ea 100644
 +            cy = (c.bottom - c.top) / 2;
 +            dx = x - cx;
 +            dy = y - cy;
++            /* Clip/recentre lands the cursor within a pixel of centre under
++             * Wine, and that residual would otherwise leak out as a constant
++             * slow drift. One pixel of motion is below anything usable. */
++            if (dx > -2 && dx < 2) dx = 0;
++            if (dy > -2 && dy < 2) dy = 0;
 +            if (dx || dy) {
 +                POINT p;
 +                InterlockedExchangeAdd(&s_mouse_dx, dx);
@@ -797,7 +970,7 @@ index 8b200d7..1c568ea 100644
          return 0;
      }
      return DefWindowProcA(h, m, w, l);
-@@ -380,6 +498,15 @@ static DWORD WINAPI fb_thread(LPVOID unused)
+@@ -380,6 +503,15 @@ static DWORD WINAPI fb_thread(LPVOID unused)
          free(caption);
          return 0;
      }
@@ -813,7 +986,7 @@ index 8b200d7..1c568ea 100644
      SendMessageA(hwnd, WM_SETICON, ICON_BIG, (LPARAM)icons.large_icon);
      SendMessageA(hwnd, WM_SETICON, ICON_SMALL, (LPARAM)icons.small_icon);
      hdc = GetDC(hwnd);
-@@ -477,4 +604,8 @@ void xbox_FramebufferWindowSet(uint32_t fb_va, uint32_t pitch) { (void)fb_va; (v
+@@ -477,4 +609,8 @@ void xbox_FramebufferWindowSet(uint32_t fb_va, uint32_t pitch) { (void)fb_va; (v
  void xbox_FramebufferWindowPresent(uint32_t fb_va, uint32_t pitch) { (void)fb_va; (void)pitch; }
  void xbox_FramebufferWindowStart(void) {}
  int xbox_FramebufferKeyDown(int vk) { (void)vk; return 0; }

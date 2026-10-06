@@ -56,11 +56,26 @@ def _run(*args, check=True):
     return result.stdout.strip()
 
 
-def hold(game, name, wait=1.6):
-    """Press a key and return the input sample taken while it is held."""
+def hold(game, name, wait=4.0, expect=None):
+    """Press a key and return an input sample taken while it is held.
+
+    `expect` maps sample fields to a required value (a bitmask is ANDed). The
+    key stays down until a fresh [INPUT] sample satisfies it, because that
+    diagnostic is emitted only once a second and may be delayed by a busy
+    frame; releasing early would sample the released state."""
+    deadline = time.time() + wait
     game.key(name, "down")
-    sample = game.wait_input()
-    game.key(name, "up")
+    sample = None
+    try:
+        while time.time() < deadline:
+            try:
+                sample = game.wait_input(timeout=min(1.5, deadline - time.time()))
+            except TimeoutError:
+                continue
+            if expect is None or all(sample.get(k, 0) & v for k, v in expect.items()):
+                break
+    finally:
+        game.key(name, "up")
     return sample
 
 
@@ -85,6 +100,7 @@ class Game:
             env["KBM"] = "1" if self.kbm else "0"
             env["DIAG"] = "1"
             env["RECOMP_KEY_TRACE"] = "1"
+            env["RECOMP_KBM_TRACE"] = "1"
             env["RECOMP_FB_CAPTURE"] = CAPTURE
             try:
                 os.remove(LOG)
@@ -128,8 +144,102 @@ class Game:
     def btn(self, number, action):
         return _run("btn", str(number), action)
 
-    def move(self, dx, dy):
-        return _run("move", str(dx), str(dy))
+    def move(self, dx, dy, count=1, interval_ms=0):
+        """Sustained motion: repeat the relative move `count` times."""
+        args = ["move", str(dx), str(dy)]
+        if count != 1 or interval_ms:
+            args += [str(count), str(interval_ms)]
+        return _run(*args)
+
+    def tap(self, name, hold=0.35, gap=0.5):
+        """A press long enough to span an input poll, then let the UI settle."""
+        self.key(name, "down")
+        time.sleep(hold)
+        self.key(name, "up")
+        time.sleep(gap)
+
+    def start_new_game(self, taps=5, gap=1.5):
+        """Advance the menus into a mission by tapping A (Return), as a human
+        would. Returns the frame counter when the taps finish."""
+        for _ in range(taps):
+            self.tap("Return", gap=gap)
+        return self.frame()
+
+    # -- telemetry: mouse / right stick -----------------------------------
+
+    def mouse_move(self, dx, dy, timeout=4.0):
+        """Inject relative mouse motion and wait for the input layer to report
+        the synthesised right-stick value. None if nothing arrived."""
+        offset = os.path.getsize(LOG) if os.path.exists(LOG) else 0
+        self.move(dx, dy)
+        deadline = time.time() + timeout
+        while time.time() < deadline:
+            offset, text = self._read_from(offset)
+            for line in text.splitlines():
+                found = re.search(
+                    r"\[KBM\] mouse dx=(-?\d+) dy=(-?\d+) rx=(-?\d+) ry=(-?\d+)", line)
+                if found:
+                    return dict(zip(("dx", "dy", "rx", "ry"),
+                                    (int(v) for v in found.groups())))
+            time.sleep(0.05)
+        return None
+
+    def mouse_trace(self):
+        with open(LOG, "r", errors="replace") as handle:
+            return [l for l in handle if "[KBM] mouse" in l]
+
+    def log_offset(self):
+        return os.path.getsize(LOG) if os.path.exists(LOG) else 0
+
+    def log_since(self, offset, tag):
+        """Lines containing `tag` appended to the boot log since `offset`."""
+        _, text = self._read_from(offset)
+        return [l for l in text.splitlines() if tag in l]
+
+    def wait_log_line(self, tag, timeout=25.0, offset=None):
+        """Wait for the next boot-log line containing `tag`; None on timeout."""
+        if offset is None:
+            offset = self.log_offset()
+        deadline = time.time() + timeout
+        while time.time() < deadline:
+            lines = self.log_since(offset, tag)
+            if lines:
+                return lines[-1]
+            time.sleep(0.5)
+        return None
+
+    # -- telemetry: GPU health --------------------------------------------
+
+    def shader_failures(self):
+        """Vertex+pixel D3DCompile failures from the latest GPU summary."""
+        line = self._last_line("[GPU-D3D11] shaders:")
+        if line is None:
+            return None
+        return sum(int(n) for n in re.findall(r"(\d+) failures", line))
+
+    def texture_failures(self):
+        """Texture decode+create failures from the latest GPU summary."""
+        line = self._last_line("[GPU-D3D11] texture uploads:")
+        if line is None:
+            return None
+        return sum(int(n) for n in re.findall(r"(\d+) (?:decode|create) failures", line))
+
+    def cpu_fallback_batches(self):
+        line = self._last_line("[GPU-D3D11] batches:")
+        if line is None:
+            return None
+        match = re.search(r"(\d+) CPU fallback", line)
+        return int(match.group(1)) if match else None
+
+    def _last_line(self, tag):
+        if not os.path.exists(LOG):
+            return None
+        last = None
+        with open(LOG, "r", errors="replace") as handle:
+            for line in handle:
+                if tag in line:
+                    last = line
+        return last
 
     # -- telemetry: input state -------------------------------------------
 

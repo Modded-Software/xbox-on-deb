@@ -11,7 +11,7 @@ Commands:
   xinject focus <title-substr>        raise + focus a matching window
   xinject key <name> down|up|press    XTest key event (name is an X keysym)
   xinject btn <1-3> down|up|click     XTest mouse button
-  xinject move <dx> <dy>              XTest relative pointer motion
+  xinject move <dx> <dy> [n] [ms]      relative pointer motion, n times (sustained)
 
 Exit status is non-zero on a bad command or a missing window, so a test script
 can assert on it. Nothing here is game-specific; it is a general X11 tool.
@@ -209,9 +209,15 @@ def main(argv):
     elif cmd == "btn" and len(argv) >= 4:
         return do_btn(int(argv[2]), argv[3])
     elif cmd == "move" and len(argv) >= 4:
-        _xtst.XTestFakeRelativeMotionEvent(_dpy, int(argv[2]), int(argv[3]), CurrentTime)
-        _x11.XFlush(_dpy)
-        print(f"move {argv[2]} {argv[3]}")
+        dx, dy = int(argv[2]), int(argv[3])
+        count = int(argv[4]) if len(argv) >= 5 else 1
+        interval = (float(argv[5]) / 1000.0) if len(argv) >= 6 else 0.0
+        for i in range(count):
+            _xtst.XTestFakeRelativeMotionEvent(_dpy, dx, dy, CurrentTime)
+            _x11.XFlush(_dpy)
+            if interval and i + 1 < count:
+                time.sleep(interval)
+        print(f"move {dx} {dy} x{count}")
     else:
         print("xinject: bad command", file=sys.stderr)
         return 2

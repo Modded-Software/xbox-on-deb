@@ -155,7 +155,7 @@ Add to `src/input/xinput_device.c`, gated on `RECOMP_KBM` (patched toolkit),
 used by both the direct and USB paths because both funnel through
 `xbox_InputGetState`.
 
-Proposed default mapping (third-person action):
+Default mapping (modern desktop, third-person action):
 
 | Input | Xbox output |
 |---|---|
@@ -163,17 +163,24 @@ Proposed default mapping (third-person action):
 | mouse Δ | right stick X/Y (camera/aim) |
 | left mouse | Right trigger (fire) |
 | right mouse | Left trigger (aim) |
-| `Space` | A |
-| `Shift` / `Ctrl` | B / X |
+| `Space` | X (jump) |
+| `Enter` | A (confirm/action) |
+| `E` | B (use/interact) |
 | `R` / `F` | Y / Black |
-| `Q` / `E` | White / Left trigger |
-| `1`–`4` | d-pad |
-| `Enter` / `Esc` | Start / Back |
-| mouse wheel | optional d-pad up/down |
+| `Q` | White |
+| `Tab` / `Esc` (or `BackSpace`) | Start / Back |
+| `1`–`4`, arrows | d-pad |
+| mouse wheel | d-pad up/down |
+
+Any face/back binding can be remapped without a rebuild with
+`RECOMP_KBM_MAP="A=Space,B=E,X=Control,Y=R,START=Return,BACK=Escape"` (single
+letters or the names `Return Space Tab Escape Back Shift Control Alt`).
 
 Tuning knobs (env, consistent with the existing profile): `RECOMP_KBM_SENS`,
-`RECOMP_KBM_INVERT_Y`, `RECOMP_KBM_DEADZONE`. Mouse movement is accumulated
-between polls and cleared on read.
+`RECOMP_KBM_INVERT_Y`, `RECOMP_KBM_DEADZONE`, `RECOMP_KBM_MAXDELTA`. Mouse
+movement is accumulated between polls and cleared on read. Motion within a
+pixel of the recentre point is discarded, because Wine lands the warped cursor
+a pixel off centre and that residual leaks out as a constant slow drift.
 
 ### Mouse plumbing (the only genuinely new window code)
 
