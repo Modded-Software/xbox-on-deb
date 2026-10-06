@@ -24,6 +24,12 @@ function checkOneDocument(doc) {
   const currents = html.match(/aria-current="page"/g) ?? [];
   assert.ok(currents.length <= 1, `${route}: at most one aria-current`);
 
+  assert.doesNotMatch(html, /class="stamp/, `${route}: dates use the date component, not the old pill`);
+  for (const tag of html.match(/<time\b[^>]*>/g) ?? []) {
+    assert.match(tag, /class="date"/, `${route}: every <time> carries the date component: ${tag}`);
+    assert.match(tag, /datetime="[^"]+"/, `${route}: every <time> carries a datetime: ${tag}`);
+  }
+
   assert.match(html, /<div id="announcer" role="status"><\/div>/, `${route}: announcer`);
   assert.match(html, /<title>[^<]{4,}<\/title>/, `${route}: non-empty title`);
   assert.match(html, /<meta name="description" content="[^"]{20,}">/, `${route}: meta description`);

@@ -92,7 +92,7 @@ button:focus-visible {
   border-right: 1px solid var(--line);
   padding: 1rem 0.75rem 2rem;
   font-family: var(--mono);
-  font-size: 0.78rem;
+  font-size: 0.84rem;
 }
 
 .index__label {
@@ -325,37 +325,47 @@ tbody tr:hover td {
   white-space: nowrap;
 }
 
-.stamp {
-  display: inline-block;
-  padding: 0.14em 0.6em;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  background: var(--panel-2);
-  color: var(--phosphor);
+/* Date token: one bracketed mono readout used wherever a date is shown. */
+.date {
   font-family: var(--mono);
-  font-size: 0.72rem;
-  letter-spacing: 0.04em;
+  font-size: 0.78rem;
+  letter-spacing: 0.05em;
+  font-variant-numeric: tabular-nums;
   white-space: nowrap;
+  color: var(--ink);
 }
 
-.stamp--pre {
-  border-color: color-mix(in oklab, var(--info) 45%, var(--line));
-  color: var(--info);
+.date::before,
+.date::after {
+  color: var(--date-accent, var(--phosphor));
+  font-weight: 600;
 }
 
-.stamp--hold {
-  border-color: color-mix(in oklab, var(--amber) 45%, var(--line));
-  color: var(--amber);
+.date::before {
+  content: "[";
+  margin-right: 0.18em;
 }
 
-.stamp--cancel {
-  border-color: color-mix(in oklab, var(--danger) 45%, var(--line));
-  color: var(--danger);
+.date::after {
+  content: "]";
+  margin-left: 0.18em;
 }
 
-.stamp--release {
-  border-color: color-mix(in oklab, var(--gold) 45%, var(--line));
-  color: var(--gold);
+.date[data-era="pre"] {
+  --date-accent: var(--info);
+}
+
+.date[data-era="build"],
+.date[data-era="release"] {
+  --date-accent: var(--phosphor);
+}
+
+.date[data-era="hold"] {
+  --date-accent: var(--amber);
+}
+
+.date[data-era="cancel"] {
+  --date-accent: var(--danger);
 }
 
 /* Bracketed status tokens replace pills. */
@@ -462,6 +472,9 @@ figure.plate figcaption {
 }
 
 .ledger a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
   font-weight: 600;
   text-decoration: none;
 }
@@ -474,6 +487,26 @@ figure.plate figcaption {
   margin: 0.15rem 0 0;
   color: var(--muted);
   font-size: 0.9rem;
+}
+
+/* Inline icon sprite (no webfont, no request). */
+.sprite {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
+
+.ico {
+  flex: none;
+  width: 1.05em;
+  height: 1.05em;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  color: var(--phosphor);
 }
 
 .gallery {
