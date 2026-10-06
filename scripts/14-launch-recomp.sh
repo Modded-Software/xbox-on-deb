@@ -41,6 +41,21 @@ else
     echo "Renderer: DXVK (Vulkan)"
 fi
 
+# Keyboard: stop Wine from talking to the X11 input method (IBus/XIM).
+#
+# Proton 9+ (and GE-Proton 11, which we use) turned XIM back on by default.
+# When it is on, Wine routes key events through IBus, which replays auto-repeat
+# presses one at a time; with a low frame rate the repeats (and the final
+# release) back up by seconds, so a held arrow key "sticks". This is the
+# long-standing ibus/Wine bug (ValveSoftware/Proton#5294), not our code.
+#
+# PROTON_NO_XIM is Proton's supported switch for this: it leaves
+# WINE_ALLOW_XIM=0, and Wine reads the raw X keyboard instead of the IM.
+# Setting both covers Proton versions that only honour one. See
+# recomp/docs/08-input.md.
+export PROTON_NO_XIM=1
+export WINE_ALLOW_XIM=0
+
 # Bring-up diagnostics (xboxrecomp runtime reads these):
 #   RECOMP_UNIMPL_TRAP=1   abort at the first untranslated instruction
 #   RECOMP_WATCHDOG_SECS=N report a hang from slowness after N seconds
@@ -48,4 +63,21 @@ fi
 export RECOMP_AC97_READY="${RECOMP_AC97_READY:-1}"
 
 cd "$GAME_DIR"
-exec "$GE_PROTON_DIR/proton" run ./build/ghost.exe
+
+# KBM=1 launches with keyboard+mouse control (--kbm). The exe sets RECOMP_KBM
+# itself from the flag; nothing else needs to know.
+ARGS=()
+if [ "${KBM:-0}" != "0" ]; then
+    ARGS+=(--kbm)
+    echo "Input: keyboard + mouse (--kbm)"
+else
+    echo "Input: Xbox controller (XInput)"
+fi
+
+# DIAG=1 prints the input chain once a second to the boot log.
+if [ "${DIAG:-0}" != "0" ]; then
+    export RECOMP_INPUT_DIAG=1
+    echo "Input diagnostic: on"
+fi
+
+exec "$GE_PROTON_DIR/proton" run ./build/ghost.exe "${ARGS[@]}"

@@ -388,7 +388,15 @@ static BOOL load_xbe(const char *path, void **out_data, size_t *out_size)
 /* Console entry point (for debugging -- lets you see printf output) */
 int main(int argc, char **argv)
 {
-    (void)argc;
-    (void)argv;
+    /* --kbm: keyboard + mouse control. Parsed here because the console
+     * subsystem gives us argv; WinMain only sees lpCmdLine. Set the seam
+     * before WinMain, whose input defaults would otherwise force the keyboard
+     * probe off (it is not the same thing). */
+    for (int i = 1; i < argc; i++) {
+        if (!strcmp(argv[i], "--kbm")) {
+            _putenv_s("RECOMP_KBM", "1");
+            _putenv_s("RECOMP_KEYBOARD", "0");
+        }
+    }
     return WinMain(GetModuleHandle(NULL), NULL, GetCommandLineA(), SW_SHOW);
 }

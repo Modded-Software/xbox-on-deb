@@ -1,0 +1,838 @@
+diff --git a/src/input/xinput_device.c b/src/input/xinput_device.c
+index 2907904..c51f2c6 100644
+--- a/src/input/xinput_device.c
++++ b/src/input/xinput_device.c
+@@ -222,6 +222,124 @@ static void keyboard_state(XBOX_INPUT_STATE *pState)
+     pState->dwPacketNumber = ++packet;
+ }
+ 
++/* ---- keyboard + mouse (RECOMP_KBM) ---------------------------------------
++ *
++ * A playing control scheme rather than the RECOMP_KEYBOARD bring-up probe:
++ * WASD moves, the mouse aims, and the triggers land on the mouse buttons.
++ * Enabled by RECOMP_KBM (set by the game's --kbm flag), port 0 only, and
++ * merged on top of a pad like the probe so a controller keeps working.
++ *
++ * Mouse movement is read as a per-frame velocity: the right stick deflects in
++ * proportion to how far the mouse moved since the last poll and centres the
++ * moment it stops, which is how a stick-driven camera expects to be steered.
++ * The window clips and recentres the cursor while this is on (see
++ * xbox_FramebufferMouseCapture), so motion never runs into a screen edge.
++ */
++extern int xbox_FramebufferMouseDelta(int *dx, int *dy);
++extern int xbox_FramebufferMouseButton(int which);
++extern int xbox_FramebufferMouseWheel(void);
++
++static BOOL kbm_enabled(void)
++{
++    static int on = -1;
++    if (on < 0) {
++        const char *v = getenv("RECOMP_KBM");
++        on = (v && *v && *v != '0') ? 1 : 0;
++    }
++    return on ? TRUE : FALSE;
++}
++
++static BOOL overlay_enabled(void)
++{
++    return kbm_enabled() || keyboard_enabled();
++}
++
++static unsigned kbm_number(const char *name, unsigned maximum, unsigned fallback)
++{
++    const char *value = getenv(name);
++    char *end;
++    unsigned long number;
++    if (!value || !*value) return fallback;
++    number = strtoul(value, &end, 10);
++    if (*end || number > maximum) return fallback;
++    return (unsigned)number;
++}
++
++static SHORT kbm_clamp(long v)
++{
++    if (v > 32767) return 32767;
++    if (v < -32767) return -32767;
++    return (SHORT)v;
++}
++
++static void kbm_state(XBOX_INPUT_STATE *pState)
++{
++    static DWORD packet;
++    static int configured;
++    static unsigned sens, deadzone, invert_y, maxdelta;
++    WORD b = 0;
++    int dx, dy, wheel;
++
++    if (!configured) {
++        /* sens is stick units per pixel of mouse travel. The stick saturates
++         * at 32767, so 32 puts saturation around 1000 px in one frame: fast
++         * enough to spin, slow enough not to pin on every twitch at the low
++         * frame rates a menu scene runs at. */
++        sens     = kbm_number("RECOMP_KBM_SENS", 4096, 32);
++        deadzone = kbm_number("RECOMP_KBM_DEADZONE", 64, 1);
++        invert_y = kbm_number("RECOMP_KBM_INVERT_Y", 1, 0);
++        maxdelta = kbm_number("RECOMP_KBM_MAXDELTA", 8192, 1024);
++        configured = 1;
++        fprintf(stderr, "[KBM] profile: sens=%u deadzone=%u invert_y=%u maxdelta=%u\n",
++                sens, deadzone, invert_y, maxdelta);
++    }
++
++    memset(pState, 0, sizeof(*pState));
++
++    /* Left stick: WASD, full deflection. */
++    pState->Gamepad.sThumbLX = axis_from_keys('A', 'D');
++    pState->Gamepad.sThumbLY = axis_from_keys('S', 'W');
++
++    /* Right stick: mouse velocity. A single poll can carry a whole frame's
++     * worth of motion; clamp that to maxdelta so a focus change or a stuck
++     * cursor cannot slam the camera, while real flicks still scale. */
++    xbox_FramebufferMouseDelta(&dx, &dy);
++    if (dx >  (int)maxdelta) dx =  (int)maxdelta;
++    if (dx < -(int)maxdelta) dx = -(int)maxdelta;
++    if (dy >  (int)maxdelta) dy =  (int)maxdelta;
++    if (dy < -(int)maxdelta) dy = -(int)maxdelta;
++    if (dx > -(int)deadzone && dx < (int)deadzone) dx = 0;
++    if (dy > -(int)deadzone && dy < (int)deadzone) dy = 0;
++    pState->Gamepad.sThumbRX = kbm_clamp((long)dx * sens);
++    pState->Gamepad.sThumbRY = kbm_clamp((invert_y ? (long)dy : -(long)dy) * sens);
++
++    /* Digital: d-pad on the arrows (and 1-4), Start/Back on Enter/Esc. */
++    if (key_down(VK_UP)    || key_down('1')) b |= XBOX_GAMEPAD_DPAD_UP;
++    if (key_down(VK_DOWN)  || key_down('2')) b |= XBOX_GAMEPAD_DPAD_DOWN;
++    if (key_down(VK_LEFT)  || key_down('3')) b |= XBOX_GAMEPAD_DPAD_LEFT;
++    if (key_down(VK_RIGHT) || key_down('4')) b |= XBOX_GAMEPAD_DPAD_RIGHT;
++    if (key_down(VK_RETURN)) b |= XBOX_GAMEPAD_START;
++    if (key_down(VK_ESCAPE) || key_down(VK_BACK)) b |= XBOX_GAMEPAD_BACK;
++    wheel = xbox_FramebufferMouseWheel();
++    if (wheel > 0) b |= XBOX_GAMEPAD_DPAD_UP;
++    if (wheel < 0) b |= XBOX_GAMEPAD_DPAD_DOWN;
++    pState->Gamepad.wButtons = b;
++
++    /* Analog face buttons and triggers. */
++    pState->Gamepad.bAnalogButtons[XBOX_BUTTON_A]     = key_down(VK_SPACE) ? 255 : 0;
++    pState->Gamepad.bAnalogButtons[XBOX_BUTTON_B]     = key_down(VK_SHIFT) ? 255 : 0;
++    pState->Gamepad.bAnalogButtons[XBOX_BUTTON_X]     = key_down(VK_CONTROL) ? 255 : 0;
++    pState->Gamepad.bAnalogButtons[XBOX_BUTTON_Y]     = key_down('R') ? 255 : 0;
++    pState->Gamepad.bAnalogButtons[XBOX_BUTTON_BLACK] = key_down('F') ? 255 : 0;
++    pState->Gamepad.bAnalogButtons[XBOX_BUTTON_WHITE] = key_down('Q') ? 255 : 0;
++    pState->Gamepad.bAnalogButtons[XBOX_BUTTON_LTRIGGER] =
++        (xbox_FramebufferMouseButton(1) || key_down('E')) ? 255 : 0;
++    pState->Gamepad.bAnalogButtons[XBOX_BUTTON_RTRIGGER] =
++        xbox_FramebufferMouseButton(0) ? 255 : 0;
++
++    pState->dwPacketNumber = ++packet;
++}
++
+ static DWORD poll_host(DWORD port, XINPUT_STATE *state, DWORD *host_slot)
+ {
+     DWORD connected = 0;
+@@ -280,8 +398,9 @@ DWORD xbox_InputGetState(DWORD dwPort, XBOX_INPUT_STATE *pState)
+ 
+     result = poll_host(dwPort, &xi_state, &host_slot);
+     if (result != ERROR_SUCCESS) {
+-        if (dwPort == 0 && keyboard_enabled()) {
+-            keyboard_state(pState);
++        if (dwPort == 0 && overlay_enabled()) {
++            if (kbm_enabled()) kbm_state(pState);
++            else               keyboard_state(pState);
+             return ERROR_SUCCESS;
+         }
+         return result;
+@@ -316,10 +435,11 @@ DWORD xbox_InputGetState(DWORD dwPort, XBOX_INPUT_STATE *pState)
+      * Merging is also the better rule. A real pad keeps working -- its
+      * buttons are already in pState and the keyboard only adds to them --
+      * and there is no special case left to get wrong. */
+-    if (dwPort == 0 && keyboard_enabled()) {
++    if (dwPort == 0 && overlay_enabled()) {
+         XBOX_INPUT_STATE kb;
+         int i;
+-        keyboard_state(&kb);
++        if (kbm_enabled()) kbm_state(&kb);
++        else               keyboard_state(&kb);
+         pState->Gamepad.wButtons |= kb.Gamepad.wButtons;
+         for (i = 0; i < 8; i++)
+             if (kb.Gamepad.bAnalogButtons[i] > pState->Gamepad.bAnalogButtons[i])
+@@ -358,7 +478,7 @@ BOOL xbox_InputIsConnected(DWORD dwPort)
+     DWORD slot;
+     if (dwPort >= XBOX_MAX_CONTROLLERS) return FALSE;
+     return poll_host(dwPort, &state, &slot) == ERROR_SUCCESS ||
+-        (dwPort == 0 && keyboard_enabled());
++        (dwPort == 0 && overlay_enabled());
+ }
+ 
+ DWORD xbox_InputGetCapabilities(DWORD dwPort, DWORD dwFlags, XBOX_INPUT_CAPABILITIES *pCaps)
+diff --git a/src/kernel/kernel_bridge.c b/src/kernel/kernel_bridge.c
+index 0057708..40eaaef 100644
+--- a/src/kernel/kernel_bridge.c
++++ b/src/kernel/kernel_bridge.c
+@@ -1303,6 +1303,17 @@ static KIRQL bridge_raise_irql(KIRQL new_irql)
+ 
+ static void bridge_lower_irql(KIRQL new_irql)
+ {
++    KIRQL old_irql = xbox_KeGetCurrentIrql();
++    if (new_irql > old_irql) {
++        /* A guest lower that would raise: the value it passes is not the level
++         * it is actually at, so its saved/restored IRQL is wrong somewhere
++         * upstream. Name the guest call site so the mismatch can be found. */
++        static volatile LONG n;
++        if (InterlockedIncrement(&n) <= 20)
++            fprintf(stderr, "  [IRQL] guest KfLowerIrql(%u) while at %u,"
++                    " from 0x%08X\n", (unsigned)new_irql, (unsigned)old_irql,
++                    g_xbox_kernel_caller);
++    }
+     xbox_KfLowerIrql(new_irql);
+     BRIDGE_MEM8(g_fs_base + XBOX_KPCR_IRQL_OFFSET) = new_irql;
+ }
+@@ -1688,19 +1699,35 @@ static void bridge_KeDelayExecutionThread(void)
+  */
+ static void bridge_KeBugCheck(void)
+ {
+-    fprintf(stderr, "  [KERNEL] *** KeBugCheck: code=0x%08X ***\n",
+-            STACK_ARG(0));
+-    fflush(stderr);
++    /* Called in a tight loop by some title path (Ghost: ~44k times in one
++     * menu boot). Name the guest call site -- that is the fact the flood
++     * lacked -- and throttle so the log does not become the bottleneck. */
++    static volatile LONG n;
++    LONG c = InterlockedIncrement(&n);
++    if (c <= 20 || (c % 10000) == 0) {
++        fprintf(stderr, "  [KERNEL] *** KeBugCheck: code=0x%08X from 0x%08X "
++                "(esp=0x%08X) [#%ld] ***\n",
++                STACK_ARG(0), g_xbox_kernel_caller, g_esp, (long)c);
++        fflush(stderr);
++        if (c == 20)
++            fprintf(stderr, "  [KERNEL] (further KeBugCheck lines throttled)\n");
++    }
+     g_eax = 0;
+ }
+ 
+ static void bridge_KeBugCheckEx(void)
+ {
+-    fprintf(stderr, "  [KERNEL] *** KeBugCheckEx: code=0x%08X "
+-            "(0x%08X, 0x%08X, 0x%08X, 0x%08X) ***\n",
+-            STACK_ARG(0), STACK_ARG(1), STACK_ARG(2),
+-            STACK_ARG(3), STACK_ARG(4));
+-    fflush(stderr);
++    static volatile LONG n;
++    LONG c = InterlockedIncrement(&n);
++    if (c <= 20 || (c % 10000) == 0) {
++        fprintf(stderr, "  [KERNEL] *** KeBugCheckEx: code=0x%08X "
++                "(0x%08X, 0x%08X, 0x%08X, 0x%08X) from 0x%08X [#%ld] ***\n",
++                STACK_ARG(0), STACK_ARG(1), STACK_ARG(2),
++                STACK_ARG(3), STACK_ARG(4), g_xbox_kernel_caller, (long)c);
++        fflush(stderr);
++        if (c == 20)
++            fprintf(stderr, "  [KERNEL] (further KeBugCheckEx lines throttled)\n");
++    }
+     g_eax = 0;
+ }
+ 
+diff --git a/src/kernel/nv2a_gpu.h b/src/kernel/nv2a_gpu.h
+index 84f0eda..09643ca 100644
+--- a/src/kernel/nv2a_gpu.h
++++ b/src/kernel/nv2a_gpu.h
+@@ -11,6 +11,7 @@ extern "C" {
+ int nv2a_gpu_available(void);
+ int nv2a_gpu_compile(void);
+ void nv2a_gpu_sync(void);
++void nv2a_gpu_wait(void);
+ void nv2a_gpu_flush(void);
+ void nv2a_gpu_invalidate(void);
+ void nv2a_gpu_report(void);
+diff --git a/src/kernel/nv2a_gpu_d3d11.cpp b/src/kernel/nv2a_gpu_d3d11.cpp
+index b9aa5d3..d3d6b02 100644
+--- a/src/kernel/nv2a_gpu_d3d11.cpp
++++ b/src/kernel/nv2a_gpu_d3d11.cpp
+@@ -302,6 +302,7 @@ struct CachedTexture {
+     uint32_t width, height, format, cube, pitch, linear, face_stride, depth;
+     uint32_t mip_levels;
+     uint64_t bytes;
++    uint64_t validated_serial;   /* frame serial this entry's memcmp last matched */
+     std::vector<uint8_t> source_snapshot;
+     ComPtr<ID3D11ShaderResourceView> view;
+ };
+@@ -1068,11 +1069,59 @@ static void publish_known_clear(SurfaceType &surface, uint32_t bytes)
+     surface.dirty = false;
+ }
+ 
+-extern "C" void nv2a_gpu_sync(void)
++/* Texture re-validation pacing.
++ *
++ * Deciding whether a bound texture changed means memcmp'ing the whole image
++ * from guest RAM against its snapshot. The menu bound textures ~2.7x their
++ * total size per frame, so the same unchanged image was compared several times
++ * a frame; measured, that was 62 GiB and ~24% of runtime for ~1,000 real
++ * uploads. Validating each texture at most once per frame keeps the first
++ * comparison and reuses its verdict for the rest of the frame.
++ *
++ * The serial advances on every flip (nv2a_gpu_sync). Disable with
++ * RECOMP_TEX_VALIDATE_ONCE=0 if a title writes a texture mid-frame and samples
++ * it again -- on hardware that is a race anyway, but a title might rely on it.
++ */
++static uint64_t s_texture_validate_serial = 1;
++static int s_tex_validate_once = -1;
++static bool tex_validate_once(void)
++{
++    if (s_tex_validate_once < 0) {
++        const char *value = std::getenv("RECOMP_TEX_VALIDATE_ONCE");
++        s_tex_validate_once = (value && value[0] == '0') ? 0 : 1;
++    }
++    return s_tex_validate_once != 0;
++}
++
++static void gpu_sync_impl(bool publish)
+ {
+     GpuTimer sync_timer(gpu_timing.sync);
+     if (!context) return;
+     gpu_timing.sync_calls++;
++    if (!publish) {
++        /* Completion only: wait for the GPU to finish, but do not copy any
++         * surface back to guest RAM. WAIT_FOR_IDLE and the semaphore release
++         * only need ordering -- the guest is not about to read the surface --
++         * and they fire ~50x a frame, so a full readback on each was most of
++         * the sync cost. Nothing is marked clean, so the next real publish
++         * still writes the final contents. The texture serial is deliberately
++         * NOT advanced here: this is not a frame boundary. */
++        if (pending_draws) {
++            GpuTimer wait_timer(gpu_timing.sync_event_wait);
++            gpu_timing.completion_waits++;
++            if (!completion_event) {
++                D3D11_QUERY_DESC description = {D3D11_QUERY_EVENT, 0};
++                HRESULT created = device->CreateQuery(&description, &completion_event);
++                if (FAILED(created)) readback_failed("completion event", created, "create");
++            }
++            context->End(completion_event.Get());
++            context->Flush();
++            while (context->GetData(completion_event.Get(), nullptr, 0, D3D11_ASYNC_GETDATA_DONOTFLUSH) == S_FALSE)
++                SwitchToThread();
++            pending_draws = false;
++        }
++        return;
++    }
+     ID3D11RenderTargetView *empty = nullptr;
+     context->OMSetRenderTargets(1, &empty, nullptr);
+     bool has_readback = false;
+@@ -1242,6 +1291,19 @@ extern "C" void nv2a_gpu_sync(void)
+         surface.dirty = false;
+     }
+     pending_draws = false;
++    s_texture_validate_serial++;
++}
++
++/* Full sync: publish every dirty surface to guest RAM (flips, invalidate). */
++extern "C" void nv2a_gpu_sync(void)
++{
++    gpu_sync_impl(true);
++}
++
++/* Completion-only sync for ordering events that do not read surfaces back. */
++extern "C" void nv2a_gpu_wait(void)
++{
++    gpu_sync_impl(false);
+ }
+ 
+ extern "C" void nv2a_gpu_flush(void)
+@@ -1581,24 +1643,37 @@ static ID3D11ShaderResourceView *get_texture(const Nv2aGpuTexture &binding, cons
+     }
+     if (direct) {
+         direct->last_used = ++surface_use_serial;
+-        refresh_surface(*direct);
++        /* A surface marked dirty holds GPU content newer than guest RAM (it has
++         * been drawn into but not published). Re-uploading the snapshot would
++         * overwrite that with the previous publish, so sample the GPU texture
++         * as-is and only refresh from guest RAM when the surface is clean.
++         * This is also what lets a sync skip publication without feeding the
++         * GPU stale data -- see RECOMP_SYNC_LIGHT. */
++        if (!direct->dirty)
++            refresh_surface(*direct);
+         return direct->view.Get();
+     }
+     CachedTexture *refresh = nullptr;
+     {
+         GpuTimer hash_timer(gpu_timing.hash);
+         gpu_timing.hash_bytes += binding.source_bytes;
+-        for (auto &texture : textures)
+-            if (texture.source == binding.source && texture.width == binding.width && texture.height == binding.height &&
+-                texture.format == binding.format && texture.cube == binding.cube && texture.depth == binding.depth && texture.pitch == binding.pitch &&
+-                texture.linear == binding.linear && texture.face_stride == binding.face_stride &&
+-                texture.mip_levels == levels &&
+-                texture.source_snapshot.size() == binding.source_bytes) {
+-                if (std::memcmp(texture.source_snapshot.data(), binding.source, binding.source_bytes) == 0)
+-                    return texture.view.Get();
+-                refresh = &texture;
+-                break;
++        for (auto &texture : textures) {
++            if (!(texture.source == binding.source && texture.width == binding.width && texture.height == binding.height &&
++                  texture.format == binding.format && texture.cube == binding.cube && texture.depth == binding.depth && texture.pitch == binding.pitch &&
++                  texture.linear == binding.linear && texture.face_stride == binding.face_stride &&
++                  texture.mip_levels == levels &&
++                  texture.source_snapshot.size() == binding.source_bytes))
++                continue;
++            /* Already compared this entry this frame: the verdict still holds. */
++            if (tex_validate_once() && texture.validated_serial == s_texture_validate_serial)
++                return texture.view.Get();
++            if (std::memcmp(texture.source_snapshot.data(), binding.source, binding.source_bytes) == 0) {
++                texture.validated_serial = s_texture_validate_serial;
++                return texture.view.Get();
+             }
++            refresh = &texture;
++            break;
++        }
+     }
+     GpuTimer upload_timer(gpu_timing.upload);
+     uint32_t faces = binding.cube ? 6 : 1;
+@@ -1661,6 +1736,7 @@ static ID3D11ShaderResourceView *get_texture(const Nv2aGpuTexture &binding, cons
+             context->UpdateSubresource(resource.Get(), subresource, nullptr,
+                                       data[subresource].pSysMem, data[subresource].SysMemPitch, data[subresource].SysMemSlicePitch);
+         refresh->source_snapshot.assign(binding.source, binding.source + binding.source_bytes);
++        refresh->validated_serial = s_texture_validate_serial;
+         gpu_timing.texture_updated++;
+         gpu_timing.texture_update_bytes += resource_bytes;
+         return refresh->view.Get();
+@@ -1677,6 +1753,7 @@ static ID3D11ShaderResourceView *get_texture(const Nv2aGpuTexture &binding, cons
+     entry.cube = binding.cube;
+     entry.depth = binding.depth;
+     entry.mip_levels = levels; entry.bytes = resource_bytes;
++    entry.validated_serial = s_texture_validate_serial;
+     if (binding.depth) {
+         D3D11_TEXTURE3D_DESC volume_description = {};
+         volume_description.Width = binding.width; volume_description.Height = binding.height;
+diff --git a/src/kernel/nv2a_pb_exec.c b/src/kernel/nv2a_pb_exec.c
+index e0fa00b..c1179d2 100644
+--- a/src/kernel/nv2a_pb_exec.c
++++ b/src/kernel/nv2a_pb_exec.c
+@@ -48,6 +48,34 @@ void nv2a_pb_exec_flush(void)
+ #endif
+ }
+ 
++/* Ordering events (WAIT_FOR_IDLE, semaphore release) only need the GPU to have
++ * finished; they do not read surfaces back. They fire tens of times per frame,
++ * so a full publication on each was most of the sync cost.
++ *
++ * Safe because the texture path no longer re-uploads a dirty surface from guest
++ * RAM: refresh_surface is skipped while the surface holds unpublishsed GPU
++ * content (nv2a_gpu_d3d11.cpp, the "direct" branch). Without that this stalled
++ * the title at the video->menu transition; with it, the menu runs ~30-35 FPS
++ * instead of ~12-18. Set RECOMP_SYNC_LIGHT=0 to restore full publication on
++ * every ordering event. */
++static int pb_sync_light(void)
++{
++    static int on = -1;
++    if (on < 0) {
++        const char *value = getenv("RECOMP_SYNC_LIGHT");
++        on = (value && value[0] == '0') ? 0 : 1;
++    }
++    return on;
++}
++
++static void pb_flush_ordering(void)
++{
++#ifdef _WIN32
++    if (pb_sync_light()) { nv2a_gpu_wait(); return; }
++#endif
++    nv2a_pb_exec_flush();
++}
++
+ extern ptrdiff_t xbox_GetMemoryOffset(void);
+ extern void xbox_FramebufferWindowSet(uint32_t fb_va, uint32_t pitch);
+ extern void xbox_FramebufferWindowStart(void);
+@@ -286,6 +314,10 @@ static struct {
+     uint32_t window_clip_horizontal[8], window_clip_vertical[8];
+     uint32_t clear_color;
+     uint32_t clears, unhandled_total;
++    /* A flush is a full GPU->CPU readback, so which guest event drives it says
++     * where to make it cheaper. See nv2a_pb_exec_report. */
++    uint32_t flush_flip, flush_semaphore, flush_wait_idle, flush_fence,
++             flush_clear, flush_raster, flush_report, flush_present;
+     uint32_t semaphore_context, semaphore_offset;
+     uint32_t flip_read, flip_write, flip_modulo, flips;
+     uint32_t tris_drawn, tris_skipped_offscreen, batches_untransformed;
+@@ -414,7 +446,8 @@ static void semaphore_release(uint32_t value)
+     if (!destination)
+         goto failure;
+     /* Retire the command's value, not a concurrently advanced CPU counter. */
+-    nv2a_pb_exec_flush();
++    s_gpu.flush_semaphore++;
++    pb_flush_ordering();
+     *(volatile uint32_t *)destination = value;
+     return;
+ 
+@@ -776,7 +809,7 @@ static void clear_surface(uint32_t param)
+ #ifdef _WIN32
+     native_clear = gpu_clear_surface(param);
+ #endif
+-    if (!native_clear) nv2a_pb_exec_flush();
++    if (!native_clear) { s_gpu.flush_clear++; nv2a_pb_exec_flush(); }
+ 
+     if (!native_clear && (param & 3u) && s_gpu.depth_offset && s_gpu.depth_pitch) {
+         uint32_t format = (s_gpu.format >> 4) & 15u;
+@@ -1529,6 +1562,7 @@ static void raster_triangle(const float a[2], const float b[2],
+     float fast_uv[3][2];
+     uint8_t fast_modulate[4][256];
+ 
++    s_gpu.flush_raster++;
+     nv2a_pb_exec_flush();
+ 
+     if (bpp != 4 && bpp != 2)
+@@ -3047,13 +3081,15 @@ void nv2a_pb_exec_method(uint32_t subch, uint32_t method, uint32_t param)
+         return;
+     }
+     if (method == NV097_WAIT_FOR_IDLE) {
+-        nv2a_pb_exec_flush();
++        s_gpu.flush_wait_idle++;
++        pb_flush_ordering();
+         return;
+     }
+     if (method == 0x0100) {
+         if (!param)
+             return;
+         if (xbox_Nv2aNativeFencesEnabled()) {
++            s_gpu.flush_fence++;
+             nv2a_pb_exec_flush();
+             if (xbox_Nv2aSoftwareMethod(param, s_gpu.depth_clear,
+                                        s_gpu.clear_color))
+@@ -3552,6 +3588,7 @@ void nv2a_pb_exec_method(uint32_t subch, uint32_t method, uint32_t param)
+         return;
+ 
+     case NV097_FLIP_STALL:
++        s_gpu.flush_flip++;
+         nv2a_pb_exec_flush();
+         /* The stall ends when the buffer being read is the one just finished.
+          * There is no scanout here to wait for, so that is now. */
+@@ -3817,6 +3854,7 @@ static void peek_chain(void)
+ 
+ void nv2a_pb_exec_report(void)
+ {
++    s_gpu.flush_report++;
+     nv2a_pb_exec_flush();
+     fprintf(stderr, "[GPU-D3D11] batches: %u hardware, %u CPU fallback\n", s_gpu.gpu_batches, s_gpu.cpu_batches);
+     fprintf(stderr, "[GPU-D3D11] index stream: %llu u16, %llu u32, %llu array-run indices; %llu above 65535; %llu native u32 batches\n",
+@@ -3865,6 +3903,11 @@ void nv2a_pb_exec_report(void)
+     }
+     int i, j;
+ 
++    fprintf(stderr, "[GPU] flushes: flip %u, wait_idle %u, fence %u, "
++                    "semaphore %u, clear %u, raster %u, report %u\n",
++            s_gpu.flush_flip, s_gpu.flush_wait_idle, s_gpu.flush_fence,
++            s_gpu.flush_semaphore, s_gpu.flush_clear, s_gpu.flush_raster,
++            s_gpu.flush_report);
+     fprintf(stderr, "[GPU] surface 0x%08X pitch %u clip %ux%u+%u+%u"
+                     " clears %u | %u unhandled methods (%d distinct)\n",
+             s_gpu.color_offset, s_gpu.pitch, s_gpu.clip_w, s_gpu.clip_h,
+diff --git a/src/usb/ohci.c b/src/usb/ohci.c
+index 9be8998..11ea672 100644
+--- a/src/usb/ohci.c
++++ b/src/usb/ohci.c
+@@ -573,8 +573,13 @@ static uint32_t ohci_do_td(OhciController *hc, uint32_t ed0, uint32_t td)
+             moved = n;
+         }
+     } else {
+-        /* OUT: the status stage of an IN control transfer, or rumble. Both
+-         * are accepted and discarded. */
++        /* OUT: the status stage of an IN control transfer, or a report on the
++         * pad's interrupt endpoint (rumble). Endpoint 0 is the control pipe;
++         * anything else is the device, so hand it the bytes. */
++        if (endpoint != 0 && len > 0) {
++            const uint8_t *p = xbox_DmaPhysicalPointer(cbp, (uint32_t)len);
++            if (p) usb_gamepad_output(p, len);
++        }
+         moved = len;
+         g_setup_pending = 0;
+     }
+@@ -753,7 +758,26 @@ static int ohci_call_isr(OhciController *hc)
+     g_esp -= 4; *(uint32_t *)(mem + g_esp) = kinterrupt;   /* arg 1 */
+     g_esp -= 4; *(uint32_t *)(mem + g_esp) = 0xDEADBEEFu;  /* return address */
+ 
+-    fn();
++    /*
++     * Hardware runs an ISR at DISPATCH_LEVEL, and the guest's own raise/lower
++     * bookkeeping assumes that baseline: the OHCI driver's transfer-queue
++     * routine lowers back to the level it was entered at. Entering at IRQL 0
++     * made that a lower-to-a-higher-level, which our IRQL model counts as a
++     * stuck raise, so the guest TIB byte at fs:[0x24] (what KeGetCurrentIrql
++     * and the CRT's getptd read) stayed >= DISPATCH and getptd took its
++     * KeBugCheck(0xA) path tens of thousands of times a boot. Raise the host
++     * TLS level and mirror it into the guest TIB across the call, and restore
++     * both afterwards.
++     */
++    {
++        KIRQL saved_irql = xbox_KfRaiseIrql(DISPATCH_LEVEL);
++        *(uint8_t *)(mem + g_fs_base + XBOX_KPCR_IRQL_OFFSET) = DISPATCH_LEVEL;
++
++        fn();
++
++        *(uint8_t *)(mem + g_fs_base + XBOX_KPCR_IRQL_OFFSET) = (uint8_t)saved_irql;
++        xbox_KfLowerIrql(saved_irql);
++    }
+ 
+     xbox_worker_stack_free(slot);
+     return (int)(g_eax & 1u);
+diff --git a/src/usb/usb_gamepad.c b/src/usb/usb_gamepad.c
+index 3643253..2eca1da 100644
+--- a/src/usb/usb_gamepad.c
++++ b/src/usb/usb_gamepad.c
+@@ -315,12 +315,20 @@ int usb_gamepad_report(uint8_t *out, int max)
+                 XBOX_INPUT_STATE probe;
+                 DWORD rc = xbox_InputGetState(0, &probe);
+                 last = now;
+-                fprintf(stderr, "  [INPUT] kbd_env=%s window_has_RETURN=%d "
+-                        "InputGetState=%lu buttons=0x%04X\n",
++                fprintf(stderr, "  [INPUT] t=%lu kbd_env=%s window_has_RETURN=%d "
++                        "window_has_SPACE=%d InputGetState=%lu buttons=0x%04X A=%u "
++                        "LX=%d LY=%d RX=%d RY=%d\n",
++                        now,
+                         getenv("RECOMP_KEYBOARD") ? getenv("RECOMP_KEYBOARD") : "(unset)",
+                         xbox_FramebufferKeyDown(0x0D),
++                        xbox_FramebufferKeyDown(0x20),
+                         (unsigned long)rc,
+-                        rc == 0 ? probe.Gamepad.wButtons : 0);
++                        rc == 0 ? probe.Gamepad.wButtons : 0,
++                        rc == 0 ? probe.Gamepad.bAnalogButtons[0] : 0,
++                        rc == 0 ? probe.Gamepad.sThumbLX : 0,
++                        rc == 0 ? probe.Gamepad.sThumbLY : 0,
++                        rc == 0 ? probe.Gamepad.sThumbRX : 0,
++                        rc == 0 ? probe.Gamepad.sThumbRY : 0);
+                 fflush(stderr);
+             }
+         }
+@@ -346,3 +354,38 @@ int usb_gamepad_report(uint8_t *out, int max)
+     out[19] = (uint8_t)((g->sThumbRY >> 8) & 0xFF);
+     return 20;
+ }
++
++/* ---- the output report: rumble -----------------------------------------
++ *
++ * The XID descriptor advertises a 6-byte output report (bMaxOutputReportSize 6)
++ * with two header bytes, so the actuators are the four bytes after them.
++ * Byte order is left then right. Each motor is a single byte 0-255; XInput
++ * wants 0-65535, so scale by 257 (0xFF -> 0xFFFF).
++ *
++ * ponytail: the exact byte order is inferred from the descriptor, not confirmed
++ * against a physical pad on this host. If rumble comes out swapped or dead,
++ * this is the one line to revisit; RECOMP_USB_TRACE prints the raw report.
++ */
++void usb_gamepad_output(const uint8_t *report, int len)
++{
++    XBOX_VIBRATION vib;
++    unsigned left, right;
++
++    if (len < 2)
++        return;
++    if (len >= 6) { left = report[2]; right = report[3]; }
++    else          { left = report[0]; right = report[1]; }
++
++    vib.wLeftMotorSpeed  = (WORD)(left * 257u);
++    vib.wRightMotorSpeed = (WORD)(right * 257u);
++    xbox_InputSetState(0, &vib);
++
++    if (getenv("RECOMP_USB_TRACE")) {
++        static unsigned n;
++        if (n++ < 20) {
++            fprintf(stderr, "  [USB] rumble report len=%d -> L=%u R=%u\n",
++                    len, vib.wLeftMotorSpeed, vib.wRightMotorSpeed);
++            fflush(stderr);
++        }
++    }
++}
+diff --git a/src/usb/usb_gamepad.h b/src/usb/usb_gamepad.h
+index 7169c32..efc603f 100644
+--- a/src/usb/usb_gamepad.h
++++ b/src/usb/usb_gamepad.h
+@@ -36,6 +36,11 @@ int usb_gamepad_control(const UsbSetup *setup, uint8_t *out, int max);
+ /* Fill in the 20-byte input report. Returns the byte count written. */
+ int usb_gamepad_report(uint8_t *out, int max);
+ 
++/* Take an output report from the host (rumble/force feedback) and forward it to
++ * the host pad. The OHCI layer moves the bytes; this is where they mean
++ * something. */
++void usb_gamepad_output(const uint8_t *report, int len);
++
+ /* The address the host assigned with SET_ADDRESS, 0 until it does. */
+ uint8_t usb_gamepad_address(void);
+ 
+diff --git a/src/video/fb_present.c b/src/video/fb_present.c
+index 8b200d7..ac671e3 100644
+--- a/src/video/fb_present.c
++++ b/src/video/fb_present.c
+@@ -18,6 +18,7 @@
+ 
+ #if defined(_WIN32)
+ #include <windows.h>
++#include <windowsx.h>
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <string.h>
+@@ -121,6 +122,76 @@ int xbox_FramebufferKeyDown(int vk)
+     return s_key_down[vk] != 0;
+ }
+ 
++/* Mouse state, for the keyboard+mouse mode (src/input, RECOMP_KBM).
++ *
++ * Absolute cursor position is useless for a camera stick: the pointer hits the
++ * window edge and stops. While KBM is active the window clips the cursor to its
++ * client area and recentres it after every move, so what the reader consumes
++ * is a delta, not a position. Deltas accumulate between polls and are cleared
++ * on read; the input layer polls at the title's rate, so one read is one
++ * frame's worth of motion.
++ *
++ * Same lock-free rule as the keys: written only by the window thread, read
++ * only by the input thread, one word at a time. A delta seen a frame late is
++ * indistinguishable from one made a frame later. */
++static volatile LONG s_mouse_dx, s_mouse_dy, s_mouse_wheel;
++static volatile unsigned char s_mouse_btn[3];   /* 0=L, 1=R, 2=M */
++static int s_mouse_x, s_mouse_y, s_mouse_have;
++static int s_mouse_capture, s_cursor_hidden;
++static HWND s_fb_hwnd;
++
++int xbox_FramebufferMouseDelta(int *dx, int *dy)
++{
++    int x = (int)InterlockedExchange(&s_mouse_dx, 0);
++    int y = (int)InterlockedExchange(&s_mouse_dy, 0);
++    if (dx) *dx = x;
++    if (dy) *dy = y;
++    return (x || y);
++}
++
++int xbox_FramebufferMouseButton(int which)
++{
++    if ((unsigned)which > 2)
++        return 0;
++    return s_mouse_btn[which] != 0;
++}
++
++int xbox_FramebufferMouseWheel(void)
++{
++    return (int)InterlockedExchange(&s_mouse_wheel, 0);
++}
++
++/* Turn relative mouse mode on/off. Called on focus changes and once at startup
++ * when RECOMP_KBM is set. */
++void xbox_FramebufferMouseCapture(int on)
++{
++    if (!s_fb_hwnd)
++        return;
++    on = on ? 1 : 0;
++    if (on == s_mouse_capture)
++        return;
++    s_mouse_capture = on;
++    if (on) {
++        RECT c, clip;
++        POINT tl = { 0, 0 }, br, centre;
++        GetClientRect(s_fb_hwnd, &c);
++        br.x = c.right; br.y = c.bottom;
++        ClientToScreen(s_fb_hwnd, &tl);
++        ClientToScreen(s_fb_hwnd, &br);
++        clip.left = tl.x; clip.top = tl.y; clip.right = br.x; clip.bottom = br.y;
++        ClipCursor(&clip);
++        centre.x = (c.right - c.left) / 2;
++        centre.y = (c.bottom - c.top) / 2;
++        ClientToScreen(s_fb_hwnd, &centre);
++        SetCursorPos(centre.x, centre.y);
++        s_mouse_have = 1;
++        if (!s_cursor_hidden) { ShowCursor(FALSE); s_cursor_hidden = 1; }
++    } else {
++        ClipCursor(NULL);
++        if (s_cursor_hidden) { ShowCursor(TRUE); s_cursor_hidden = 0; }
++    }
++}
++
+ static void fb_exit_process(void)
+ {
+     InterlockedExchange(&s_fb_running, 0);
+@@ -175,9 +246,56 @@ static LRESULT CALLBACK fb_wndproc(HWND h, UINT m, WPARAM w, LPARAM l)
+             s_key_down[w] = 0;
+         return m == WM_SYSKEYUP ? DefWindowProcA(h, m, w, l) : 0;
+ 
++    case WM_MOUSEMOVE: {
++        int x = (int)(short)LOWORD(l), y = (int)(short)HIWORD(l);
++        if (s_mouse_capture) {
++            RECT c;
++            int cx, cy, dx, dy;
++            GetClientRect(h, &c);
++            cx = (c.right - c.left) / 2;
++            cy = (c.bottom - c.top) / 2;
++            dx = x - cx;
++            dy = y - cy;
++            if (dx || dy) {
++                POINT p;
++                InterlockedExchangeAdd(&s_mouse_dx, dx);
++                InterlockedExchangeAdd(&s_mouse_dy, dy);
++                p.x = cx; p.y = cy;
++                ClientToScreen(h, &p);
++                SetCursorPos(p.x, p.y);
++            }
++        } else {
++            if (s_mouse_have) {
++                InterlockedExchangeAdd(&s_mouse_dx, x - s_mouse_x);
++                InterlockedExchangeAdd(&s_mouse_dy, y - s_mouse_y);
++            }
++            s_mouse_x = x; s_mouse_y = y; s_mouse_have = 1;
++        }
++        return 0;
++    }
++
++    case WM_LBUTTONDOWN: s_mouse_btn[0] = 1; return 0;
++    case WM_LBUTTONUP:   s_mouse_btn[0] = 0; return 0;
++    case WM_RBUTTONDOWN: s_mouse_btn[1] = 1; return 0;
++    case WM_RBUTTONUP:   s_mouse_btn[1] = 0; return 0;
++    case WM_MBUTTONDOWN: s_mouse_btn[2] = 1; return 0;
++    case WM_MBUTTONUP:   s_mouse_btn[2] = 0; return 0;
++
++    case WM_MOUSEWHEEL:
++        InterlockedExchangeAdd(&s_mouse_wheel,
++                               (LONG)(GET_WHEEL_DELTA_WPARAM(w) / WHEEL_DELTA));
++        return 0;
++
++    case WM_SETFOCUS:
++        if (getenv("RECOMP_KBM"))
++            xbox_FramebufferMouseCapture(1);
++        return 0;
++
+     /* Alt-tabbing away with a key held would leave it held for ever. */
+     case WM_KILLFOCUS:
+         memset((void *)s_key_down, 0, sizeof s_key_down);
++        s_mouse_btn[0] = s_mouse_btn[1] = s_mouse_btn[2] = 0;
++        xbox_FramebufferMouseCapture(0);
+         return 0;
+     }
+     return DefWindowProcA(h, m, w, l);
+@@ -380,6 +498,9 @@ static DWORD WINAPI fb_thread(LPVOID unused)
+         free(caption);
+         return 0;
+     }
++    s_fb_hwnd = hwnd;
++    if (getenv("RECOMP_KBM"))
++        xbox_FramebufferMouseCapture(1);
+     SendMessageA(hwnd, WM_SETICON, ICON_BIG, (LPARAM)icons.large_icon);
+     SendMessageA(hwnd, WM_SETICON, ICON_SMALL, (LPARAM)icons.small_icon);
+     hdc = GetDC(hwnd);
+@@ -477,4 +598,8 @@ void xbox_FramebufferWindowSet(uint32_t fb_va, uint32_t pitch) { (void)fb_va; (v
+ void xbox_FramebufferWindowPresent(uint32_t fb_va, uint32_t pitch) { (void)fb_va; (void)pitch; }
+ void xbox_FramebufferWindowStart(void) {}
+ int xbox_FramebufferKeyDown(int vk) { (void)vk; return 0; }
++int xbox_FramebufferMouseDelta(int *dx, int *dy) { if (dx) *dx = 0; if (dy) *dy = 0; return 0; }
++int xbox_FramebufferMouseButton(int which) { (void)which; return 0; }
++int xbox_FramebufferMouseWheel(void) { return 0; }
++void xbox_FramebufferMouseCapture(int on) { (void)on; }
+ #endif
+diff --git a/src/video/video_player.h b/src/video/video_player.h
+index 295e10c..5c67d5f 100644
+--- a/src/video/video_player.h
++++ b/src/video/video_player.h
+@@ -63,6 +63,15 @@ int  video_dump_frame_bmp(const char *path);
+  * focus there is nothing to type into. */
+ int xbox_FramebufferKeyDown(int vk);
+ 
++/* Mouse, for the keyboard+mouse mode (RECOMP_KBM). Delta is the movement
++ * accumulated since the last read, cleared on read; buttons are 0=L, 1=R,
++ * 2=M; wheel is in notches. Capture clips and recentres the cursor so movement
++ * is unbounded. All zero when there is no window. */
++int xbox_FramebufferMouseDelta(int *dx, int *dy);
++int xbox_FramebufferMouseButton(int which);
++int xbox_FramebufferMouseWheel(void);
++void xbox_FramebufferMouseCapture(int on);
++
+ void xbox_FramebufferWindowStart(void);
+ void xbox_FramebufferWindowSet(uint32_t fb_va, uint32_t pitch);
+ int  xbox_FramebufferDumpBmp(const char *path);

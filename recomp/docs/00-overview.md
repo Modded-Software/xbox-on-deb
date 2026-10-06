@@ -76,3 +76,8 @@ naming and locating functions — from weeks of Ghidra work into a data join. Se
 - [07-decomp-workflow.md](07-decomp-workflow.md) — the readability pipeline
   (names → banners → per-source-file grouping), the annotations file, and the
   matching-decomp path.
+- [08-input.md](08-input.md) — controller support and the optional `--kbm`
+  keyboard+mouse mode: the full input chain, current state, gaps, and design.
+- [09-performance.md](09-performance.md) — measured frame-time budget, the
+  draw/present pipeline, the two guest threads, and ranked quick wins and
+  parallelisation opportunities.
