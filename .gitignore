@@ -24,3 +24,6 @@ recomp/build/
 # Generated MinGW import libs (recomp/toolchain/make_import_libs.sh rebuilds them).
 recomp/toolchain/lib/
 .venv-recomp/
+
+# Test capture artifact (recomp/tests framework F12 framebuffer dump).
+recomp/game/framebuffer.bmp

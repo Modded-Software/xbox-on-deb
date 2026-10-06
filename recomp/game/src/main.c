@@ -217,6 +217,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
         setvbuf(stderr, NULL, _IONBF, 0);
     }
 
+    /* stdio already goes to the log file, so the console window is dead weight
+     * and only competes for the keyboard with the framebuffer window. Hide it. */
+    {
+        HWND console = GetConsoleWindow();
+        if (console)
+            ShowWindow(console, SW_HIDE);
+    }
+
     /* Runtime configuration. These are the settings the known-working
      * scghost-recomp port uses to get past hardware init and present frames:
      * push-buffer execution, native NV2A fences + vblank, the emulated APU
