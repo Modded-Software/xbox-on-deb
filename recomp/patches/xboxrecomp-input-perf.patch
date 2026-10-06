@@ -1,8 +1,8 @@
 diff --git a/src/input/xinput_device.c b/src/input/xinput_device.c
-index 2907904..2d91133 100644
+index 2907904..4ee0b08 100644
 --- a/src/input/xinput_device.c
 +++ b/src/input/xinput_device.c
-@@ -222,6 +222,189 @@ static void keyboard_state(XBOX_INPUT_STATE *pState)
+@@ -222,6 +222,197 @@ static void keyboard_state(XBOX_INPUT_STATE *pState)
      pState->dwPacketNumber = ++packet;
  }
  
@@ -56,18 +56,19 @@ index 2907904..2d91133 100644
 +    return (SHORT)v;
 +}
 +
-+/* Face/back buttons, on the modern desktop convention: confirm on Enter, use
-+ * on E, jump on Space. A pad is expected to be the primary device, so this is
-+ * the "there is no pad" scheme and stays out of the way when one is plugged
-+ * in. Override any binding with
-+ *   RECOMP_KBM_MAP="A=Space,B=E,X=Control,Y=R,BLACK=F,WHITE=Q,START=Return,BACK=Escape" */
-+static int k_a = VK_RETURN, k_b = 'E', k_x = VK_SPACE, k_y = 'R',
-+           k_black = 'F', k_white = 'Q', k_start = VK_TAB, k_back = VK_ESCAPE;
++/* Face/triggers, matching what the build actually does (not what the docs
++ * guess): A is jump, B is use, X is melee, LT is crouch. So jump is on Space,
++ * melee on F, crouch on Control. A pad is expected to be the primary device,
++ * so this is the "there is no pad" scheme. Override any binding with
++ *   RECOMP_KBM_MAP="A=Return,B=E,X=Space,Y=R,BLACK=Shift,WHITE=Q,LT=Control,START=Tab,BACK=Escape" */
++static int k_a = VK_SPACE, k_b = 'E', k_x = 'F', k_y = 'R',
++           k_black = VK_SHIFT, k_white = 'Q', k_lt = VK_CONTROL,
++           k_start = VK_TAB, k_back = VK_ESCAPE;
 +
 +struct kbm_bind { const char *name; int *vk; };
 +static struct kbm_bind kbm_binds[] = {
 +    { "A", &k_a }, { "B", &k_b }, { "X", &k_x }, { "Y", &k_y },
-+    { "BLACK", &k_black }, { "WHITE", &k_white },
++    { "BLACK", &k_black }, { "WHITE", &k_white }, { "LT", &k_lt },
 +    { "START", &k_start }, { "BACK", &k_back },
 +};
 +
@@ -109,25 +110,28 @@ index 2907904..2d91133 100644
 +{
 +    static DWORD packet;
 +    static int configured;
-+    static unsigned sens, deadzone, invert_y, maxdelta;
++    static unsigned sens, deadzone, invert_y, maxdelta, decay;
++    static float vx, vy;      /* decaying right-stick velocity, stick units */
 +    WORD b = 0;
 +    int dx, dy, wheel;
 +
 +    if (!configured) {
-+        /* sens is stick units per pixel of mouse travel. The stick saturates
-+         * at 32767, so 32 puts saturation around 1000 px in one frame: fast
-+         * enough to spin, slow enough not to pin on every twitch at the low
-+         * frame rates a menu scene runs at. */
-+        sens     = kbm_number("RECOMP_KBM_SENS", 4096, 32);
++        /* sens is stick units per pixel of mouse travel, and the stick is held
++         * for a few polls (decay) so the title's own look deadzone is cleared
++         * and the camera integrates over the motion instead of seeing a
++         * one-frame blip. 32 was far too low: a normal 10 px/frame move
++         * deflected the stick ~1% and the camera never moved. */
++        sens     = kbm_number("RECOMP_KBM_SENS", 65536, 512);
++        decay    = kbm_number("RECOMP_KBM_DECAY", 99, 50);
 +        deadzone = kbm_number("RECOMP_KBM_DEADZONE", 64, 1);
 +        invert_y = kbm_number("RECOMP_KBM_INVERT_Y", 1, 0);
 +        maxdelta = kbm_number("RECOMP_KBM_MAXDELTA", 8192, 1024);
 +        kbm_load_map();
 +        configured = 1;
-+        fprintf(stderr, "[KBM] profile: sens=%u deadzone=%u invert_y=%u maxdelta=%u "
-+                "A=%d B=%d X=%d Y=%d BLACK=%d WHITE=%d START=%d BACK=%d\n",
-+                sens, deadzone, invert_y, maxdelta,
-+                k_a, k_b, k_x, k_y, k_black, k_white, k_start, k_back);
++        fprintf(stderr, "[KBM] profile: sens=%u decay=%u deadzone=%u invert_y=%u maxdelta=%u "
++                "A=%d B=%d X=%d Y=%d BLACK=%d WHITE=%d LT=%d START=%d BACK=%d\n",
++                sens, decay, deadzone, invert_y, maxdelta,
++                k_a, k_b, k_x, k_y, k_black, k_white, k_lt, k_start, k_back);
 +    }
 +
 +    memset(pState, 0, sizeof(*pState));
@@ -136,9 +140,9 @@ index 2907904..2d91133 100644
 +    pState->Gamepad.sThumbLX = axis_from_keys('A', 'D');
 +    pState->Gamepad.sThumbLY = axis_from_keys('S', 'W');
 +
-+    /* Right stick: mouse velocity. A single poll can carry a whole frame's
-+     * worth of motion; clamp that to maxdelta so a focus change or a stuck
-+     * cursor cannot slam the camera, while real flicks still scale. */
++    /* Right stick: mouse velocity, held with decay. A single poll can carry a
++     * whole frame's worth of motion; clamp that to maxdelta so a focus change
++     * or a stuck cursor cannot slam the camera, while real flicks still scale. */
 +    xbox_FramebufferMouseDelta(&dx, &dy);
 +    if (dx >  (int)maxdelta) dx =  (int)maxdelta;
 +    if (dx < -(int)maxdelta) dx = -(int)maxdelta;
@@ -146,8 +150,10 @@ index 2907904..2d91133 100644
 +    if (dy < -(int)maxdelta) dy = -(int)maxdelta;
 +    if (dx > -(int)deadzone && dx < (int)deadzone) dx = 0;
 +    if (dy > -(int)deadzone && dy < (int)deadzone) dy = 0;
-+    pState->Gamepad.sThumbRX = kbm_clamp((long)dx * sens);
-+    pState->Gamepad.sThumbRY = kbm_clamp((invert_y ? (long)dy : -(long)dy) * sens);
++    vx = vx * ((float)decay / 100.0f) + (float)dx * (float)sens;
++    vy = vy * ((float)decay / 100.0f) + (float)dy * (float)sens;
++    pState->Gamepad.sThumbRX = kbm_clamp((long)vx);
++    pState->Gamepad.sThumbRY = kbm_clamp((long)(invert_y ? vy : -vy));
 +    if (dx || dy) {
 +        static int trace = -1;
 +        static unsigned long moves;
@@ -174,15 +180,17 @@ index 2907904..2d91133 100644
 +    if (key_down(k_back) || key_down(VK_BACK)) b |= XBOX_GAMEPAD_BACK;
 +    pState->Gamepad.wButtons = b;
 +
-+    /* Analog face buttons and triggers. */
++    /* Analog face buttons and triggers. Right mouse is aim (White); crouch
++     * lives on the LT button, which the map puts on Control. */
 +    pState->Gamepad.bAnalogButtons[XBOX_BUTTON_A]     = key_down(k_a) ? 255 : 0;
 +    pState->Gamepad.bAnalogButtons[XBOX_BUTTON_B]     = key_down(k_b) ? 255 : 0;
 +    pState->Gamepad.bAnalogButtons[XBOX_BUTTON_X]     = key_down(k_x) ? 255 : 0;
 +    pState->Gamepad.bAnalogButtons[XBOX_BUTTON_Y]     = key_down(k_y) ? 255 : 0;
 +    pState->Gamepad.bAnalogButtons[XBOX_BUTTON_BLACK] = key_down(k_black) ? 255 : 0;
-+    pState->Gamepad.bAnalogButtons[XBOX_BUTTON_WHITE] = key_down(k_white) ? 255 : 0;
++    pState->Gamepad.bAnalogButtons[XBOX_BUTTON_WHITE] =
++        (key_down(k_white) || xbox_FramebufferMouseButton(1)) ? 255 : 0;
 +    pState->Gamepad.bAnalogButtons[XBOX_BUTTON_LTRIGGER] =
-+        xbox_FramebufferMouseButton(1) ? 255 : 0;
++        key_down(k_lt) ? 255 : 0;
 +    pState->Gamepad.bAnalogButtons[XBOX_BUTTON_RTRIGGER] =
 +        xbox_FramebufferMouseButton(0) ? 255 : 0;
 +
@@ -192,7 +200,7 @@ index 2907904..2d91133 100644
  static DWORD poll_host(DWORD port, XINPUT_STATE *state, DWORD *host_slot)
  {
      DWORD connected = 0;
-@@ -280,8 +463,9 @@ DWORD xbox_InputGetState(DWORD dwPort, XBOX_INPUT_STATE *pState)
+@@ -280,8 +471,9 @@ DWORD xbox_InputGetState(DWORD dwPort, XBOX_INPUT_STATE *pState)
  
      result = poll_host(dwPort, &xi_state, &host_slot);
      if (result != ERROR_SUCCESS) {
@@ -204,7 +212,7 @@ index 2907904..2d91133 100644
              return ERROR_SUCCESS;
          }
          return result;
-@@ -316,10 +500,11 @@ DWORD xbox_InputGetState(DWORD dwPort, XBOX_INPUT_STATE *pState)
+@@ -316,10 +508,11 @@ DWORD xbox_InputGetState(DWORD dwPort, XBOX_INPUT_STATE *pState)
       * Merging is also the better rule. A real pad keeps working -- its
       * buttons are already in pState and the keyboard only adds to them --
       * and there is no special case left to get wrong. */
@@ -218,7 +226,7 @@ index 2907904..2d91133 100644
          pState->Gamepad.wButtons |= kb.Gamepad.wButtons;
          for (i = 0; i < 8; i++)
              if (kb.Gamepad.bAnalogButtons[i] > pState->Gamepad.bAnalogButtons[i])
-@@ -358,7 +543,7 @@ BOOL xbox_InputIsConnected(DWORD dwPort)
+@@ -358,7 +551,7 @@ BOOL xbox_InputIsConnected(DWORD dwPort)
      DWORD slot;
      if (dwPort >= XBOX_MAX_CONTROLLERS) return FALSE;
      return poll_host(dwPort, &state, &slot) == ERROR_SUCCESS ||
@@ -975,18 +983,23 @@ index 7169c32..efc603f 100644
  uint8_t usb_gamepad_address(void);
  
 diff --git a/src/video/fb_present.c b/src/video/fb_present.c
-index 8b200d7..3e3ce31 100644
+index 8b200d7..16b471e 100644
 --- a/src/video/fb_present.c
 +++ b/src/video/fb_present.c
-@@ -18,6 +18,7 @@
+@@ -17,7 +17,12 @@
+ #include <stdint.h>
  
  #if defined(_WIN32)
++/* Raw mouse input (WM_INPUT) needs the Vista+ declarations. */
++#ifndef _WIN32_WINNT
++#define _WIN32_WINNT 0x0601
++#endif
  #include <windows.h>
 +#include <windowsx.h>
  #include <stdio.h>
  #include <stdlib.h>
  #include <string.h>
-@@ -121,6 +122,76 @@ int xbox_FramebufferKeyDown(int vk)
+@@ -121,6 +126,96 @@ int xbox_FramebufferKeyDown(int vk)
      return s_key_down[vk] != 0;
  }
  
@@ -1006,6 +1019,7 @@ index 8b200d7..3e3ce31 100644
 +static volatile unsigned char s_mouse_btn[3];   /* 0=L, 1=R, 2=M */
 +static int s_mouse_x, s_mouse_y, s_mouse_have;
 +static int s_mouse_capture, s_cursor_hidden;
++static int s_mouse_raw;      /* WM_INPUT deltas are authoritative when set */
 +static HWND s_fb_hwnd;
 +
 +int xbox_FramebufferMouseDelta(int *dx, int *dy)
@@ -1042,6 +1056,18 @@ index 8b200d7..3e3ce31 100644
 +    if (on) {
 +        RECT c, clip;
 +        POINT tl = { 0, 0 }, br, centre;
++        RAWINPUTDEVICE rid;
++        /* Raw input is the only motion source that does not fight the cursor:
++         * it reports relative deltas straight from the device, so nothing has
++         * to be clipped or recentred and the view cannot stall at a screen
++         * edge. WM_MOUSEMOVE stays as the fallback for hosts where it fails. */
++        rid.usUsagePage = 0x01;      /* generic desktop */
++        rid.usUsage = 0x02;          /* mouse */
++        rid.dwFlags = 0;
++        rid.hwndTarget = s_fb_hwnd;
++        s_mouse_raw = RegisterRawInputDevices(&rid, 1, sizeof(rid)) ? 1 : 0;
++        if (s_mouse_raw)
++            fprintf(stderr, "[FBWIN] mouse: raw input active\n");
 +        GetClientRect(s_fb_hwnd, &c);
 +        br.x = c.right; br.y = c.bottom;
 +        ClientToScreen(s_fb_hwnd, &tl);
@@ -1055,6 +1081,13 @@ index 8b200d7..3e3ce31 100644
 +        s_mouse_have = 1;
 +        if (!s_cursor_hidden) { ShowCursor(FALSE); s_cursor_hidden = 1; }
 +    } else {
++        if (s_mouse_raw) {
++            RAWINPUTDEVICE rid;
++            rid.usUsagePage = 0x01; rid.usUsage = 0x02;
++            rid.dwFlags = RIDEV_REMOVE; rid.hwndTarget = NULL;
++            RegisterRawInputDevices(&rid, 1, sizeof(rid));
++            s_mouse_raw = 0;
++        }
 +        ClipCursor(NULL);
 +        if (s_cursor_hidden) { ShowCursor(TRUE); s_cursor_hidden = 0; }
 +    }
@@ -1063,7 +1096,7 @@ index 8b200d7..3e3ce31 100644
  static void fb_exit_process(void)
  {
      InterlockedExchange(&s_fb_running, 0);
-@@ -175,9 +246,61 @@ static LRESULT CALLBACK fb_wndproc(HWND h, UINT m, WPARAM w, LPARAM l)
+@@ -175,9 +270,86 @@ static LRESULT CALLBACK fb_wndproc(HWND h, UINT m, WPARAM w, LPARAM l)
              s_key_down[w] = 0;
          return m == WM_SYSKEYUP ? DefWindowProcA(h, m, w, l) : 0;
  
@@ -1071,24 +1104,34 @@ index 8b200d7..3e3ce31 100644
 +        int x = (int)(short)LOWORD(l), y = (int)(short)HIWORD(l);
 +        if (s_mouse_capture) {
 +            RECT c;
-+            int cx, cy, dx, dy;
++            int cx, cy;
 +            GetClientRect(h, &c);
 +            cx = (c.right - c.left) / 2;
 +            cy = (c.bottom - c.top) / 2;
-+            dx = x - cx;
-+            dy = y - cy;
-+            /* Clip/recentre lands the cursor within a pixel of centre under
-+             * Wine, and that residual would otherwise leak out as a constant
-+             * slow drift. One pixel of motion is below anything usable. */
-+            if (dx > -2 && dx < 2) dx = 0;
-+            if (dy > -2 && dy < 2) dy = 0;
-+            if (dx || dy) {
-+                POINT p;
-+                InterlockedExchangeAdd(&s_mouse_dx, dx);
-+                InterlockedExchangeAdd(&s_mouse_dy, dy);
-+                p.x = cx; p.y = cy;
-+                ClientToScreen(h, &p);
-+                SetCursorPos(p.x, p.y);
++            if (s_mouse_raw) {
++                /* Raw input (WM_INPUT) owns the deltas. Only keep the hidden
++                 * cursor centred so clicks stay in the window. */
++                if (x != cx || y != cy) {
++                    POINT p;
++                    p.x = cx; p.y = cy;
++                    ClientToScreen(h, &p);
++                    SetCursorPos(p.x, p.y);
++                }
++            } else {
++                int dx = x - cx, dy = y - cy;
++                /* Clip/recentre lands the cursor within a pixel of centre under
++                 * Wine, and that residual would otherwise leak out as a constant
++                 * slow drift. One pixel of motion is below anything usable. */
++                if (dx > -2 && dx < 2) dx = 0;
++                if (dy > -2 && dy < 2) dy = 0;
++                if (dx || dy) {
++                    POINT p;
++                    InterlockedExchangeAdd(&s_mouse_dx, dx);
++                    InterlockedExchangeAdd(&s_mouse_dy, dy);
++                    p.x = cx; p.y = cy;
++                    ClientToScreen(h, &p);
++                    SetCursorPos(p.x, p.y);
++                }
 +            }
 +        } else {
 +            if (s_mouse_have) {
@@ -1098,6 +1141,21 @@ index 8b200d7..3e3ce31 100644
 +            s_mouse_x = x; s_mouse_y = y; s_mouse_have = 1;
 +        }
 +        return 0;
++    }
++
++    case WM_INPUT: {
++        if (s_mouse_capture && s_mouse_raw) {
++            RAWINPUT raw;
++            UINT size = sizeof(raw);
++            if (GetRawInputData((HRAWINPUT)l, RID_INPUT, &raw, &size,
++                                sizeof(RAWINPUTHEADER)) == sizeof(raw) &&
++                raw.header.dwType == RIM_TYPEMOUSE &&
++                !(raw.data.mouse.usFlags & MOUSE_MOVE_ABSOLUTE)) {
++                InterlockedExchangeAdd(&s_mouse_dx, raw.data.mouse.lLastX);
++                InterlockedExchangeAdd(&s_mouse_dy, raw.data.mouse.lLastY);
++            }
++        }
++        return DefWindowProcA(h, m, w, l);
 +    }
 +
 +    case WM_LBUTTONDOWN: s_mouse_btn[0] = 1; return 0;
@@ -1125,7 +1183,7 @@ index 8b200d7..3e3ce31 100644
          return 0;
      }
      return DefWindowProcA(h, m, w, l);
-@@ -380,6 +503,15 @@ static DWORD WINAPI fb_thread(LPVOID unused)
+@@ -380,6 +552,15 @@ static DWORD WINAPI fb_thread(LPVOID unused)
          free(caption);
          return 0;
      }
@@ -1141,7 +1199,7 @@ index 8b200d7..3e3ce31 100644
      SendMessageA(hwnd, WM_SETICON, ICON_BIG, (LPARAM)icons.large_icon);
      SendMessageA(hwnd, WM_SETICON, ICON_SMALL, (LPARAM)icons.small_icon);
      hdc = GetDC(hwnd);
-@@ -477,4 +609,8 @@ void xbox_FramebufferWindowSet(uint32_t fb_va, uint32_t pitch) { (void)fb_va; (v
+@@ -477,4 +658,8 @@ void xbox_FramebufferWindowSet(uint32_t fb_va, uint32_t pitch) { (void)fb_va; (v
  void xbox_FramebufferWindowPresent(uint32_t fb_va, uint32_t pitch) { (void)fb_va; (void)pitch; }
  void xbox_FramebufferWindowStart(void) {}
  int xbox_FramebufferKeyDown(int vk) { (void)vk; return 0; }

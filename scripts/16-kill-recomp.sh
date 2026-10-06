@@ -13,3 +13,4 @@ WINEPREFIX="$SCGHOST_PREFIX/pfx" "$GE_PROTON_DIR/files/bin/wineserver" -k
 sleep 2
 echo "remaining:"
 pgrep -af "/ghost.exe"
+echo "(done)"
