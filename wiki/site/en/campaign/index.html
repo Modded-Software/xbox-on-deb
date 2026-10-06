@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Campaign - StarCraft: Ghost Archive</title>
+  <meta name="description" content="The six playable StarCraft: Ghost missions in the May 2004 build and the roughly 45-mission slate preserved in its string tables.">
+  <link rel="stylesheet" href="/assets/css/main.css">
+  <link rel="icon" href="/assets/img/favicon.svg" type="image/svg+xml">
+  <script type="module" src="/assets/js/main.js"></script>
+  <link rel="canonical" href="/en/campaign/">
+</head>
+<body>
+  <a href="#main" class="skip-link">Skip to content</a>
+  <div class="shell">
+    <nav class="index" aria-label="Primary">
+      <p class="index__label">Mission index</p>
+      <ul>
+        <li><a href="/en/"><span class="index__n">01</span> Home</a></li>
+        <li><a href="/en/timeline/"><span class="index__n">02</span> Timeline</a></li>
+        <li><a href="/en/development/"><span class="index__n">03</span> Development</a></li>
+        <li><a href="/en/the-leak/"><span class="index__n">04</span> The leak</a></li>
+        <li><a href="/en/campaign/" aria-current="page"><span class="index__n">05</span> Campaign</a></li>
+        <li><a href="/en/systems/"><span class="index__n">06</span> Systems</a></li>
+        <li><a href="/en/multiplayer/"><span class="index__n">07</span> Multiplayer</a></li>
+        <li><a href="/en/story/"><span class="index__n">08</span> Story</a></li>
+        <li><a href="/en/media/"><span class="index__n">09</span> Media</a></li>
+        <li><a href="/en/people/"><span class="index__n">10</span> People</a></li>
+        <li><a href="/en/faq/"><span class="index__n">11</span> FAQ</a></li>
+        <li><a href="/en/gap-analysis/"><span class="index__n">12</span> Vision vs build</a></li>
+        <li><a href="/en/sources/"><span class="index__n">13</span> Sources</a></li>
+        <li><a href="/en/colophon/"><span class="index__n">14</span> Colophon</a></li>
+      </ul>
+    </nav>
+    <main id="main">
+    <h1 tabindex="-1">Campaign</h1>
+    <p class="lede">The leaked build exposes six playable mission segments and one disabled mission. The same build's string tables preserve the full intended slate, roughly 45 mission IDs across seven acts, most of them never built or left disabled. The campaign plan is far larger than the playable content.</p>
+    <figure class="plate">
+      <img src="/assets/media/shot-13.webp" width="700" height="394" alt="StarCraft: Ghost gameplay screenshot" loading="lazy">
+      <figcaption><span class="plate__id">Plate</span> Official screenshot 13 <span class="plate__credit">Source: <a href="https://web.archive.org/web/20031112122633id_/http://blizzard.com/ghost/images/screens/ss13.jpg">Blizzard Entertainment</a></span></figcaption>
+    </figure>
+
+    <figure class="plate">
+      <img src="/assets/media/shot-19.webp" width="700" height="394" alt="StarCraft: Ghost gameplay screenshot" loading="lazy">
+      <figcaption><span class="plate__id">Plate</span> Official screenshot 19 <span class="plate__credit">Source: <a href="https://web.archive.org/web/20050128143357id_/http://blizzard.com/ghost/images/screens/ss19.jpg">Blizzard Entertainment</a></span></figcaption>
+    </figure>
+
+
+    <h2>Playable missions</h2>
+    <p>These mission segments are enabled in the build's chronicle file. Names and internal identifiers come from the build itself.</p>
+    <table>
+      <thead>
+        <tr><th>Mission</th><th>Internal ID</th><th>Notes</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Scattered Forces</td><td><code>1_2_ZERG</code></td><td>Miners Bunker.</td></tr>
+        <tr><td>Zergling Rush</td><td><code>1_2_ZERGA</code></td><td>The mission with the joking briefing text.</td></tr>
+        <tr><td>Canyon Advance</td><td><code>1_2_ZERGB</code></td><td>Terran and Zerg level set.</td></tr>
+        <tr><td>The Fujita Pinnacle</td><td><code>2_2_OUTERHULL</code></td><td>Threat Base Upper.</td></tr>
+        <tr><td>Pinnacle Hangar</td><td><code>2_2_OUTERHULLA</code></td><td>Continues the Fujita sequence.</td></tr>
+        <tr><td>Sabotage</td><td><code>1_3_REFINERYB</code></td><td>Hive Station Outer; described as the first level. It does not load on a 64 MB retail Xbox.</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Disabled mission</h3>
+    <p>The Borgo Refinery (<code>1_3_REFINERY</code>) is present but commented out in the chronicle file. It can be re-enabled.</p>
+
+    <h2>The planned slate</h2>
+    <p>The build's general string table carries roughly 45 mission identifiers across seven acts. The unbuilt and disabled slate includes three complete arcs that do not appear in playable content.</p>
+    <table>
+      <thead>
+        <tr><th>Arc</th><th>Mission names preserved</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Protoss arc</td>
+          <td>In the Path of Titans, Sacred Ground, Khaydarin Core, Arbiter Tribunal, Artemis Boss.</td>
+        </tr>
+        <tr>
+          <td>Zerg arc</td>
+          <td>The Shadow Hunters, The Way of the Warrior, Terrazine Mining A, B, and C, The Path of Shadow.</td>
+        </tr>
+        <tr>
+          <td>Endgame bosses</td>
+          <td>Aries Boss, Hauler Boss, Vulcan Boss.</td>
+        </tr>
+        <tr>
+          <td>StarCraft 1 homage act</td>
+          <td>Desperate Alliance, Revolution, Backwater Station, The Trump Card, The Jacobs Installation, The Invasion of Aiur, The New Gettysberg.</td>
+        </tr>
+      </tbody>
+    </table>
+    <p>The Protoss missions are named in the strings but have no enabled implementation. Their unit and creature assets exist, which places them in the "content-rich, wiring-poor" category described in the <a href="/en/gap-analysis/">gap analysis</a>.</p>
+
+    <h2>Unfinished content in the strings</h2>
+    <p>The string tables still contain placeholders, which shows the slate was being shaped rather than finished. The following are quoted from the build's text tables.</p>
+    <ul>
+      <li>Objective placeholders: "Find the MacGuffin part #1", "Find the Flux Capacitor", "Find the Heisenberg Compensator", "Find the Minovsky Particles", "Find the Maltese Falcon".</li>
+      <li>Temporary objectives marked "[TEMP]", including "Disable Heisenberg Compensators", "Flux Capacitor", and "Deactivate laser wall".</li>
+      <li>A briefing line that reads "And here comes a Zergling Rush!!! (Yeah, I know you can't see it. But it's coming. Someday.)".</li>
+      <li>Joke dialogue for an infested marine, written as "...kill me, I'm infested blah blah blah...".</li>
+    </ul>
+
+    <h2>What the campaign does not include</h2>
+    <p>The marketed single-player length of 12 to 15 hours is not met. The playable content is a few hours at most, across six segments of a 45-segment plan. There is no Protoss play and no full act structure in the artifact. The <a href="/en/multiplayer/">multiplayer</a> promised in the official FAQ is absent, too.</p>
+
+    <h2>References</h2>
+    <ol class="refs">
+      <li>The build's own string tables and chronicle, extracted from the dumped May 8 2004 build. The extraction is documented in the hosting repository's research archive.</li>
+      <li>Hidden Palace, "StarCraft: Ghost (May 8, 2004 prototype)", <a href="https://hiddenpalace.org/StarCraft:_Ghost_(May_8,_2004_prototype)">live</a>.</li>
+      <li>Blizzard, official FAQ (2005), archived at <a href="https://web.archive.org/web/2005id_/http://www.blizzard.com/ghost/faq.shtml">Wayback Machine</a>, for the stated 12 to 15 hour length.</li>
+    </ol>
+
+    <p class="reviewed">Last reviewed October 2026. Mission names are quoted from the build's data, not from a copyrighted asset re-hosted here.</p>
+    </main>
+  </div>
+  <footer>
+    <p>An independent research wiki about the cancelled <em>StarCraft: Ghost</em>. Documents the game and the leaked May 8 2004 build from public sources. Does not host the game or any copyrighted assets.</p>
+    <p class="reviewed"><a href="/en/sources/">Sources</a> // <a href="/en/colophon/">Colophon</a> // Images: Blizzard Entertainment, via the Wayback Machine.</p>
+  </footer>
+  <div id="announcer" role="status"></div>
+</body>
+</html>

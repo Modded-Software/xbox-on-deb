@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>The leak - StarCraft: Ghost Archive</title>
+  <meta name="description" content="What the StarCraft: Ghost leak contains: the May 8 2004 Xbox build, the Win32 TGS demo, executables, command-line switches, and the NOD engine.">
+  <link rel="stylesheet" href="/assets/css/main.css">
+  <link rel="icon" href="/assets/img/favicon.svg" type="image/svg+xml">
+  <script type="module" src="/assets/js/main.js"></script>
+  <link rel="canonical" href="/en/the-leak/">
+</head>
+<body>
+  <a href="#main" class="skip-link">Skip to content</a>
+  <div class="shell">
+    <nav class="index" aria-label="Primary">
+      <p class="index__label">Mission index</p>
+      <ul>
+        <li><a href="/en/"><span class="index__n">01</span> Home</a></li>
+        <li><a href="/en/timeline/"><span class="index__n">02</span> Timeline</a></li>
+        <li><a href="/en/development/"><span class="index__n">03</span> Development</a></li>
+        <li><a href="/en/the-leak/" aria-current="page"><span class="index__n">04</span> The leak</a></li>
+        <li><a href="/en/campaign/"><span class="index__n">05</span> Campaign</a></li>
+        <li><a href="/en/systems/"><span class="index__n">06</span> Systems</a></li>
+        <li><a href="/en/multiplayer/"><span class="index__n">07</span> Multiplayer</a></li>
+        <li><a href="/en/story/"><span class="index__n">08</span> Story</a></li>
+        <li><a href="/en/media/"><span class="index__n">09</span> Media</a></li>
+        <li><a href="/en/people/"><span class="index__n">10</span> People</a></li>
+        <li><a href="/en/faq/"><span class="index__n">11</span> FAQ</a></li>
+        <li><a href="/en/gap-analysis/"><span class="index__n">12</span> Vision vs build</a></li>
+        <li><a href="/en/sources/"><span class="index__n">13</span> Sources</a></li>
+        <li><a href="/en/colophon/"><span class="index__n">14</span> Colophon</a></li>
+      </ul>
+    </nav>
+    <main id="main">
+    <h1 tabindex="-1">The leak</h1>
+    <p class="lede">The leaked archive holds two different StarCraft: Ghost builds. The newer one is an Xbox development build compiled on May 8 2004. The older one is a 2002 Win32 demo made for the Tokyo Game Show. This page describes the files, how the build runs, and the command-line options and debug features found inside.</p>
+    <figure class="plate">
+      <img src="/assets/media/shot-08.webp" width="1024" height="576" alt="StarCraft: Ghost gameplay screenshot" loading="lazy">
+      <figcaption><span class="plate__id">Plate</span> Official screenshot 08 <span class="plate__credit">Source: <a href="https://web.archive.org/web/20050128143301id_/http://blizzard.com/ghost/images/screens/ss08.jpg">Blizzard Entertainment</a></span></figcaption>
+    </figure>
+
+
+    <section class="panel" aria-label="Build facts">
+      <h2>Build facts</h2>
+      <dl>
+        <dt>Compiled</dt><dd>May 8 2004 14:36:32</dd>
+        <dt>Dumped and released by</dt><dd>Finn Hillbilly</dd>
+        <dt>File release date</dt><dd>December 29 2019</dd>
+        <dt>Origin</dt><dd>Xbox development kit</dd>
+        <dt>Wide circulation</dt><dd>February 2020, via Archive.org and press coverage</dd>
+        <dt>Engine</dt><dd>NOD, the engine from Vampire: The Masquerade - Redemption</dd>
+      </dl>
+    </section>
+
+    <h2>Two executable families</h2>
+    <p>The archive ships one family for Windows and one for the Xbox. Telling them apart matters because only one runs under Wine or Proton directly.</p>
+    <table>
+      <thead>
+        <tr><th>Family</th><th>Files</th><th>Target</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Win32 demo</td>
+          <td><code>Star.exe</code>, <code>Star_d.exe</code>, <code>Star_u.exe</code></td>
+          <td>Windows, Direct3D 8 and DInput8; the 2002 Tokyo Game Show demo</td>
+        </tr>
+        <tr>
+          <td>Xbox build</td>
+          <td><code>Ghost.xbe</code> (release), <code>GhostR.xbe</code>, <code>GhostU.xbe</code>, <code>update.xbe</code>, plus <code>Ghost.exe</code>, <code>GhostR.exe</code>, <code>GhostU.exe</code> and their <code>.map</code> and <code>.pdb</code> files</td>
+          <td>Original Xbox, imports <code>xboxkrnl.exe</code></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>How it runs</h2>
+    <p>The Xbox build runs in Cxbx-Reloaded, an original Xbox emulator. On Linux, Cxbx runs under GE-Proton (Wine, DXVK, VKD3D), with its Direct3D 9 output translated to Vulkan through DXVK. The Win32 demo runs directly under GE-Proton with Direct3D 8. The repository that hosts this wiki documents the setup.</p>
+
+    <h2>Command-line switches</h2>
+    <p>The community teardown on BetaArchive lists several command-line options in the build:</p>
+    <table>
+      <thead>
+        <tr><th>Switch</th><th>Effect</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>/devmode</code></td><td>Development mode.</td></tr>
+        <tr><td><code>/console</code></td><td>Opens the in-game console.</td></tr>
+        <tr><td><code>/window</code></td><td>Runs in a window.</td></tr>
+        <tr><td><code>/tgs</code></td><td>Tokyo Game Show demo mode.</td></tr>
+        <tr><td><code>/level</code></td><td>Loads a named level directly.</td></tr>
+        <tr><td><code>/nosound</code></td><td>Disables audio.</td></tr>
+        <tr><td><code>/novid</code></td><td>Skips the intro video.</td></tr>
+      </tbody>
+    </table>
+
+    <h2>Debug and unlock features</h2>
+    <p>A development profile named <code>Nova</code> unlocks all missions. Single-player mission definitions live in a chronicle file, <code>ghostsp.nsc</code>, where disabled missions are commented out and can be re-enabled. The build also writes an engine configuration file named <code>masquerade.ini</code>, which preserves the NOD engine's connection to Vampire: The Masquerade - Redemption, the 2000 Nihilistic role-playing game.</p>
+
+    <h2>Why the build matters</h2>
+    <p>The build sits at the handoff between the two developers. It is a Nihilistic-era vertical slice, with the core stealth-combat loop and several psi powers working, and most of the marketed feature set present only as assets, text, and disabled mission definitions. The <a href="/en/gap-analysis/">gap analysis</a> covers that comparison in detail.</p>
+
+    <h2>References</h2>
+    <ol class="refs">
+      <li>Hidden Palace, "StarCraft: Ghost (May 8, 2004 prototype)", <a href="https://hiddenpalace.org/StarCraft:_Ghost_(May_8,_2004_prototype)">live</a>.</li>
+      <li>BetaArchive, teardown thread 40850, <a href="https://www.betaarchive.com/forum/viewtopic.php?t=40850">live</a>, <a href="https://web.archive.org/web/2020id_/https://www.betaarchive.com/forum/viewtopic.php?t=40850">archived</a>.</li>
+      <li>NeoGAF, "Nihilistic Software's StarCraft Ghost 2003 build has been leaked", <a href="https://www.neogaf.com/threads/nihilistic-softwares-starcraft-ghost-2003-build-has-been-leaked.1526286/">live</a>, <a href="https://web.archive.org/web/2020id_/https://www.neogaf.com/threads/nihilistic-softwares-starcraft-ghost-2003-build-has-been-leaked.1526286/">archived</a>.</li>
+      <li>Internet Archive item, <a href="https://archive.org/details/starcraftghostxbox_202002">starcraftghostxbox_202002</a>.</li>
+      <li>Lost Media Wiki, "StarCraft: Ghost", <a href="https://lostmediawiki.com/StarCraft:_Ghost_(partially_found_build_of_cancelled_sci-fi_stealth-action_game;_2006)">live</a>.</li>
+    </ol>
+
+    <p class="reviewed">Last reviewed October 2026. This wiki does not host the build. The executable facts come from the community teardown and the build's own files.</p>
+    </main>
+  </div>
+  <footer>
+    <p>An independent research wiki about the cancelled <em>StarCraft: Ghost</em>. Documents the game and the leaked May 8 2004 build from public sources. Does not host the game or any copyrighted assets.</p>
+    <p class="reviewed"><a href="/en/sources/">Sources</a> // <a href="/en/colophon/">Colophon</a> // Images: Blizzard Entertainment, via the Wayback Machine.</p>
+  </footer>
+  <div id="announcer" role="status"></div>
+</body>
+</html>

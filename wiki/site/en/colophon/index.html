@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Colophon - StarCraft: Ghost Archive</title>
+  <meta name="description" content="How the StarCraft: Ghost archive wiki is built, and its measured page weights.">
+  <link rel="stylesheet" href="/assets/css/main.css">
+  <link rel="icon" href="/assets/img/favicon.svg" type="image/svg+xml">
+  <script type="module" src="/assets/js/main.js"></script>
+  <link rel="canonical" href="/en/colophon/">
+</head>
+<body>
+  <a href="#main" class="skip-link">Skip to content</a>
+  <div class="shell">
+    <nav class="index" aria-label="Primary">
+      <p class="index__label">Mission index</p>
+      <ul>
+        <li><a href="/en/"><span class="index__n">01</span> Home</a></li>
+        <li><a href="/en/timeline/"><span class="index__n">02</span> Timeline</a></li>
+        <li><a href="/en/development/"><span class="index__n">03</span> Development</a></li>
+        <li><a href="/en/the-leak/"><span class="index__n">04</span> The leak</a></li>
+        <li><a href="/en/campaign/"><span class="index__n">05</span> Campaign</a></li>
+        <li><a href="/en/systems/"><span class="index__n">06</span> Systems</a></li>
+        <li><a href="/en/multiplayer/"><span class="index__n">07</span> Multiplayer</a></li>
+        <li><a href="/en/story/"><span class="index__n">08</span> Story</a></li>
+        <li><a href="/en/media/"><span class="index__n">09</span> Media</a></li>
+        <li><a href="/en/people/"><span class="index__n">10</span> People</a></li>
+        <li><a href="/en/faq/"><span class="index__n">11</span> FAQ</a></li>
+        <li><a href="/en/gap-analysis/"><span class="index__n">12</span> Vision vs build</a></li>
+        <li><a href="/en/sources/"><span class="index__n">13</span> Sources</a></li>
+        <li><a href="/en/colophon/" aria-current="page"><span class="index__n">14</span> Colophon</a></li>
+      </ul>
+    </nav>
+    <main id="main">
+    <h1 tabindex="-1">Colophon</h1>
+    <p class="lede">In the spirit of the StarCraft: Ghost era, this wiki is a documents-first static site. Every route is a complete HTML document that renders and reads with JavaScript disabled. A few kilobytes of vanilla JavaScript upgrade same-origin navigation using the browser's own Navigation API and View Transitions. There is no framework, no build step, no webfont, and no third-party request.</p>
+
+    <h2>Structure</h2>
+    <ul>
+      <li>One hand-written stylesheet at <code>/assets/css/main.css</code>.</li>
+      <li>Three ES modules at <code>/assets/js/</code> for navigation upgrades.</li>
+      <li>Per-route documents at <code>/en/&lt;route&gt;/index.html</code>.</li>
+      <li>A route registry at <code>/assets/routes.json</code>.</li>
+    </ul>
+
+    <h2>Accessibility</h2>
+    <p>Each page carries one heading, a skip link, header, main, and footer landmarks, a labelled primary navigation, and a live region that announces route changes. Focus moves to the heading on navigation. The target is WCAG 2.2 AA.</p>
+
+    <h2>Receipts</h2>
+    <p>The weights below are measured from the files in the repository and rewritten by the measurement script. The block is test-enforced, so the numbers cannot drift from the committed bytes.</p>
+    <!-- receipts:start -->
+<table>
+<thead><tr><th>Route</th><th data-n>Raw</th><th data-n>Brotli</th></tr></thead>
+<tbody>
+<tr><td><code>/en/</code></td><td data-n>18.96 KB</td><td data-n>5.19 KB</td></tr>
+<tr><td><code>/en/404.html</code></td><td data-n>15.79 KB</td><td data-n>4.22 KB</td></tr>
+<tr><td><code>/en/campaign/</code></td><td data-n>20.52 KB</td><td data-n>5.78 KB</td></tr>
+<tr><td><code>/en/colophon/</code></td><td data-n>16.60 KB</td><td data-n>4.63 KB</td></tr>
+<tr><td><code>/en/development/</code></td><td data-n>19.57 KB</td><td data-n>5.54 KB</td></tr>
+<tr><td><code>/en/faq/</code></td><td data-n>18.27 KB</td><td data-n>5.16 KB</td></tr>
+<tr><td><code>/en/gap-analysis/</code></td><td data-n>21.86 KB</td><td data-n>5.94 KB</td></tr>
+<tr><td><code>/en/media/</code></td><td data-n>28.02 KB</td><td data-n>6.25 KB</td></tr>
+<tr><td><code>/en/multiplayer/</code></td><td data-n>18.26 KB</td><td data-n>5.07 KB</td></tr>
+<tr><td><code>/en/people/</code></td><td data-n>19.29 KB</td><td data-n>5.29 KB</td></tr>
+<tr><td><code>/en/sources/</code></td><td data-n>24.75 KB</td><td data-n>6.25 KB</td></tr>
+<tr><td><code>/en/story/</code></td><td data-n>18.60 KB</td><td data-n>5.16 KB</td></tr>
+<tr><td><code>/en/systems/</code></td><td data-n>22.85 KB</td><td data-n>5.81 KB</td></tr>
+<tr><td><code>/en/the-leak/</code></td><td data-n>20.51 KB</td><td data-n>5.73 KB</td></tr>
+<tr><td><code>/en/timeline/</code></td><td data-n>20.61 KB</td><td data-n>5.49 KB</td></tr>
+</tbody>
+</table>
+<p>JavaScript: 1.10 KB Brotli, 3.19 KB raw (budget 8 KB). CSS: 2.10 KB Brotli, 8.82 KB raw (budget 8 KB). Route budget 50 KB Brotli. Measured from the files in this commit.</p>
+<!-- receipts:end -->
+
+    <h2>Legal</h2>
+    <p>This wiki is an independent research project. It does not host the leaked StarCraft: Ghost build, its assets, its text content, or its soundtrack. It contains original prose, source links, and metadata. StarCraft and StarCraft: Ghost are trademarks of Blizzard Entertainment.</p>
+
+    <p class="reviewed">Last reviewed October 2026.</p>
+    </main>
+  </div>
+  <footer>
+    <p>An independent research wiki about the cancelled <em>StarCraft: Ghost</em>. Documents the game and the leaked May 8 2004 build from public sources. Does not host the game or any copyrighted assets.</p>
+    <p class="reviewed"><a href="/en/sources/">Sources</a> // <a href="/en/colophon/">Colophon</a> // Images: Blizzard Entertainment, via the Wayback Machine.</p>
+  </footer>
+  <div id="announcer" role="status"></div>
+</body>
+</html>

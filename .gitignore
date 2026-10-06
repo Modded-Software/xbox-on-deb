@@ -24,6 +24,11 @@ recomp/build/
 # Generated MinGW import libs (recomp/toolchain/make_import_libs.sh rebuilds them).
 recomp/toolchain/lib/
 .venv-recomp/
+# Image-pipeline virtualenv (Pillow). See scripts/ghost-research/images.py.
+.venv-wiki/
+
+# Wiki imagery: real archived material, local only, built by images.py.
+wiki/site/assets/media/
 
 # Test capture artifact (recomp/tests framework F12 framebuffer dump).
 recomp/game/framebuffer.bmp

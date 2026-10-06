@@ -167,6 +167,7 @@ extracted/               game data (not committed)
 emulator/                Cxbx-Reloaded binaries + settings.ini (not committed)
 docs/                    research, inventory, plan, crash write-up
 scripts/                 setup, launcher and helper scripts
+wiki/                    static reference wiki (see wiki/README.md)
 ```
 
 ## Docs
@@ -182,6 +183,24 @@ Start at [`docs/00-overview.md`](docs/00-overview.md).
 | [04-cxbx-wine-crash](docs/04-cxbx-wine-crash.md) | The `0xC0000005` init crash and fix |
 | [05-research-archive](docs/05-research-archive.md) | Archive of official/leaked/community sources (links + gitignored artifacts) |
 | [06-vision-vs-build-gap-analysis](docs/06-vision-vs-build-gap-analysis.md) | Stated vision vs. what the May 2004 build contains |
+
+## Wiki
+
+[`wiki/`](wiki/README.md) is a static, documents-first reference wiki about the
+game, its development, and the leaked build. Every route is a plain HTML
+document; there is no build step. The design is a Retro StarCraft HUD, and the
+pages carry real archived imagery (screenshots, key art, concept art) pulled
+from the preserved official site. Images are local and gitignored; the pipeline
+is in [`scripts/ghost-research/images.py`](scripts/ghost-research/images.py) and
+the art direction is in [`wiki/docs/DESIGN-DIRECTION.md`](wiki/docs/DESIGN-DIRECTION.md).
+Serve it with the bundled static server:
+
+```sh
+cd wiki && bash tools/serve.sh   # http://127.0.0.1:18082/en/
+```
+
+Check the document contract, image integrity, anti-slop lint, and page-weight
+budgets with `bash wiki/tools/run-tests.sh`.
 
 ## Legal
 
