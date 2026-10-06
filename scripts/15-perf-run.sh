@@ -21,6 +21,6 @@ echo "running for ${SECS}s (KBM=${KBM:-1})..."
 echo "run exit=$? (124 = reached the time limit)"
 
 echo "--- frame rate ---"
-grep -E "\[GPU\] presentation:" "$LOG" | tail -6
+grep -E "\[GPU\] presentation:" "$LOG"
 echo "--- pipeline phases (cumulative) ---"
-grep -E "\[GPU-D3D11\] time:|\[GPU-D3D11\] draw phases:|\[GPU\] flushes:" "$LOG" | tail -9
+grep -E "\[GPU-D3D11\] time:|\[GPU-D3D11\] draw phases:|\[GPU\] flushes:" "$LOG"
