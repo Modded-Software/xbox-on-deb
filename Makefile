@@ -67,6 +67,7 @@ patch: ## Regenerate the toolkit patch from refs/xboxrecomp.
 	git -C refs/xboxrecomp diff -- \
 		src/input/xinput_device.c \
 		src/kernel/kernel_bridge.c \
+		src/kernel/kernel_hal.c \
 		src/kernel/nv2a_gpu.h \
 		src/kernel/nv2a_gpu_d3d11.cpp \
 		src/kernel/nv2a_pb_exec.c \

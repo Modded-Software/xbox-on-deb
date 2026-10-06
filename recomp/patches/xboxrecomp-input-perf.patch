@@ -1,8 +1,16 @@
 diff --git a/src/input/xinput_device.c b/src/input/xinput_device.c
-index 2907904..4ee0b08 100644
+index 2907904..6177f13 100644
 --- a/src/input/xinput_device.c
 +++ b/src/input/xinput_device.c
-@@ -222,6 +222,197 @@ static void keyboard_state(XBOX_INPUT_STATE *pState)
+@@ -14,6 +14,7 @@
+ #include <stdlib.h>
+ #include <stdio.h>
+ #include <string.h>
++#include <math.h>
+ 
+ /* ======================================================================== */
+ #if defined(_WIN32)
+@@ -222,6 +223,212 @@ static void keyboard_state(XBOX_INPUT_STATE *pState)
      pState->dwPacketNumber = ++packet;
  }
  
@@ -110,27 +118,32 @@ index 2907904..4ee0b08 100644
 +{
 +    static DWORD packet;
 +    static int configured;
-+    static unsigned sens, deadzone, invert_y, maxdelta, decay;
++    static unsigned sens, deadzone, invert_y, maxdelta, decay_ms;
 +    static float vx, vy;      /* decaying right-stick velocity, stick units */
++    static unsigned long last_ms;
 +    WORD b = 0;
 +    int dx, dy, wheel;
 +
 +    if (!configured) {
-+        /* sens is stick units per pixel of mouse travel, and the stick is held
-+         * for a few polls (decay) so the title's own look deadzone is cleared
-+         * and the camera integrates over the motion instead of seeing a
-+         * one-frame blip. 32 was far too low: a normal 10 px/frame move
-+         * deflected the stick ~1% and the camera never moved. */
-+        sens     = kbm_number("RECOMP_KBM_SENS", 65536, 512);
-+        decay    = kbm_number("RECOMP_KBM_DECAY", 99, 50);
-+        deadzone = kbm_number("RECOMP_KBM_DEADZONE", 64, 1);
++        /* sens is stick units per pixel of mouse travel; decay_ms is how long
++         * that deflection is held, so the camera integrates over the motion
++         * rather than seeing a one-poll blip.
++         *
++         * The hold has to be measured in time, not in polls. The title polls
++         * this ~400 times a second, so a per-call decay halved the deflection
++         * every call and it was gone inside 25 ms -- which reads as small,
++         * stuttering camera steps no matter how large sens is. Decaying by
++         * elapsed milliseconds makes the feel independent of the poll rate. */
++        sens     = kbm_number("RECOMP_KBM_SENS", 65536, 140);
++        decay_ms = kbm_number("RECOMP_KBM_DECAY_MS", 1000, 120);
++        deadzone = kbm_number("RECOMP_KBM_DEADZONE", 64, 2);
 +        invert_y = kbm_number("RECOMP_KBM_INVERT_Y", 1, 0);
-+        maxdelta = kbm_number("RECOMP_KBM_MAXDELTA", 8192, 1024);
++        maxdelta = kbm_number("RECOMP_KBM_MAXDELTA", 8192, 512);
 +        kbm_load_map();
 +        configured = 1;
-+        fprintf(stderr, "[KBM] profile: sens=%u decay=%u deadzone=%u invert_y=%u maxdelta=%u "
++        fprintf(stderr, "[KBM] profile: sens=%u decay_ms=%u deadzone=%u invert_y=%u maxdelta=%u "
 +                "A=%d B=%d X=%d Y=%d BLACK=%d WHITE=%d LT=%d START=%d BACK=%d\n",
-+                sens, decay, deadzone, invert_y, maxdelta,
++                sens, decay_ms, deadzone, invert_y, maxdelta,
 +                k_a, k_b, k_x, k_y, k_black, k_white, k_lt, k_start, k_back);
 +    }
 +
@@ -140,7 +153,7 @@ index 2907904..4ee0b08 100644
 +    pState->Gamepad.sThumbLX = axis_from_keys('A', 'D');
 +    pState->Gamepad.sThumbLY = axis_from_keys('S', 'W');
 +
-+    /* Right stick: mouse velocity, held with decay. A single poll can carry a
++    /* Right stick: mouse velocity, held for decay_ms. A single poll can carry a
 +     * whole frame's worth of motion; clamp that to maxdelta so a focus change
 +     * or a stuck cursor cannot slam the camera, while real flicks still scale. */
 +    xbox_FramebufferMouseDelta(&dx, &dy);
@@ -150,8 +163,18 @@ index 2907904..4ee0b08 100644
 +    if (dy < -(int)maxdelta) dy = -(int)maxdelta;
 +    if (dx > -(int)deadzone && dx < (int)deadzone) dx = 0;
 +    if (dy > -(int)deadzone && dy < (int)deadzone) dy = 0;
-+    vx = vx * ((float)decay / 100.0f) + (float)dx * (float)sens;
-+    vy = vy * ((float)decay / 100.0f) + (float)dy * (float)sens;
++
++    {
++        unsigned long now = (unsigned long)GetTickCount();
++        float dt = last_ms ? (float)(now - last_ms) / 1000.0f : 0.0f;
++        float tau = (float)decay_ms / 1000.0f;
++        float alpha;
++        last_ms = now;
++        if (dt > 0.25f) dt = 0.25f;      /* do not let a focus pause clear it */
++        alpha = (dt > 0.0f) ? expf(-dt / tau) : 1.0f;
++        vx = vx * alpha + (float)dx * (float)sens;
++        vy = vy * alpha + (float)dy * (float)sens;
++    }
 +    pState->Gamepad.sThumbRX = kbm_clamp((long)vx);
 +    pState->Gamepad.sThumbRY = kbm_clamp((long)(invert_y ? vy : -vy));
 +    if (dx || dy) {
@@ -200,7 +223,33 @@ index 2907904..4ee0b08 100644
  static DWORD poll_host(DWORD port, XINPUT_STATE *state, DWORD *host_slot)
  {
      DWORD connected = 0;
-@@ -280,8 +471,9 @@ DWORD xbox_InputGetState(DWORD dwPort, XBOX_INPUT_STATE *pState)
+@@ -275,13 +482,35 @@ DWORD xbox_InputGetState(DWORD dwPort, XBOX_INPUT_STATE *pState)
+     XINPUT_STATE xi_state;
+     DWORD result, host_slot;
+ 
++    /* RECOMP_POLL_TRACE: how often the title actually asks for input. A menu
++     * that renders at 30 FPS but polls the pad at 1 Hz is the difference
++     * between "laggy" and "broken", and nothing else in the chain shows it. */
++    {
++        static int trace = -1;
++        static unsigned long last;
++        static unsigned calls;
++        if (trace < 0)
++            trace = getenv("RECOMP_POLL_TRACE") != NULL;
++        if (trace) {
++            unsigned long now = GetTickCount();
++            calls++;
++            if (now - last >= 1000) {
++                fprintf(stderr, "  [POLL] xbox_InputGetState %u/s\n", calls);
++                fflush(stderr);
++                last = now;
++                calls = 0;
++            }
++        }
++    }
++
+     if (dwPort >= XBOX_MAX_CONTROLLERS || !pState)
+         return ERROR_DEVICE_NOT_CONNECTED;
  
      result = poll_host(dwPort, &xi_state, &host_slot);
      if (result != ERROR_SUCCESS) {
@@ -212,7 +261,7 @@ index 2907904..4ee0b08 100644
              return ERROR_SUCCESS;
          }
          return result;
-@@ -316,10 +508,11 @@ DWORD xbox_InputGetState(DWORD dwPort, XBOX_INPUT_STATE *pState)
+@@ -316,10 +545,11 @@ DWORD xbox_InputGetState(DWORD dwPort, XBOX_INPUT_STATE *pState)
       * Merging is also the better rule. A real pad keeps working -- its
       * buttons are already in pState and the keyboard only adds to them --
       * and there is no special case left to get wrong. */
@@ -226,7 +275,7 @@ index 2907904..4ee0b08 100644
          pState->Gamepad.wButtons |= kb.Gamepad.wButtons;
          for (i = 0; i < 8; i++)
              if (kb.Gamepad.bAnalogButtons[i] > pState->Gamepad.bAnalogButtons[i])
-@@ -358,7 +551,7 @@ BOOL xbox_InputIsConnected(DWORD dwPort)
+@@ -358,7 +588,7 @@ BOOL xbox_InputIsConnected(DWORD dwPort)
      DWORD slot;
      if (dwPort >= XBOX_MAX_CONTROLLERS) return FALSE;
      return poll_host(dwPort, &state, &slot) == ERROR_SUCCESS ||
@@ -299,6 +348,179 @@ index 0057708..40eaaef 100644
 +            fprintf(stderr, "  [KERNEL] (further KeBugCheckEx lines throttled)\n");
 +    }
      g_eax = 0;
+ }
+ 
+diff --git a/src/kernel/kernel_hal.c b/src/kernel/kernel_hal.c
+index 7c48553..4f7253c 100644
+--- a/src/kernel/kernel_hal.c
++++ b/src/kernel/kernel_hal.c
+@@ -37,42 +37,41 @@
+  * allows code that checks IRQL to function correctly.
+  * ============================================================================ */
+ 
+-static XBOX_THREAD_LOCAL KIRQL g_current_irql = PASSIVE_LEVEL;
++/* The processor's interrupt request level.
++ *
++ * The console has one processor, so IRQL is a per-processor value that every
++ * guest thread shares and every device model reads -- not a per-thread one.
++ * Modelling it per host thread was the bug: a guest thread that lowers IRQL
++ * against a level another thread raised reads its own stale PASSIVE_LEVEL,
++ * the lower looks like a raise, and the raised-count that gated every
++ * interrupt climbed and never came back down. Once stuck, OHCI held the
++ * gamepad interrupt off for seconds at a time and input appeared dead.
++ *
++ * A single level, swapped atomically, is the correct model: a lower always
++ * sets the level rather than moving a counter, so a mismatched pair can be
++ * momentarily wrong but can never wedge the gate shut. */
++static volatile LONG g_cpu_irql = PASSIVE_LEVEL;
+ 
+ KIRQL __stdcall xbox_KeGetCurrentIrql(void)
+ {
+-    return g_current_irql;
++    return (KIRQL)InterlockedCompareExchange(&g_cpu_irql, 0, 0);
+ }
+ 
+-/* How many threads are holding IRQL at or above DISPATCH_LEVEL.
+- *
+- * The level itself is per-thread, which is right for a guest that asks "what
+- * is my IRQL". It is wrong for the question a device model has to answer:
+- * raising IRQL on hardware masks the interrupt for the whole processor, and
+- * the title raises it precisely to keep an ISR out of structures it is in the
+- * middle of editing. With the level thread-local, a controller thread sees
+- * PASSIVE_LEVEL, calls the ISR anyway, and the two race over exactly the
+- * state the guest was protecting -- which surfaces as an intermittent fault
+- * on a garbage pointer, far from the code that dropped it.
+- *
+- * A count rather than a flag, because several threads can be raised at once
+- * and the last one out is what re-opens the gate. */
+-static volatile LONG g_irql_raised_count = 0;
+-
+-/* Non-zero while any thread is at or above DISPATCH_LEVEL. Device models call
+- * this before delivering an interrupt; OHCI and the NV2A are level-triggered,
+- * so a deferred interrupt is delivered on the next poll rather than lost. */
++/* Non-zero while the processor is at or above DISPATCH_LEVEL. Device models
++ * call this before delivering an interrupt; OHCI and the NV2A are
++ * level-triggered, so a deferred interrupt is delivered on the next poll
++ * rather than lost. */
+ int xbox_IrqlBlocksInterrupts(void)
+ {
+-    return InterlockedCompareExchange(&g_irql_raised_count, 0, 0) != 0;
++    return xbox_KeGetCurrentIrql() >= DISPATCH_LEVEL;
+ }
+ 
+-/* The raw depth, for callers that want to report it. A count that only ever
+- * grows is a leak somewhere in the raise/lower pairs, and the number says so
+- * where a yes/no cannot. */
++/* The current level, for callers that want to report it. A level that stays
++ * at DISPATCH across a quiet thread is a guest that genuinely raised and
++ * never lowered, not a counter artefact. */
+ int xbox_IrqlRaisedCount(void)
+ {
+-    return (int)InterlockedCompareExchange(&g_irql_raised_count, 0, 0);
++    return (int)xbox_KeGetCurrentIrql();
+ }
+ 
+ static int  s_trace = -1;
+@@ -144,13 +143,10 @@ static void irql_track(KIRQL old_level, KIRQL new_level, void *ra)
+ {
+     int was = (old_level >= DISPATCH_LEVEL);
+     int now = (new_level >= DISPATCH_LEVEL);
+-    LONG d;
+ 
+     if (now == was)
+         return;
+ 
+-    d = now ? InterlockedIncrement(&g_irql_raised_count)
+-            : InterlockedDecrement(&g_irql_raised_count);
+     InterlockedIncrement(&s_transitions);
+     if (now)
+         irql_holder_add(ra);
+@@ -164,9 +160,10 @@ static void irql_track(KIRQL old_level, KIRQL new_level, void *ra)
+     if (s_trace < 0)
+         s_trace = getenv("RECOMP_IRQL_TRACE") ? 1 : 0;
+     if (s_trace && InterlockedIncrement(&s_traced) <= 20) {
+-        fprintf(stderr, "  [IRQL] tid %lu %s %d->%d depth=%ld\n",
++        fprintf(stderr, "  [IRQL] tid %lu %s %d->%d level=%d\n",
+                 (unsigned long)GetCurrentThreadId(),
+-                now ? "raise" : "lower", old_level, new_level, (long)d);
++                now ? "raise" : "lower", old_level, new_level,
++                (int)new_level);
+         fflush(stderr);
+     }
+ }
+@@ -177,7 +174,7 @@ static void irql_track(KIRQL old_level, KIRQL new_level, void *ra)
+  */
+ KIRQL __fastcall xbox_KfRaiseIrql(KIRQL NewIrql)
+ {
+-    KIRQL old = g_current_irql;
++    KIRQL old = (KIRQL)InterlockedExchange(&g_cpu_irql, (LONG)NewIrql);
+ 
+     if (NewIrql < old) {
+         xbox_log(XBOX_LOG_WARN, XBOX_LOG_HAL,
+@@ -186,7 +183,6 @@ KIRQL __fastcall xbox_KfRaiseIrql(KIRQL NewIrql)
+     }
+ 
+     irql_track(old, NewIrql, IRQL_CALLER());
+-    g_current_irql = NewIrql;
+     return old;
+ }
+ 
+@@ -196,33 +192,27 @@ KIRQL __fastcall xbox_KfRaiseIrql(KIRQL NewIrql)
+  */
+ VOID __fastcall xbox_KfLowerIrql(KIRQL NewIrql)
+ {
+-    if (NewIrql > g_current_irql) {
+-        /* A lower that raises the count.
+-         *
+-         * irql_track works on the edge, so this call crosses the boundary
+-         * upwards and increments. The pair that would bring it back down has
+-         * already happened, so the depth is now permanently one too high --
+-         * and the count is what every device model reads before delivering.
+-         * One of these ends interrupts for the rest of the run.
+-         *
+-         * Loud rather than a filtered warning because of that consequence:
+-         * the symptom is a device going silent minutes later, with nothing
+-         * connecting it back to here. */
++    KIRQL old = (KIRQL)InterlockedExchange(&g_cpu_irql, (LONG)NewIrql);
++
++    if (NewIrql > old) {
++        /* A lower that sets a higher level than the processor is at. That is
++         * still a calling-convention mismatch upstream, but with the level
++         * model it can no longer wedge the interrupt gate: the next genuine
++         * lower sets the level back down. Kept loud so the caller can still
++         * be found, just named a warning rather than a fatal bug. */
+         static volatile LONG n;
+         if (InterlockedIncrement(&n) <= 20) {
+-            fprintf(stderr, "  [IRQLBUG] tid %lu KfLowerIrql(%d) while at %d"
+-                    " -- counted as a raise, depth is now stuck\n",
++            fprintf(stderr, "  [IRQLWARN] tid %lu KfLowerIrql(%d) while at %d\n",
+                     (unsigned long)GetCurrentThreadId(),
+-                    (int)NewIrql, (int)g_current_irql);
++                    (int)NewIrql, (int)old);
+             fflush(stderr);
+         }
+         xbox_log(XBOX_LOG_WARN, XBOX_LOG_HAL,
+             "KfLowerIrql: attempt to raise IRQL from %d to %d (use KfRaiseIrql)",
+-            g_current_irql, NewIrql);
++            old, NewIrql);
+     }
+ 
+-    irql_track(g_current_irql, NewIrql, IRQL_CALLER());
+-    g_current_irql = NewIrql;
++    irql_track(old, NewIrql, IRQL_CALLER());
+ }
+ 
+ /*
+@@ -230,10 +220,9 @@ VOID __fastcall xbox_KfLowerIrql(KIRQL NewIrql)
+  */
+ KIRQL __stdcall xbox_KeRaiseIrqlToDpcLevel(void)
+ {
+-    KIRQL old = g_current_irql;
++    KIRQL old = (KIRQL)InterlockedExchange(&g_cpu_irql, DISPATCH_LEVEL);
+ 
+     irql_track(old, DISPATCH_LEVEL, IRQL_CALLER());
+-    g_current_irql = DISPATCH_LEVEL;
+     return old;
  }
  
 diff --git a/src/kernel/nv2a_gpu.h b/src/kernel/nv2a_gpu.h
@@ -844,10 +1066,47 @@ index 2a8aec4..ab7c7d5 100644
      /* Taken on the guest thread: g_esp is thread-local, so the watchdog has to
       * be handed the address of the one that matters rather than reading its
 diff --git a/src/usb/ohci.c b/src/usb/ohci.c
-index 9be8998..11ea672 100644
+index 9be8998..554efec 100644
 --- a/src/usb/ohci.c
 +++ b/src/usb/ohci.c
-@@ -573,8 +573,13 @@ static uint32_t ohci_do_td(OhciController *hc, uint32_t ed0, uint32_t td)
+@@ -129,9 +129,14 @@ static void wr32(uint32_t va, uint32_t v);
+  * kernel is slower than the console by a wide and variable margin, and the
+  * section XAPI holds while it opens the gamepad's interrupt pipe overran it.
+  * The interrupt then landed in the middle of that setup and the title faulted
+- * on a half-built structure. Two seconds is still not forever -- a guest that
+- * genuinely never lowers is still not allowed to switch the device off -- but
+- * it is long enough that a slow critical section is not mistaken for one. */
++ * on a half-built structure.
++ *
++ * It now applies only until the pad's interrupt pipe is open
++ * (hc->pad_live). Holding past that is what killed input: the guest's IRQL is
++ * modelled per-processor but our guest threads run concurrently, so a
++ * mismatched save/restore can leave it raised, and every report would then be
++ * held off for the full two seconds -- which reads as input that arrives
++ * tens of seconds late. Opening is the only window that needed the grace. */
+ #define OHCI_IRQ_HOLDOFF        500
+ 
+ /* Milliseconds per pass of the controller thread, which is also how many USB
+@@ -153,6 +158,10 @@ typedef struct {
+     int      index;
+     int      periodic_seen;
+     int      ple_seen;
++    /* Set once the pad's interrupt endpoint has delivered a report, i.e. the
++     * interrupt pipe is open. The IRQL holdoff exists only to survive that
++     * opening; after it, a stuck guest IRQL must not gate the pad. */
++    int      pad_live;
+     /* Bumped every time the driver writes HcInterruptStatus. The interrupt
+      * thread watches it to tell a source nobody is servicing from one that
+      * is simply busy -- see the delivery loop. */
+@@ -564,6 +573,7 @@ static uint32_t ohci_do_td(OhciController *hc, uint32_t ed0, uint32_t td)
+             /* The pad's report, on its interrupt endpoint. */
+             uint8_t rep[32];
+             int n = usb_gamepad_report(rep, (int)sizeof rep);
++            hc->pad_live = 1;   /* pipe open: the IRQL holdoff is over */
+             if (n > len) n = len;
+             if (n > 0) {
+                 uint8_t *p = xbox_DmaPhysicalPointer(cbp, (uint32_t)n);
+@@ -573,8 +583,13 @@ static uint32_t ohci_do_td(OhciController *hc, uint32_t ed0, uint32_t td)
              moved = n;
          }
      } else {
@@ -863,7 +1122,7 @@ index 9be8998..11ea672 100644
          moved = len;
          g_setup_pending = 0;
      }
-@@ -753,7 +758,26 @@ static int ohci_call_isr(OhciController *hc)
+@@ -753,7 +768,26 @@ static int ohci_call_isr(OhciController *hc)
      g_esp -= 4; *(uint32_t *)(mem + g_esp) = kinterrupt;   /* arg 1 */
      g_esp -= 4; *(uint32_t *)(mem + g_esp) = 0xDEADBEEFu;  /* return address */
  
@@ -891,6 +1150,16 @@ index 9be8998..11ea672 100644
  
      xbox_worker_stack_free(slot);
      return (int)(g_eax & 1u);
+@@ -1025,7 +1059,8 @@ static DWORD WINAPI ohci_thread(LPVOID unused)
+          * asserted anyway. The common case still holds the ISR out of the
+          * guest's critical section; the pathological case costs a delay
+          * instead of the device. */
+-        if (xbox_IrqlBlocksInterrupts() && ++held_off <= OHCI_IRQ_HOLDOFF) {
++        if (!hc->pad_live && xbox_IrqlBlocksInterrupts()
++                && ++held_off <= OHCI_IRQ_HOLDOFF) {
+             if (!held_off_warned) {
+                 held_off_warned = 1;
+                 fprintf(stderr, "  [OHCI%d] irq held off by guest IRQL "
 diff --git a/src/usb/usb_gamepad.c b/src/usb/usb_gamepad.c
 index 3643253..a3c8e92 100644
 --- a/src/usb/usb_gamepad.c
@@ -983,7 +1252,7 @@ index 7169c32..efc603f 100644
  uint8_t usb_gamepad_address(void);
  
 diff --git a/src/video/fb_present.c b/src/video/fb_present.c
-index 8b200d7..16b471e 100644
+index 8b200d7..aba338d 100644
 --- a/src/video/fb_present.c
 +++ b/src/video/fb_present.c
 @@ -17,7 +17,12 @@
@@ -1183,7 +1452,7 @@ index 8b200d7..16b471e 100644
          return 0;
      }
      return DefWindowProcA(h, m, w, l);
-@@ -380,6 +552,15 @@ static DWORD WINAPI fb_thread(LPVOID unused)
+@@ -380,6 +552,27 @@ static DWORD WINAPI fb_thread(LPVOID unused)
          free(caption);
          return 0;
      }
@@ -1191,15 +1460,69 @@ index 8b200d7..16b471e 100644
 +    /* Take the keyboard. The exe is console-subsystem, so Wine also creates a
 +     * console window that otherwise holds the focus and receives every key --
 +     * the game window then sees none of them. Force this window forward and
-+     * focused so the pad-overlay keys arrive without a manual click. */
++     * focused so the pad-overlay keys arrive without a manual click.
++     *
++     * A plain SetForegroundWindow is not enough: Wine enforces the foreground
++     * lock, and a game launched from a terminal is not the foreground process,
++     * so the call is denied and the window stays unfocused until the user
++     * clicks it. The topmost flip is the documented workaround -- raising the
++     * window while it is topmost makes it the foreground one even when the
++     * lock would otherwise say no -- and it is left not-topmost afterwards so
++     * nothing else is occluded. */
++    SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0,
++                 SWP_NOMOVE | SWP_NOSIZE);
 +    SetForegroundWindow(hwnd);
++    SetWindowPos(hwnd, HWND_NOTOPMOST, 0, 0, 0, 0,
++                 SWP_NOMOVE | SWP_NOSIZE);
 +    SetFocus(hwnd);
 +    if (getenv("RECOMP_KBM"))
 +        xbox_FramebufferMouseCapture(1);
      SendMessageA(hwnd, WM_SETICON, ICON_BIG, (LPARAM)icons.large_icon);
      SendMessageA(hwnd, WM_SETICON, ICON_SMALL, (LPARAM)icons.small_icon);
      hdc = GetDC(hwnd);
-@@ -477,4 +658,8 @@ void xbox_FramebufferWindowSet(uint32_t fb_va, uint32_t pitch) { (void)fb_va; (v
+@@ -397,6 +590,7 @@ static DWORD WINAPI fb_thread(LPVOID unused)
+     fprintf(stderr, "  [FBWIN] framebuffer window open (%ux%u)\n",
+             s_fb_width, s_fb_height);
+ 
++    long last_drawn = -2;
+     while (InterlockedCompareExchange(&s_fb_running, 1, 1)) {
+         MSG msg;
+         while (PeekMessageA(&msg, NULL, 0, 0, PM_REMOVE)) {
+@@ -432,12 +626,15 @@ static DWORD WINAPI fb_thread(LPVOID unused)
+              * the dump path and GDI see one consistent image even if the
+              * next flip lands mid-blit. */
+             LONG idx = s_present_idx;
+-            if (s_present[idx])
+-                memcpy(s_rgb, s_present[idx],
+-                       (size_t)s_fb_width * s_fb_height * 4);
+-            StretchDIBits(hdc, 0, 0, (int)s_fb_width, (int)s_fb_height,
+-                          0, 0, (int)s_fb_width, (int)s_fb_height,
+-                          s_rgb, &bi, DIB_RGB_COLORS, SRCCOPY);
++            if (idx != last_drawn) {
++                if (s_present[idx])
++                    memcpy(s_rgb, s_present[idx],
++                           (size_t)s_fb_width * s_fb_height * 4);
++                StretchDIBits(hdc, 0, 0, (int)s_fb_width, (int)s_fb_height,
++                              0, 0, (int)s_fb_width, (int)s_fb_height,
++                              s_rgb, &bi, DIB_RGB_COLORS, SRCCOPY);
++                last_drawn = idx;
++            }
+         } else if (s_fb_va && s_fb_pitch && s_rgb) {
+             /* No flip yet, or pinned with RECOMP_FB_VA: read guest memory as
+              * before, which is also what a title that never flips needs. */
+@@ -448,7 +645,10 @@ static DWORD WINAPI fb_thread(LPVOID unused)
+                           0, 0, (int)s_fb_width, (int)s_fb_height,
+                           s_rgb, &bi, DIB_RGB_COLORS, SRCCOPY);
+         }
+-        Sleep(16);
++        /* Pump often enough to sample WM_INPUT/WM_KEYDOWN smoothly, but not
++         * so tightly that the window thread monopolises a core. Rendering is
++         * gated on a new frame, above. */
++        Sleep(4);
+     }
+ 
+     ReleaseDC(hwnd, hdc);
+@@ -477,4 +677,8 @@ void xbox_FramebufferWindowSet(uint32_t fb_va, uint32_t pitch) { (void)fb_va; (v
  void xbox_FramebufferWindowPresent(uint32_t fb_va, uint32_t pitch) { (void)fb_va; (void)pitch; }
  void xbox_FramebufferWindowStart(void) {}
  int xbox_FramebufferKeyDown(int vk) { (void)vk; return 0; }

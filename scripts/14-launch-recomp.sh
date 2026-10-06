@@ -44,17 +44,25 @@ fi
 # Keyboard: stop Wine from talking to the X11 input method (IBus/XIM).
 #
 # Proton 9+ (and GE-Proton 11, which we use) turned XIM back on by default.
-# When it is on, Wine routes key events through IBus, which replays auto-repeat
-# presses one at a time; with a low frame rate the repeats (and the final
-# release) back up by seconds, so a held arrow key "sticks". This is the
-# long-standing ibus/Wine bug (ValveSoftware/Proton#5294), not our code.
+# When it is on, Wine routes key events through IBus, which replays them one at
+# a time; the press, the auto-repeats and the final release back up by seconds
+# (tens of seconds under load), so a key looks unregistered and then fires long
+# afterwards. This is the long-standing ibus/Wine bug
+# (ValveSoftware/Proton#5294), not our code, and it is invisible to XTest (the
+# test framework injects straight into the X server, past the IM), which is why
+# automated input works while a real keyboard does not.
 #
-# PROTON_NO_XIM is Proton's supported switch for this: it leaves
-# WINE_ALLOW_XIM=0, and Wine reads the raw X keyboard instead of the IM.
-# Setting both covers Proton versions that only honour one. See
-# recomp/docs/08-input.md.
+# PROTON_NO_XIM / WINE_ALLOW_XIM are Proton's switches, but they are not enough
+# on every build: tell the X client library itself to use no input method, so
+# there is nothing to connect to. XMODIFIERS=@im=none is the definitive one;
+# the rest cover GTK/Qt/CLI IM frontends.
 export PROTON_NO_XIM=1
 export WINE_ALLOW_XIM=0
+export XMODIFIERS="@im=none"
+export GTK_IM_MODULE=""
+export QT_IM_MODULE=""
+export XIM=""
+export XIM_PROGRAM=""
 
 # Bring-up diagnostics (xboxrecomp runtime reads these):
 #   RECOMP_UNIMPL_TRAP=1   abort at the first untranslated instruction
