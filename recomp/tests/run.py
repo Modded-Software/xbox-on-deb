@@ -14,6 +14,7 @@ their @test cases with the framework.
 import argparse
 import importlib
 import os
+import signal
 import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -23,6 +24,16 @@ import framework  # noqa: E402
 from framework import Game  # noqa: E402
 
 BASELINES = os.path.join(HERE, "baselines", "scenes.txt")
+
+
+def _on_signal(signum, _frame):
+    """Ctrl-C or a kill must not leave the game running."""
+    framework.kill_ghost()
+    sys.exit(128 + signum)
+
+
+signal.signal(signal.SIGINT, _on_signal)
+signal.signal(signal.SIGTERM, _on_signal)
 
 
 def load_tests():

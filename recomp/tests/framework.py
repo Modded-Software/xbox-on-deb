@@ -56,6 +56,49 @@ def _run(*args, check=True):
     return result.stdout.strip()
 
 
+def _ghost_pids():
+    """PIDs of any running ghost.exe, found via /proc (Proton detaches it
+    from the launched session, so killing the process group is not enough).
+
+    Match the binary path, not the bare name: a shell command that merely
+    mentions "ghost.exe" (say, the one running these tests) must not be
+    mistaken for the game."""
+    me = os.getpid()
+    pids = []
+    for entry in os.listdir("/proc"):
+        if not entry.isdigit() or int(entry) == me:
+            continue
+        try:
+            with open(f"/proc/{entry}/cmdline", "rb") as handle:
+                cmdline = handle.read().replace(b"\x00", b" ").decode("utf-8", "replace")
+        except OSError:
+            continue
+        if "/ghost.exe" in cmdline or "\\ghost.exe" in cmdline:
+            pids.append(int(entry))
+    return pids
+
+
+def kill_ghost():
+    """Terminate every running ghost.exe, then force-kill any survivor."""
+    pids = _ghost_pids()
+    if not pids:
+        return 0
+    for pid in pids:
+        try:
+            os.kill(pid, signal.SIGTERM)
+        except ProcessLookupError:
+            pass
+    deadline = time.time() + 10
+    while time.time() < deadline and _ghost_pids():
+        time.sleep(0.2)
+    for pid in _ghost_pids():
+        try:
+            os.kill(pid, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
+    return len(pids)
+
+
 def hold(game, name, wait=4.0, expect=None):
     """Press a key and return an input sample taken while it is held.
 
@@ -96,6 +139,7 @@ class Game:
             self._log_pos = os.path.getsize(LOG)
             _run("wait", WINDOW_TITLE, str(self.boot_timeout))
         else:
+            kill_ghost()  # clear any stale instance so runs never stack
             env = dict(os.environ)
             env["KBM"] = "1" if self.kbm else "0"
             env["DIAG"] = "1"
@@ -107,16 +151,21 @@ class Game:
             except FileNotFoundError:
                 pass
             out = open(os.path.join("/tmp/opencode", "test_game.out"), "w")
-            self.proc = subprocess.Popen(
-                ["bash", "scripts/14-launch-recomp.sh"], cwd=ROOT, env=env,
-                stdout=out, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL,
-                start_new_session=True)
+            try:
+                self.proc = subprocess.Popen(
+                    ["bash", "scripts/14-launch-recomp.sh"], cwd=ROOT, env=env,
+                    stdout=out, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL,
+                    start_new_session=True)
+            finally:
+                out.close()  # the child holds its own copy
             _run("wait", WINDOW_TITLE, str(self.boot_timeout))
             self._log_pos = 0
         self.focus()
         return self
 
     def stop(self):
+        if self.attach:
+            return
         if self.proc and self.proc.poll() is None:
             try:
                 os.killpg(os.getpgid(self.proc.pid), signal.SIGTERM)
@@ -126,6 +175,8 @@ class Game:
                 self.proc.wait(timeout=10)
             except subprocess.TimeoutExpired:
                 os.killpg(os.getpgid(self.proc.pid), signal.SIGKILL)
+        self.proc = None
+        kill_ghost()
 
     def __enter__(self):
         return self.start()
@@ -344,18 +395,27 @@ def registered():
     return list(_REGISTRY)
 
 
-def run_all(game, only=None):
+def _test_alarm(_signum, _frame):
+    raise TimeoutError("test exceeded its time limit (game may have hung)")
+
+
+def run_all(game, only=None, per_test_timeout=90):
     passed, failed = 0, 0
+    previous = signal.signal(signal.SIGALRM, _test_alarm)
     for name, fn in registered():
         if only and only not in name:
             continue
-        game.focus()
+        signal.alarm(per_test_timeout)
         try:
+            game.focus()
             fn(game)
             print(f"  PASS  {name}")
             passed += 1
         except Exception as error:  # noqa: BLE001 - report anything a test raises
             print(f"  FAIL  {name}: {type(error).__name__}: {error}")
             failed += 1
+        finally:
+            signal.alarm(0)
+    signal.signal(signal.SIGALRM, previous)
     print(f"\n{passed} passed, {failed} failed")
     return failed == 0

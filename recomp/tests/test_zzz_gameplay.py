@@ -57,6 +57,15 @@ def mouse_direction(g: Game):
     assert left and left["rx"] < 0, f"leftward motion not left: {left}"
 
 
+@test("a bigger mouse move deflects the stick further in a mission")
+def mouse_scale(g: Game):
+    _ensure_mission(g)
+    small = g.mouse_move(20, 0)
+    big = g.mouse_move(200, 0)
+    assert small and big, f"missing traces: {small} {big}"
+    assert abs(big["rx"]) > abs(small["rx"]), f"not scaled: small={small} big={big}"
+
+
 @test("the stick is silent when the mouse is still")
 def mouse_no_drift(g: Game):
     _ensure_mission(g)

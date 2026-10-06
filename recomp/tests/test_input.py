@@ -9,6 +9,8 @@ These exercise the modern desktop layout (see src/input/xinput_device.c):
   R = Y   Q = White   F = Black  Tab = Start   BackSpace/Escape = Back
   WASD = left stick   mouse = right stick   LMB = RT   RMB = LT
 """
+import time
+
 from framework import Game, test, hold, START, BACK, DPAD_UP, DPAD_DOWN
 
 
@@ -19,9 +21,13 @@ def game_is_alive(g: Game):
 
 @test("Return reaches the framebuffer window")
 def return_reaches_window(g: Game):
-    sample = hold(g, "Return")
+    sample = hold(g, "Return", expect={"window_has_RETURN": 1})
     assert sample["window_has_RETURN"] == 1, f"window never saw Return: {sample}"
-    after = g.wait_input()
+    deadline = time.time() + 5.0
+    after = g.latest_input()
+    while after["window_has_RETURN"] == 1 and time.time() < deadline:
+        time.sleep(0.5)
+        after = g.latest_input()
     assert after["window_has_RETURN"] == 0, f"Return stuck down: {after}"
 
 
