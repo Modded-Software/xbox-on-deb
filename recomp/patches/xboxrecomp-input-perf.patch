@@ -680,6 +680,161 @@ index e0fa00b..c1179d2 100644
      fprintf(stderr, "[GPU] surface 0x%08X pitch %u clip %ux%u+%u+%u"
                      " clears %u | %u unhandled methods (%d distinct)\n",
              s_gpu.color_offset, s_gpu.pitch, s_gpu.clip_w, s_gpu.clip_h,
+diff --git a/src/kernel/xbox_memory_layout.c b/src/kernel/xbox_memory_layout.c
+index 2a8aec4..ab7c7d5 100644
+--- a/src/kernel/xbox_memory_layout.c
++++ b/src/kernel/xbox_memory_layout.c
+@@ -1269,6 +1269,10 @@ static uint32_t *s_watchdog_esp;
+  * registers are the thing being asked about. */
+ static uint32_t *s_watchdog_regs[6];
+ static unsigned  s_watchdog_secs;
++/* RECOMP_WATCHDOG_REPEAT: keep sampling every interval instead of firing
++ * once and exiting. An intermittent deadlock is not caught by a one-shot
++ * timer, and the sample taken while it is stuck is the whole answer. */
++static int       s_watchdog_repeat;
+ #if defined(_WIN32)
+ static DWORD s_watchdog_thread_id;
+ #endif
+@@ -1586,16 +1590,71 @@ void xbox_PeekSample(const char *label)
+     fflush(stderr);
+ }
+ 
++#if defined(_WIN32) && defined(_WIN64)
++/* The host RIP, resolved to the generated function, names the guest function
++ * that is stuck even when the guest stack has been unwound away. */
++static void watchdog_report_host_rip(void)
++{
++    HANDLE thread = OpenThread(THREAD_SUSPEND_RESUME | THREAD_GET_CONTEXT,
++                               FALSE, s_watchdog_thread_id);
++    if (!thread)
++        return;
++    {
++        CONTEXT ctx = {0};
++        uintptr_t rip = 0;
++        ctx.ContextFlags = CONTEXT_CONTROL;
++        if (SuspendThread(thread) != (DWORD)-1) {
++            if (GetThreadContext(thread, &ctx))
++                rip = (uintptr_t)ctx.Rip;
++            ResumeThread(thread);
++        }
++        CloseHandle(thread);
++        if (rip) {
++            char buffer[sizeof(SYMBOL_INFO) + 128] = {0};
++            SYMBOL_INFO *sym = (SYMBOL_INFO *)buffer;
++            DWORD64 displacement = 0;
++            sym->SizeOfStruct = sizeof(SYMBOL_INFO);
++            sym->MaxNameLen = 127;
++            fprintf(stderr, "  host RIP=0x%llX", (unsigned long long)rip);
++            if (SymFromAddr(GetCurrentProcess(), (DWORD64)rip, &displacement, sym))
++                fprintf(stderr, " %s+0x%llX", sym->Name, (unsigned long long)displacement);
++            {
++                IMAGEHLP_LINE64 line = {0};
++                DWORD line_displacement = 0;
++                line.SizeOfStruct = sizeof(line);
++                if (SymGetLineFromAddr64(GetCurrentProcess(), (DWORD64)rip, &line_displacement, &line))
++                    fprintf(stderr, " at %s:%lu", line.FileName, line.LineNumber);
++            }
++            fprintf(stderr, "\n");
++        }
++    }
++}
++#endif
++
+ static DWORD WINAPI xbox_watchdog_thread(LPVOID unused)
+ {
+     const uint8_t *mem;
+     uint32_t esp, i;
+ 
+     (void)unused;
++    mem = (const uint8_t *)g_memory_offset;
++    for (long sample = 1;; sample++) {
+     Sleep(s_watchdog_secs * 1000u);
+ 
+-    mem = (const uint8_t *)g_memory_offset;
+     esp = s_watchdog_esp ? *s_watchdog_esp : 0;
++    if (s_watchdog_repeat && sample > 1) {
++        int k;
++        fprintf(stderr, "[WATCHDOG] #%ld esp=0x%08X icalls=%llu recent:",
++                sample, esp, (unsigned long long)g_icall_count);
++        for (k = 0; k < 8; k++)
++            fprintf(stderr, " %08X", g_icall_trace[(g_icall_trace_idx + k) & 15]);
++        fprintf(stderr, "\n");
++        fflush(stderr);
++#if defined(_WIN32) && defined(_WIN64)
++        watchdog_report_host_rip();
++#endif
++        continue;
++    }
+     fprintf(stderr, "[WATCHDOG] no exit after %us; guest esp=0x%08X\n"
+             "  regs: eax=%08X ecx=%08X edx=%08X ebx=%08X esi=%08X edi=%08X\n",
+             s_watchdog_secs, esp,
+@@ -1630,43 +1689,7 @@ static DWORD WINAPI xbox_watchdog_thread(LPVOID unused)
+      */
+     xbox_PeekSample("peek");
+ #if defined(_WIN32) && defined(_WIN64)
+-    {
+-        HANDLE thread = OpenThread(THREAD_SUSPEND_RESUME | THREAD_GET_CONTEXT,
+-                                   FALSE, s_watchdog_thread_id);
+-        if (thread) {
+-            CONTEXT ctx = {0};
+-            uintptr_t rip = 0;
+-            ctx.ContextFlags = CONTEXT_CONTROL;
+-            if (SuspendThread(thread) != (DWORD)-1) {
+-                if (GetThreadContext(thread, &ctx))
+-                    rip = (uintptr_t)ctx.Rip;
+-                ResumeThread(thread);
+-            }
+-            CloseHandle(thread);
+-            if (rip) {
+-                char buffer[sizeof(SYMBOL_INFO) + 128] = {0};
+-                SYMBOL_INFO *sym = (SYMBOL_INFO *)buffer;
+-                DWORD64 displacement = 0;
+-                sym->SizeOfStruct = sizeof(SYMBOL_INFO);
+-                sym->MaxNameLen = 127;
+-                fprintf(stderr, "  host RIP=0x%llX", (unsigned long long)rip);
+-                if (SymFromAddr(GetCurrentProcess(), (DWORD64)rip,
+-                                &displacement, sym))
+-                    fprintf(stderr, " %s+0x%llX", sym->Name,
+-                            (unsigned long long)displacement);
+-                {
+-                    IMAGEHLP_LINE64 line = {0};
+-                    DWORD line_displacement = 0;
+-                    line.SizeOfStruct = sizeof(line);
+-                    if (SymGetLineFromAddr64(GetCurrentProcess(), (DWORD64)rip,
+-                                 &line_displacement, &line))
+-                    fprintf(stderr, " at %s:%lu", line.FileName,
+-                        line.LineNumber);
+-                }
+-                fprintf(stderr, "\n");
+-            }
+-        }
+-    }
++    watchdog_report_host_rip();
+ #endif
+     /* The pushbuffer pointers, unconditionally.
+      *
+@@ -1700,8 +1723,11 @@ static DWORD WINAPI xbox_watchdog_thread(LPVOID unused)
+                 *(const uint32_t *)(mem + a));
+     }
+     fflush(stderr);
+-    RECOMP_ICALL_FEEDBACK_DUMP();
+-    _exit(3);
++    if (!s_watchdog_repeat) {
++        RECOMP_ICALL_FEEDBACK_DUMP();
++        _exit(3);
++    }
++    } /* for (;;) */
+     return 0;
+ }
+ 
+@@ -1715,6 +1741,7 @@ void xbox_WatchdogStart(void)
+     s_watchdog_secs = (unsigned)atoi(secs);
+     if (!s_watchdog_secs)
+         return;
++    s_watchdog_repeat = getenv("RECOMP_WATCHDOG_REPEAT") != NULL;
+ 
+     /* Taken on the guest thread: g_esp is thread-local, so the watchdog has to
+      * be handed the address of the one that matters rather than reading its
 diff --git a/src/usb/ohci.c b/src/usb/ohci.c
 index 9be8998..11ea672 100644
 --- a/src/usb/ohci.c
