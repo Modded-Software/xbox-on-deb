@@ -30,6 +30,9 @@ if [ "${VBLANK:-0}" != "0" ]; then
     EXTRA="$EXTRA RECOMP_VBLANK=1"
 fi
 
+# RESOLUTION=WxH is forwarded to the launcher as --resolution=WxH.
+export RESOLUTION="${RESOLUTION:-}"
+
 env KBM=1 DIAG=1 RECOMP_KEY_TRACE=1 RECOMP_LOG="$RUNLOG" $EXTRA \
     setsid bash scripts/14-launch-recomp.sh > logs/launch.out 2>&1 &
 

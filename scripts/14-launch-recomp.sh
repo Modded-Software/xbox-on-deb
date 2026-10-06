@@ -82,6 +82,14 @@ else
     echo "Input: Xbox controller (XInput)"
 fi
 
+# RESOLUTION=WxH renders at WxH instead of the 480i default (--resolution).
+# The exe stores it as RECOMP_RESOLUTION; the toolkit and the title hook read
+# it. RECOMP_RESOLUTION_NATIVE=1 forces the title's native modes only.
+if [ -n "${RESOLUTION:-}" ]; then
+    ARGS+=(--resolution="$RESOLUTION")
+    echo "Resolution: $RESOLUTION (--resolution)"
+fi
+
 # DIAG=1 prints the input chain once a second to the boot log.
 if [ "${DIAG:-0}" != "0" ]; then
     export RECOMP_INPUT_DIAG=1

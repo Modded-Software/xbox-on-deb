@@ -292,11 +292,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
         _putenv_s("RECOMP_VBLANK", "1");
 
     /* Bring up the emulated APU (mapped variant: it resolves both contiguous
-     * allocations and ordinary-RAM payloads through the DMA mapper). */
+     * allocations and ordinary-RAM payloads through the APU mapper, which
+     * prefers a live contiguous block over a colliding ordinary page). */
     if (getenv("RECOMP_AC97_READY")) {
         g_apu_state = mcpx_apu_init_standalone_mapped(
             (uint8_t *)((uintptr_t)g_xbox_mem_offset + XBOX_CONTIG_BASE),
-            xbox_DmaPhysicalPointer);
+            xbox_ApuPhysicalPointer);
         fprintf(stderr, "[BOOT] emulated APU %s\n",
                 g_apu_state ? "up" : "FAILED to initialise");
     }
@@ -393,6 +394,9 @@ static BOOL load_xbe(const char *path, void **out_data, size_t *out_size)
     return TRUE;
 }
 
+/* Title-specific render-resolution hook (src/recomp_video.c). */
+extern void scghost_video_install(void);
+
 /* Console entry point (for debugging -- lets you see printf output) */
 int main(int argc, char **argv)
 {
@@ -405,6 +409,16 @@ int main(int argc, char **argv)
             _putenv_s("RECOMP_KBM", "1");
             _putenv_s("RECOMP_KEYBOARD", "0");
         }
+        /* --resolution=WxH: render at WxH instead of the 480i default. The
+         * toolkit reads RECOMP_RESOLUTION and steers the title's own display-
+         * mode selection; see src/recomp_video.c for the title-specific half. */
+        else if (!strncmp(argv[i], "--resolution=", 13)) {
+            _putenv_s("RECOMP_RESOLUTION", argv[i] + 13);
+        }
+        else if (!strcmp(argv[i], "--resolution") && i + 1 < argc) {
+            _putenv_s("RECOMP_RESOLUTION", argv[++i]);
+        }
     }
+    scghost_video_install();
     return WinMain(GetModuleHandle(NULL), NULL, GetCommandLineA(), SW_SHOW);
 }
