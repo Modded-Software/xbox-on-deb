@@ -276,6 +276,20 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     }
     printf("XBE loaded: %zu bytes\n", xbe_size);
 
+    /* RAM size override for a devkit-targeted debug build. Ghost.xbe is a
+     * Debug XBE that ships for the 128 MB devkit; the retail default is 64 MB.
+     * Must be set before MemoryLayoutInit, which sizes the heap from it. */
+    {
+        const char *ram_mb = getenv("RECOMP_TOTAL_RAM_MB");
+        if (ram_mb && *ram_mb) {
+            unsigned long mb = strtoul(ram_mb, NULL, 0);
+            if (mb) {
+                xbox_SetTotalRam((size_t)mb * 1024 * 1024);
+                printf("RAM override: %lu MB\n", mb);
+            }
+        }
+    }
+
     /* Step 2: Initialize Xbox memory layout */
     printf("Initializing Xbox memory layout...\n");
     if (!xbox_MemoryLayoutInit(xbe_data, xbe_size)) {
@@ -287,6 +301,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
     g_xbox_mem_offset = xbox_GetMemoryOffset();
     printf("Xbox memory mapped. Offset: 0x%llX\n", (unsigned long long)g_xbox_mem_offset);
+
+    if (getenv("RECOMP_HEAP_SELFTEST"))
+        xbox_HeapSelfTest();
 
     if (xbox_Nv2aNativeFencesEnabled() && !getenv("RECOMP_VBLANK"))
         _putenv_s("RECOMP_VBLANK", "1");
@@ -328,6 +345,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
         xbox_Nv2aMirrorFence(0x002D2148u, 0x2Cu, 0x30u);
         xbox_Nv2aFrameCounter(0x002D2148u, 0x1DE8u);
     }
+    /* D3D::BlockOnTime waits on the device's embedded completion event at
+     * +0x1DCC; the GPU interrupt signals it on hardware. Register it in both
+     * modes so the ack thread releases the wait instead of it resolving to an
+     * invalid handle and spinning. */
+    xbox_Nv2aSignalEvent(0x002D2148u, 0x1DCCu);
 
     /* Step 7: Initialize stack */
     g_esp = XBOX_STACK_TOP;
