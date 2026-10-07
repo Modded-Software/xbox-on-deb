@@ -21,6 +21,32 @@ relaunch: ## Stop any running game and launch a fresh one.
 watch: ## Launch with the repeating hang watchdog (diagnosis only).
 	WATCH=1 bash scripts/18-launch-user.sh
 
+# ── recomp code generation ──────────────────────────────────────────────
+# The generated tree (recomp/game/src/recomp/gen/) is a build artifact and is
+# gitignored: it is regenerated wholesale from Ghost.xbe. Never hand-patch it.
+# Corrections belong in recomp/game/src/recomp_manual.c (recomp_lookup_manual),
+# recomp/config/ (seed_functions.json, annotations.csv) or recomp/tools/.
+OUT ?= recomp/build/gen_fresh
+
+.PHONY: regen
+regen: ## Regenerate the recompiled C into OUT (reuses analysis): make regen OUT=DIR
+	bash scripts/20-regen-recomp.sh "$(OUT)"
+
+.PHONY: regen-full
+regen-full: ## Regenerate everything incl. disassembly (seeded): make regen-full OUT=DIR
+	MODE=full bash scripts/20-regen-recomp.sh "$(OUT)"
+
+.PHONY: gen-diff
+gen-diff: ## Regenerate into OUT and diff against the in-tree generated sources (finds hand edits).
+	bash scripts/20-regen-recomp.sh "$(OUT)"
+	-diff -ru recomp/game/src/recomp/gen "$(OUT)"
+
+.PHONY: gen-sync
+gen-sync: ## Replace the in-tree generated sources with a freshly generated OUT.
+	bash scripts/20-regen-recomp.sh "$(OUT)"
+	rm -f recomp/game/src/recomp/gen/*.c recomp/game/src/recomp/gen/*.h
+	cp "$(OUT)"/*.c "$(OUT)"/*.h recomp/game/src/recomp/gen/
+
 # ── build & test ────────────────────────────────────────────────────────
 .PHONY: build
 build: ## Build ghost.exe from the recompiled sources.
@@ -74,6 +100,10 @@ clean: ## Remove build output (keeps generated sources).
 help: ## List the targets.
 	@echo "targets:"
 	@echo "  launch         launch the game for manual testing (default)"
+	@echo "  regen          regenerate recompiled C into OUT (reuses analysis)"
+	@echo "  regen-full     regenerate incl. disassembly (seeded)"
+	@echo "  gen-diff       regenerate into OUT + diff vs in-tree gen (find hand edits)"
+	@echo "  gen-sync       replace in-tree gen with freshly generated OUT"
 	@echo "  build          build ghost.exe"
 	@echo "  test           run the full test suite"
 	@echo "  test-input     input tests only"

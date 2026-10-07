@@ -10,13 +10,13 @@
   "source": "Ghost.map (pub+static, with Lib:Object) + Ghost.pdb (modules/files)"
  },
  "coverage": {
-  "functions_detected": 17321,
-  "functions_named_from_map": 16128,
-  "functions_with_source_file": 9067,
-  "functions_with_source_direct": 8188,
-  "functions_with_source_interpolated": 879,
-  "named_percent": 93.11,
-  "sourced_percent": 52.35,
+  "functions_detected": 17236,
+  "functions_named_from_map": 16131,
+  "functions_with_source_file": 9006,
+  "functions_with_source_direct": 8190,
+  "functions_with_source_interpolated": 816,
+  "named_percent": 93.59,
+  "sourced_percent": 52.25,
   "distinct_source_files": 222
  },
  "functions": {
@@ -516,16 +516,6 @@
    "object": "vui.obj",
    "source_file": "c:/star/code/game/ui/vui.cpp",
    "source_origin": "direct"
-  },
-  "0x000136CE": {
-   "va": "0x000136CE",
-   "end": "0x000136F0",
-   "size": 34,
-   "section": ".text",
-   "detected": true,
-   "name": "sub_000136CE",
-   "source_file": "c:/star/code/game/ui/vui.cpp",
-   "source_origin": "interpolated"
   },
   "0x000136F0": {
    "va": "0x000136F0",
@@ -8125,16 +8115,6 @@
    "source_file": "c:/star/code/game/ui/vuiminimap.cpp",
    "source_origin": "interpolated"
   },
-  "0x0002A2B2": {
-   "va": "0x0002A2B2",
-   "end": "0x0002A2E0",
-   "size": 46,
-   "section": ".text",
-   "detected": true,
-   "name": "sub_0002A2B2",
-   "source_file": "c:/star/code/game/ui/vuiminimap.cpp",
-   "source_origin": "interpolated"
-  },
   "0x0002A2E0": {
    "va": "0x0002A2E0",
    "end": "0x0002A42F",
@@ -9164,16 +9144,6 @@
    "section": ".text",
    "detected": true,
    "name": "sub_0002E59E",
-   "source_file": "c:/star/code/game/ui/vuiplayer.cpp",
-   "source_origin": "interpolated"
-  },
-  "0x0002E5B2": {
-   "va": "0x0002E5B2",
-   "end": "0x0002E5D0",
-   "size": 30,
-   "section": ".text",
-   "detected": true,
-   "name": "sub_0002E5B2",
    "source_file": "c:/star/code/game/ui/vuiplayer.cpp",
    "source_origin": "interpolated"
   },
@@ -10386,16 +10356,6 @@
    "object": "vuiTarget.obj",
    "source_file": "c:/star/code/game/ui/vuitarget.cpp",
    "source_origin": "direct"
-  },
-  "0x000310EE": {
-   "va": "0x000310EE",
-   "end": "0x00031110",
-   "size": 34,
-   "section": ".text",
-   "detected": true,
-   "name": "sub_000310EE",
-   "source_file": "c:/star/code/game/ui/vuitarget.cpp",
-   "source_origin": "interpolated"
   },
   "0x00031110": {
    "va": "0x00031110",
@@ -13295,16 +13255,6 @@
    "source_file": "c:/star/code/game/world/worldrenderdebug.cpp",
    "source_origin": "direct"
   },
-  "0x0003C6BA": {
-   "va": "0x0003C6BA",
-   "end": "0x0003C6F0",
-   "size": 54,
-   "section": ".text",
-   "detected": true,
-   "name": "sub_0003C6BA",
-   "source_file": "c:/star/code/game/world/worldrenderdebug.cpp",
-   "source_origin": "interpolated"
-  },
   "0x0003C6F0": {
    "va": "0x0003C6F0",
    "end": "0x0003C72B",
@@ -14203,16 +14153,6 @@
    "section": ".text",
    "detected": true,
    "name": "sub_000431D6",
-   "source_file": "c:/star/code/game/world/worldrenderdebug.cpp",
-   "source_origin": "interpolated"
-  },
-  "0x000433AA": {
-   "va": "0x000433AA",
-   "end": "0x000433F0",
-   "size": 70,
-   "section": ".text",
-   "detected": true,
-   "name": "sub_000433AA",
    "source_file": "c:/star/code/game/world/worldrenderdebug.cpp",
    "source_origin": "interpolated"
   },
@@ -17973,14 +17913,6 @@
    "source_file": "c:/star/code/game/main/divx/vidplayerxb.cpp",
    "source_origin": "direct"
   },
-  "0x0004F88A": {
-   "va": "0x0004F88A",
-   "end": "0x0004F8A1",
-   "size": 23,
-   "section": ".text",
-   "detected": true,
-   "name": "sub_0004F88A"
-  },
   "0x0004F8B0": {
    "va": "0x0004F8B0",
    "end": "0x0004F8C9",
@@ -18587,20 +18519,10 @@
    "source_file": "c:/star/code/game/sim/simactor.cpp",
    "source_origin": "interpolated"
   },
-  "0x000508D2": {
-   "va": "0x000508D2",
-   "end": "0x0005093A",
-   "size": 104,
-   "section": ".text",
-   "detected": true,
-   "name": "sub_000508D2",
-   "source_file": "c:/star/code/game/sim/simactor.cpp",
-   "source_origin": "interpolated"
-  },
   "0x000508F0": {
    "va": "0x000508F0",
-   "end": "0x0005093A",
-   "size": 74,
+   "end": "0x00050940",
+   "size": 80,
    "section": ".text",
    "detected": true,
    "mangled": "?DFXFall@tActor@@UAE?AW4eActorEffectResult@@PAVtThing@@W4eDamageSource@@W4eDamageType@@MPAUXGVECTOR3@@3I@Z",
@@ -21495,16 +21417,6 @@
    "section": ".text",
    "detected": true,
    "name": "sub_0005C9F7",
-   "source_file": "c:/star/code/game/sim/simcamera.cpp",
-   "source_origin": "interpolated"
-  },
-  "0x0005CAF2": {
-   "va": "0x0005CAF2",
-   "end": "0x0005CB10",
-   "size": 30,
-   "section": ".text",
-   "detected": true,
-   "name": "sub_0005CAF2",
    "source_file": "c:/star/code/game/sim/simcamera.cpp",
    "source_origin": "interpolated"
   },
@@ -24597,6 +24509,19 @@
    "source_file": "c:/star/code/game/sim/simcontrol.cpp",
    "source_origin": "direct"
   },
+  "0x00067F10": {
+   "va": "0x00067F10",
+   "end": "0x00068047",
+   "size": 311,
+   "section": ".text",
+   "detected": true,
+   "mangled": "?DismountStart@cPlayerControl@@AAEHI@Z",
+   "demangled": "private: int __thiscall cPlayerControl::DismountStart(unsigned int)",
+   "name": "cPlayerControl_DismountStart_00067F10",
+   "object": "simControl.obj",
+   "source_file": "c:/star/code/game/sim/simcontrol.cpp",
+   "source_origin": "direct"
+  },
   "0x00068050": {
    "va": "0x00068050",
    "end": "0x00068090",
@@ -25262,20 +25187,10 @@
    "source_file": "c:/star/code/game/sim/simcontrol.cpp",
    "source_origin": "interpolated"
   },
-  "0x0006C226": {
-   "va": "0x0006C226",
-   "end": "0x0006C38D",
-   "size": 359,
-   "section": ".text",
-   "detected": true,
-   "name": "sub_0006C226",
-   "source_file": "c:/star/code/game/sim/simcontrol.cpp",
-   "source_origin": "interpolated"
-  },
   "0x0006C260": {
    "va": "0x0006C260",
-   "end": "0x0006C38D",
-   "size": 301,
+   "end": "0x0006C390",
+   "size": 304,
    "section": ".text",
    "detected": true,
    "mangled": "?StartState@cPlayerControl@@UAEHI@Z",
@@ -25287,8 +25202,8 @@
   },
   "0x0006C2F4": {
    "va": "0x0006C2F4",
-   "end": "0x0006C38D",
-   "size": 153,
+   "end": "0x0006C390",
+   "size": 156,
    "section": ".text",
    "detected": true,
    "name": "sub_0006C2F4",
@@ -27594,20 +27509,10 @@
    "source_file": "c:/star/code/game/sim/simcontrolcombat.cpp",
    "source_origin": "interpolated"
   },
-  "0x0007B74E": {
-   "va": "0x0007B74E",
-   "end": "0x0007B792",
-   "size": 68,
-   "section": ".text",
-   "detected": true,
-   "name": "sub_0007B74E",
-   "source_file": "c:/star/code/game/sim/simcontrolcombat.cpp",
-   "source_origin": "interpolated"
-  },
   "0x0007B770": {
    "va": "0x0007B770",
-   "end": "0x0007B792",
-   "size": 34,
+   "end": "0x0007B7A0",
+   "size": 48,
    "section": ".text",
    "detected": true,
    "mangled": "?CanDeathBlow@cPlayerControl@@UAEHXZ",
@@ -27790,15 +27695,18 @@
    "source_file": "c:/star/code/game/sim/simcontrolcombat.cpp",
    "source_origin": "direct"
   },
-  "0x0007D456": {
-   "va": "0x0007D456",
+  "0x0007D4B0": {
+   "va": "0x0007D4B0",
    "end": "0x0007D7E0",
-   "size": 906,
+   "size": 816,
    "section": ".text",
    "detected": true,
-   "name": "sub_0007D456",
+   "mangled": "?GunCrouchStart@cPlayerControl@@AAEHI@Z",
+   "demangled": "private: int __thiscall cPlayerControl::GunCrouchStart(unsigned int)",
+   "name": "cPlayerControl_GunCrouchStart_0007D4B0",
+   "object": "simControlCombat.obj",
    "source_file": "c:/star/code/game/sim/simcontrolcombat.cpp",
-   "source_origin": "interpolated"
+   "source_origin": "direct"
   },
   "0x0007D4B7": {
    "va": "0x0007D4B7",
@@ -27881,16 +27789,6 @@
    "object": "simControlCombat.obj",
    "source_file": "c:/star/code/game/sim/simcontrolcombat.cpp",
    "source_origin": "direct"
-  },
-  "0x0007E58A": {
-   "va": "0x0007E58A",
-   "end": "0x0007E5F0",
-   "size": 102,
-   "section": ".text",
-   "detected": true,
-   "name": "sub_0007E58A",
-   "source_file": "c:/star/code/game/sim/simcontrolcombat.cpp",
-   "source_origin": "interpolated"
   },
   "0x0007E5F0": {
    "va": "0x0007E5F0",
@@ -28254,15 +28152,18 @@
    "source_file": "c:/star/code/game/sim/simcontrolsniper.cpp",
    "source_origin": "direct"
   },
-  "0x0007FD66": {
-   "va": "0x0007FD66",
+  "0x0007FD90": {
+   "va": "0x0007FD90",
    "end": "0x0007FF05",
-   "size": 415,
+   "size": 373,
    "section": ".text",
    "detected": true,
-   "name": "sub_0007FD66",
+   "mangled": "?SniperHangStop@cPlayerControl@@AAEHI@Z",
+   "demangled": "private: int __thiscall cPlayerControl::SniperHangStop(unsigned int)",
+   "name": "cPlayerControl_SniperHangStop_0007FD90",
+   "object": "simControlSniper.obj",
    "source_file": "c:/star/code/game/sim/simcontrolsniper.cpp",
-   "source_origin": "interpolated"
+   "source_origin": "direct"
   },
   "0x0007FF02": {
    "va": "0x0007FF02",
@@ -29930,16 +29831,6 @@
    "object": "simControlSpecial.obj",
    "source_file": "c:/star/code/game/sim/simcontrolspecial.cpp",
    "source_origin": "direct"
-  },
-  "0x00086AC6": {
-   "va": "0x00086AC6",
-   "end": "0x00086AE0",
-   "size": 26,
-   "section": ".text",
-   "detected": true,
-   "name": "sub_00086AC6",
-   "source_file": "c:/star/code/game/sim/simcontrolspecial.cpp",
-   "source_origin": "interpolated"
   },
   "0x00086AE0": {
    "va": "0x00086AE0",
@@ -32865,16 +32756,6 @@
    "object": "simCutscene.obj",
    "source_file": "c:/star/code/game/sim/simcutscene.cpp",
    "source_origin": "direct"
-  },
-  "0x00093D02": {
-   "va": "0x00093D02",
-   "end": "0x00093D20",
-   "size": 30,
-   "section": ".text",
-   "detected": true,
-   "name": "sub_00093D02",
-   "source_file": "c:/star/code/game/sim/simcutscene.cpp",
-   "source_origin": "interpolated"
   },
   "0x00093D20": {
    "va": "0x00093D20",
@@ -37561,16 +37442,6 @@
    "source_file": "c:/star/code/game/sim/simphysics.cpp",
    "source_origin": "interpolated"
   },
-  "0x000A7C86": {
-   "va": "0x000A7C86",
-   "end": "0x000A7CD0",
-   "size": 74,
-   "section": ".text",
-   "detected": true,
-   "name": "sub_000A7C86",
-   "source_file": "c:/star/code/game/sim/simphysics.cpp",
-   "source_origin": "interpolated"
-  },
   "0x000A7CD0": {
    "va": "0x000A7CD0",
    "end": "0x000A862B",
@@ -37814,16 +37685,6 @@
    "object": "simPhysics.obj",
    "source_file": "c:/star/code/game/sim/simphysics.cpp",
    "source_origin": "direct"
-  },
-  "0x000ACD06": {
-   "va": "0x000ACD06",
-   "end": "0x000ACD50",
-   "size": 74,
-   "section": ".text",
-   "detected": true,
-   "name": "sub_000ACD06",
-   "source_file": "c:/star/code/game/sim/simphysics.cpp",
-   "source_origin": "interpolated"
   },
   "0x000ACD50": {
    "va": "0x000ACD50",
@@ -39525,16 +39386,6 @@
    "source_file": "c:/star/code/game/sim/simthing.cpp",
    "source_origin": "direct"
   },
-  "0x000B43D6": {
-   "va": "0x000B43D6",
-   "end": "0x000B4400",
-   "size": 42,
-   "section": ".text",
-   "detected": true,
-   "name": "sub_000B43D6",
-   "source_file": "c:/star/code/game/sim/simthing.cpp",
-   "source_origin": "interpolated"
-  },
   "0x000B4400": {
    "va": "0x000B4400",
    "end": "0x000B4A85",
@@ -39843,16 +39694,6 @@
    "object": "script.obj",
    "source_file": "c:/star/code/game/script/script.cpp",
    "source_origin": "direct"
-  },
-  "0x000B620A": {
-   "va": "0x000B620A",
-   "end": "0x000B6230",
-   "size": 38,
-   "section": ".text",
-   "detected": true,
-   "name": "sub_000B620A",
-   "source_file": "c:/star/code/game/script/script.cpp",
-   "source_origin": "interpolated"
   },
   "0x000B6230": {
    "va": "0x000B6230",
@@ -41025,16 +40866,6 @@
    "section": ".text",
    "detected": true,
    "name": "sub_000B7D84",
-   "source_file": "c:/star/code/game/script/scriptmain.cpp",
-   "source_origin": "interpolated"
-  },
-  "0x000B7DAE": {
-   "va": "0x000B7DAE",
-   "end": "0x000B7DE9",
-   "size": 59,
-   "section": ".text",
-   "detected": true,
-   "name": "sub_000B7DAE",
    "source_file": "c:/star/code/game/script/scriptmain.cpp",
    "source_origin": "interpolated"
   },
@@ -51306,16 +51137,6 @@
    "source_file": "c:/star/code/game/ai/aidebug.cpp",
    "source_origin": "direct"
   },
-  "0x000C711A": {
-   "va": "0x000C711A",
-   "end": "0x000C7140",
-   "size": 38,
-   "section": ".text",
-   "detected": true,
-   "name": "sub_000C711A",
-   "source_file": "c:/star/code/game/ai/aidebug.cpp",
-   "source_origin": "interpolated"
-  },
   "0x000C7140": {
    "va": "0x000C7140",
    "end": "0x000C7174",
@@ -51341,16 +51162,6 @@
    "object": "aiDebug.obj",
    "source_file": "c:/star/code/game/ai/aidebug.cpp",
    "source_origin": "direct"
-  },
-  "0x000C722E": {
-   "va": "0x000C722E",
-   "end": "0x000C72A6",
-   "size": 120,
-   "section": ".text",
-   "detected": true,
-   "name": "sub_000C722E",
-   "source_file": "c:/star/code/game/ai/aidebug.cpp",
-   "source_origin": "interpolated"
   },
   "0x000C72A6": {
    "va": "0x000C72A6",
@@ -51382,26 +51193,6 @@
    "source_file": "c:/star/code/game/ai/aidebug.cpp",
    "source_origin": "interpolated"
   },
-  "0x000C72B8": {
-   "va": "0x000C72B8",
-   "end": "0x000C72BE",
-   "size": 6,
-   "section": ".text",
-   "detected": true,
-   "name": "sub_000C72B8",
-   "source_file": "c:/star/code/game/ai/aidebug.cpp",
-   "source_origin": "interpolated"
-  },
-  "0x000C72BE": {
-   "va": "0x000C72BE",
-   "end": "0x000C72C4",
-   "size": 6,
-   "section": ".text",
-   "detected": true,
-   "name": "sub_000C72BE",
-   "source_file": "c:/star/code/game/ai/aidebug.cpp",
-   "source_origin": "interpolated"
-  },
   "0x000C72E0": {
    "va": "0x000C72E0",
    "end": "0x000C7314",
@@ -51428,16 +51219,6 @@
    "source_file": "c:/star/code/game/ai/aidebug.cpp",
    "source_origin": "direct"
   },
-  "0x000C735E": {
-   "va": "0x000C735E",
-   "end": "0x000C7370",
-   "size": 18,
-   "section": ".text",
-   "detected": true,
-   "name": "sub_000C735E",
-   "source_file": "c:/star/code/game/ai/aidebug.cpp",
-   "source_origin": "interpolated"
-  },
   "0x000C7370": {
    "va": "0x000C7370",
    "end": "0x000C73B6",
@@ -51450,16 +51231,6 @@
    "object": "aiDebug.obj",
    "source_file": "c:/star/code/game/ai/aidebug.cpp",
    "source_origin": "direct"
-  },
-  "0x000C73B6": {
-   "va": "0x000C73B6",
-   "end": "0x000C7418",
-   "size": 98,
-   "section": ".text",
-   "detected": true,
-   "name": "sub_000C73B6",
-   "source_file": "c:/star/code/game/ai/aidebug.cpp",
-   "source_origin": "interpolated"
   },
   "0x000C7420": {
    "va": "0x000C7420",
@@ -51948,16 +51719,6 @@
    "object": "aiDebug.obj",
    "source_file": "c:/star/code/game/ai/aidebug.cpp",
    "source_origin": "direct"
-  },
-  "0x000C936A": {
-   "va": "0x000C936A",
-   "end": "0x000C93CA",
-   "size": 96,
-   "section": ".text",
-   "detected": true,
-   "name": "sub_000C936A",
-   "source_file": "c:/star/code/game/ai/aidebug.cpp",
-   "source_origin": "interpolated"
   },
   "0x000C93D0": {
    "va": "0x000C93D0",
@@ -53874,20 +53635,10 @@
    "source_file": "c:/star/code/game/ai/aimain.cpp",
    "source_origin": "direct"
   },
-  "0x000CF2FE": {
-   "va": "0x000CF2FE",
-   "end": "0x000CF406",
-   "size": 264,
-   "section": ".text",
-   "detected": true,
-   "name": "sub_000CF2FE",
-   "source_file": "c:/star/code/game/ai/aimain.cpp",
-   "source_origin": "interpolated"
-  },
   "0x000CF400": {
    "va": "0x000CF400",
-   "end": "0x000CF406",
-   "size": 6,
+   "end": "0x000CF410",
+   "size": 16,
    "section": ".text",
    "detected": true,
    "mangled": "?GetMem@cAIInstance@@UAEIXZ",
@@ -72488,8 +72239,8 @@
   },
   "0x00105A60": {
    "va": "0x00105A60",
-   "end": "0x00105B66",
-   "size": 262,
+   "end": "0x00105BA0",
+   "size": 320,
    "section": ".text",
    "detected": true,
    "mangled": "?UpdateControllerMode@cAIBaseBossBrain@@MAEXXZ",
@@ -72501,8 +72252,8 @@
   },
   "0x00105AE0": {
    "va": "0x00105AE0",
-   "end": "0x00105B66",
-   "size": 134,
+   "end": "0x00105BA0",
+   "size": 192,
    "section": ".text",
    "detected": true,
    "mangled": "?StopControllerMode@cAIBaseBossBrain@@MAEXXZ",
@@ -72512,20 +72263,10 @@
    "source_file": "c:/star/code/game/ai/aiclassbasebossbrain.cpp",
    "source_origin": "direct"
   },
-  "0x00105B66": {
-   "va": "0x00105B66",
-   "end": "0x00105B98",
-   "size": 50,
-   "section": ".text",
-   "detected": true,
-   "name": "sub_00105B66",
-   "source_file": "c:/star/code/game/ai/aiclassbasebossbrain.cpp",
-   "source_origin": "interpolated"
-  },
   "0x00105B90": {
    "va": "0x00105B90",
-   "end": "0x00105B98",
-   "size": 8,
+   "end": "0x00105BA0",
+   "size": 16,
    "section": ".text",
    "detected": true,
    "mangled": "?ForceStopController@cAIBaseBossBrain@@MAEXXZ",
@@ -72678,20 +72419,10 @@
    "source_file": "c:/star/code/game/ai/aiclassbasebossbrain.cpp",
    "source_origin": "direct"
   },
-  "0x00105DCE": {
-   "va": "0x00105DCE",
-   "end": "0x00105E06",
-   "size": 56,
-   "section": ".text",
-   "detected": true,
-   "name": "sub_00105DCE",
-   "source_file": "c:/star/code/game/ai/aiclassbasebossbrain.cpp",
-   "source_origin": "interpolated"
-  },
   "0x00105E00": {
    "va": "0x00105E00",
-   "end": "0x00105E06",
-   "size": 6,
+   "end": "0x00105E10",
+   "size": 16,
    "section": ".text",
    "detected": true,
    "mangled": "?GetMem@cAIBaseBossBrain@@MAEIXZ",
@@ -73067,8 +72798,8 @@
   },
   "0x00106FA0": {
    "va": "0x00106FA0",
-   "end": "0x00107142",
-   "size": 418,
+   "end": "0x00107190",
+   "size": 496,
    "section": ".text",
    "detected": true,
    "mangled": "?UpdateControllerMode@cAIBaseBossGoliath@@MAEXXZ",
@@ -73080,8 +72811,8 @@
   },
   "0x00107060": {
    "va": "0x00107060",
-   "end": "0x00107142",
-   "size": 226,
+   "end": "0x00107190",
+   "size": 304,
    "section": ".text",
    "detected": true,
    "mangled": "?StopControllerMode@cAIBaseBossGoliath@@MAEXXZ",
@@ -73091,20 +72822,10 @@
    "source_file": "c:/star/code/game/ai/aiclassbasebossgoliath.cpp",
    "source_origin": "direct"
   },
-  "0x00107142": {
-   "va": "0x00107142",
-   "end": "0x00107188",
-   "size": 70,
-   "section": ".text",
-   "detected": true,
-   "name": "sub_00107142",
-   "source_file": "c:/star/code/game/ai/aiclassbasebossgoliath.cpp",
-   "source_origin": "interpolated"
-  },
   "0x00107180": {
    "va": "0x00107180",
-   "end": "0x00107188",
-   "size": 8,
+   "end": "0x00107190",
+   "size": 16,
    "section": ".text",
    "detected": true,
    "mangled": "?ForceStopController@cAIBaseBossGoliath@@MAEXXZ",
@@ -73334,16 +73055,6 @@
    "object": "aiClassBaseBossGoliath.obj",
    "source_file": "c:/star/code/game/ai/aiclassbasebossgoliath.cpp",
    "source_origin": "direct"
-  },
-  "0x001074D2": {
-   "va": "0x001074D2",
-   "end": "0x00107520",
-   "size": 78,
-   "section": ".text",
-   "detected": true,
-   "name": "sub_001074D2",
-   "source_file": "c:/star/code/game/ai/aiclassbasebossgoliath.cpp",
-   "source_origin": "interpolated"
   },
   "0x00107520": {
    "va": "0x00107520",
@@ -74147,8 +73858,8 @@
   },
   "0x00109580": {
    "va": "0x00109580",
-   "end": "0x00109606",
-   "size": 134,
+   "end": "0x00109640",
+   "size": 192,
    "section": ".text",
    "detected": true,
    "mangled": "?StopControllerMode@cAIBaseFlyer@@MAEXXZ",
@@ -74158,20 +73869,10 @@
    "source_file": "c:/star/code/game/ai/aiclassbaseflyer.cpp",
    "source_origin": "direct"
   },
-  "0x00109606": {
-   "va": "0x00109606",
-   "end": "0x00109638",
-   "size": 50,
-   "section": ".text",
-   "detected": true,
-   "name": "sub_00109606",
-   "source_file": "c:/star/code/game/ai/aiclassbaseflyer.cpp",
-   "source_origin": "interpolated"
-  },
   "0x00109630": {
    "va": "0x00109630",
-   "end": "0x00109638",
-   "size": 8,
+   "end": "0x00109640",
+   "size": 16,
    "section": ".text",
    "detected": true,
    "mangled": "?ForceStopController@cAIBaseFlyer@@MAEXXZ",
@@ -74310,16 +74011,6 @@
    "object": "aiClassBaseFlyer.obj",
    "source_file": "c:/star/code/game/ai/aiclassbaseflyer.cpp",
    "source_origin": "direct"
-  },
-  "0x00109852": {
-   "va": "0x00109852",
-   "end": "0x00109880",
-   "size": 46,
-   "section": ".text",
-   "detected": true,
-   "name": "sub_00109852",
-   "source_file": "c:/star/code/game/ai/aiclassbaseflyer.cpp",
-   "source_origin": "interpolated"
   },
   "0x00109880": {
    "va": "0x00109880",
@@ -74786,20 +74477,10 @@
    "source_file": "c:/star/code/game/ai/aiclassbasevehicle.cpp",
    "source_origin": "direct"
   },
-  "0x0010AA36": {
-   "va": "0x0010AA36",
-   "end": "0x0010AA66",
-   "size": 48,
-   "section": ".text",
-   "detected": true,
-   "name": "sub_0010AA36",
-   "source_file": "c:/star/code/game/ai/aiclassbasevehicle.cpp",
-   "source_origin": "interpolated"
-  },
   "0x0010AA60": {
    "va": "0x0010AA60",
-   "end": "0x0010AA66",
-   "size": 6,
+   "end": "0x0010AA70",
+   "size": 16,
    "section": ".text",
    "detected": true,
    "mangled": "?GetMem@cAIBaseVehicle@@MAEIXZ",
@@ -77047,16 +76728,6 @@
    "source_file": "c:/star/code/game/ai/aiclassbasewalker.cpp",
    "source_origin": "direct"
   },
-  "0x00112836": {
-   "va": "0x00112836",
-   "end": "0x00112850",
-   "size": 26,
-   "section": ".text",
-   "detected": true,
-   "name": "sub_00112836",
-   "source_file": "c:/star/code/game/ai/aiclassbasewalker.cpp",
-   "source_origin": "interpolated"
-  },
   "0x00112850": {
    "va": "0x00112850",
    "end": "0x001128DB",
@@ -77750,20 +77421,10 @@
    "source_file": "c:/star/code/game/ai/aiclassbasewalkercontrol.cpp",
    "source_origin": "interpolated"
   },
-  "0x00116E42": {
-   "va": "0x00116E42",
-   "end": "0x00116F38",
-   "size": 246,
-   "section": ".text",
-   "detected": true,
-   "name": "sub_00116E42",
-   "source_file": "c:/star/code/game/ai/aiclassbasewalkercontrol.cpp",
-   "source_origin": "interpolated"
-  },
   "0x00116F30": {
    "va": "0x00116F30",
-   "end": "0x00116F38",
-   "size": 8,
+   "end": "0x00116F40",
+   "size": 16,
    "section": ".text",
    "detected": true,
    "mangled": "?ForceStopController@cAIBaseWalker@@UAEXXZ",
@@ -80205,20 +79866,10 @@
    "source_file": "c:/star/code/game/ai/aiclassbasewalkermove.cpp",
    "source_origin": "direct"
   },
-  "0x0011EF3E": {
-   "va": "0x0011EF3E",
-   "end": "0x0011F411",
-   "size": 1235,
-   "section": ".text",
-   "detected": true,
-   "name": "sub_0011EF3E",
-   "source_file": "c:/star/code/game/ai/aiclassbasewalkermove.cpp",
-   "source_origin": "interpolated"
-  },
   "0x0011EF60": {
    "va": "0x0011EF60",
-   "end": "0x0011F411",
-   "size": 1201,
+   "end": "0x0011F420",
+   "size": 1216,
    "section": ".text",
    "detected": true,
    "mangled": "?BLKSolutionSmallDetour@cAIBaseWalker@@MAEHMPAUXGVECTOR3@@I@Z",
@@ -80230,8 +79881,8 @@
   },
   "0x0011F0DC": {
    "va": "0x0011F0DC",
-   "end": "0x0011F411",
-   "size": 821,
+   "end": "0x0011F420",
+   "size": 836,
    "section": ".text",
    "detected": true,
    "name": "sub_0011F0DC",
@@ -81223,16 +80874,6 @@
    "object": "gameActor.obj",
    "source_file": "c:/star/code/game/gamelib/gameactor.cpp",
    "source_origin": "direct"
-  },
-  "0x0012394A": {
-   "va": "0x0012394A",
-   "end": "0x00123A50",
-   "size": 262,
-   "section": ".text",
-   "detected": true,
-   "name": "sub_0012394A",
-   "source_file": "c:/star/code/game/gamelib/gameactor.cpp",
-   "source_origin": "interpolated"
   },
   "0x00123A50": {
    "va": "0x00123A50",
@@ -86887,16 +86528,6 @@
    "source_file": "c:/star/code/game/gamelib/gameobject.cpp",
    "source_origin": "direct"
   },
-  "0x0013252E": {
-   "va": "0x0013252E",
-   "end": "0x00132630",
-   "size": 258,
-   "section": ".text",
-   "detected": true,
-   "name": "sub_0013252E",
-   "source_file": "c:/star/code/game/gamelib/gameobject.cpp",
-   "source_origin": "interpolated"
-  },
   "0x00132630": {
    "va": "0x00132630",
    "end": "0x0013275E",
@@ -89293,16 +88924,6 @@
    "source_file": "c:/star/code/game/gamelib/gameplayer.cpp",
    "source_origin": "interpolated"
   },
-  "0x00139FFA": {
-   "va": "0x00139FFA",
-   "end": "0x0013A020",
-   "size": 38,
-   "section": ".text",
-   "detected": true,
-   "name": "sub_00139FFA",
-   "source_file": "c:/star/code/game/gamelib/gameplayer.cpp",
-   "source_origin": "interpolated"
-  },
   "0x0013A020": {
    "va": "0x0013A020",
    "end": "0x0013A075",
@@ -90170,16 +89791,6 @@
    "object": "gameProjectile.obj",
    "source_file": "c:/star/code/game/gamelib/gameprojectile.cpp",
    "source_origin": "direct"
-  },
-  "0x0013D852": {
-   "va": "0x0013D852",
-   "end": "0x0013D880",
-   "size": 46,
-   "section": ".text",
-   "detected": true,
-   "name": "sub_0013D852",
-   "source_file": "c:/star/code/game/gamelib/gameprojectile.cpp",
-   "source_origin": "interpolated"
   },
   "0x0013D880": {
    "va": "0x0013D880",
@@ -92320,16 +91931,6 @@
    "source_file": "c:/star/code/game/gamelib/gamexboxmixer.cpp",
    "source_origin": "direct"
   },
-  "0x001461F2": {
-   "va": "0x001461F2",
-   "end": "0x00146210",
-   "size": 30,
-   "section": ".text",
-   "detected": true,
-   "name": "sub_001461F2",
-   "source_file": "c:/star/code/game/gamelib/gamexboxmixer.cpp",
-   "source_origin": "interpolated"
-  },
   "0x00146210": {
    "va": "0x00146210",
    "end": "0x00146261",
@@ -92941,16 +92542,6 @@
    "source_file": "c:/star/code/game/shell/shell.cpp",
    "source_origin": "direct"
   },
-  "0x00147BF2": {
-   "va": "0x00147BF2",
-   "end": "0x00147C80",
-   "size": 142,
-   "section": ".text",
-   "detected": true,
-   "name": "sub_00147BF2",
-   "source_file": "c:/star/code/game/shell/shell.cpp",
-   "source_origin": "interpolated"
-  },
   "0x00147C80": {
    "va": "0x00147C80",
    "end": "0x00147DAA",
@@ -93166,16 +92757,6 @@
    "section": ".text",
    "detected": true,
    "name": "sub_001486BA",
-   "source_file": "c:/star/code/game/shell/shell.cpp",
-   "source_origin": "interpolated"
-  },
-  "0x001487AE": {
-   "va": "0x001487AE",
-   "end": "0x001487C0",
-   "size": 18,
-   "section": ".text",
-   "detected": true,
-   "name": "sub_001487AE",
    "source_file": "c:/star/code/game/shell/shell.cpp",
    "source_origin": "interpolated"
   },
@@ -95985,20 +95566,10 @@
    "source_file": "c:/star/code/game/shell/shellhacksys.cpp",
    "source_origin": "direct"
   },
-  "0x0015412A": {
-   "va": "0x0015412A",
-   "end": "0x0015416E",
-   "size": 68,
-   "section": ".text",
-   "detected": true,
-   "name": "sub_0015412A",
-   "source_file": "c:/star/code/game/shell/shellhacksys.cpp",
-   "source_origin": "interpolated"
-  },
   "0x00154150": {
    "va": "0x00154150",
-   "end": "0x0015416E",
-   "size": 30,
+   "end": "0x00154170",
+   "size": 32,
    "section": ".text",
    "detected": true,
    "mangled": "?SetState@cHackGame@@MAEXEM@Z",
@@ -98424,14 +97995,6 @@
    "source_file": "c:/star/code/game/shell/shellmenuitem.cpp",
    "source_origin": "direct"
   },
-  "0x0015E262": {
-   "va": "0x0015E262",
-   "end": "0x0015E2B0",
-   "size": 78,
-   "section": ".text",
-   "detected": true,
-   "name": "sub_0015E262"
-  },
   "0x0015E2B0": {
    "va": "0x0015E2B0",
    "end": "0x0015E2E4",
@@ -100668,20 +100231,10 @@
    "source_file": "c:/star/code/game/effect/effectbillboard.cpp",
    "source_origin": "direct"
   },
-  "0x00165852": {
-   "va": "0x00165852",
-   "end": "0x001659A3",
-   "size": 337,
-   "section": ".text",
-   "detected": true,
-   "name": "sub_00165852",
-   "source_file": "c:/star/code/game/effect/effectbillboard.cpp",
-   "source_origin": "interpolated"
-  },
   "0x001658E0": {
    "va": "0x001658E0",
-   "end": "0x001659A3",
-   "size": 195,
+   "end": "0x001659B0",
+   "size": 208,
    "section": ".text",
    "detected": true,
    "mangled": "?SetupRender@cEffectBillboard@@MAEXXZ",
@@ -100833,16 +100386,6 @@
    "object": "effectCalldown.obj",
    "source_file": "c:/star/code/game/effect/effectcalldown.cpp",
    "source_origin": "direct"
-  },
-  "0x0016736E": {
-   "va": "0x0016736E",
-   "end": "0x001673E0",
-   "size": 114,
-   "section": ".text",
-   "detected": true,
-   "name": "sub_0016736E",
-   "source_file": "c:/star/code/game/effect/effectcalldown.cpp",
-   "source_origin": "interpolated"
   },
   "0x001673E0": {
    "va": "0x001673E0",
@@ -101218,20 +100761,10 @@
    "source_file": "c:/star/code/game/effect/effectenergy.cpp",
    "source_origin": "direct"
   },
-  "0x00169D5A": {
-   "va": "0x00169D5A",
-   "end": "0x0016A0C5",
-   "size": 875,
-   "section": ".text",
-   "detected": true,
-   "name": "sub_00169D5A",
-   "source_file": "c:/star/code/game/effect/effectenergy.cpp",
-   "source_origin": "interpolated"
-  },
   "0x00169E00": {
    "va": "0x00169E00",
-   "end": "0x0016A0C5",
-   "size": 709,
+   "end": "0x0016A0D0",
+   "size": 720,
    "section": ".text",
    "detected": true,
    "mangled": "?Render@cEffectChargeUp@@UAEXXZ",
@@ -101253,16 +100786,6 @@
    "object": "effectEnergy.obj",
    "source_file": "c:/star/code/game/effect/effectenergy.cpp",
    "source_origin": "direct"
-  },
-  "0x0016A406": {
-   "va": "0x0016A406",
-   "end": "0x0016A4BA",
-   "size": 180,
-   "section": ".text",
-   "detected": true,
-   "name": "sub_0016A406",
-   "source_file": "c:/star/code/game/effect/effectenergy.cpp",
-   "source_origin": "interpolated"
   },
   "0x0016A4C0": {
    "va": "0x0016A4C0",
@@ -103937,16 +103460,6 @@
    "source_file": "c:/star/code/game/effect/effectlight.cpp",
    "source_origin": "interpolated"
   },
-  "0x0017973E": {
-   "va": "0x0017973E",
-   "end": "0x001797D0",
-   "size": 146,
-   "section": ".text",
-   "detected": true,
-   "name": "sub_0017973E",
-   "source_file": "c:/star/code/game/effect/effectlight.cpp",
-   "source_origin": "interpolated"
-  },
   "0x001797D0": {
    "va": "0x001797D0",
    "end": "0x0017999F",
@@ -104103,16 +103616,6 @@
    "source_file": "c:/star/code/game/effect/effectlight.cpp",
    "source_origin": "direct"
   },
-  "0x0017A98E": {
-   "va": "0x0017A98E",
-   "end": "0x0017AA30",
-   "size": 162,
-   "section": ".text",
-   "detected": true,
-   "name": "sub_0017A98E",
-   "source_file": "c:/star/code/game/effect/effectlight.cpp",
-   "source_origin": "interpolated"
-  },
   "0x0017AA30": {
    "va": "0x0017AA30",
    "end": "0x0017AE62",
@@ -104159,16 +103662,6 @@
    "section": ".text",
    "detected": true,
    "name": "sub_0017B3F4",
-   "source_file": "c:/star/code/game/effect/effectlight.cpp",
-   "source_origin": "interpolated"
-  },
-  "0x0017B60A": {
-   "va": "0x0017B60A",
-   "end": "0x0017B6A0",
-   "size": 150,
-   "section": ".text",
-   "detected": true,
-   "name": "sub_0017B60A",
    "source_file": "c:/star/code/game/effect/effectlight.cpp",
    "source_origin": "interpolated"
   },
@@ -107962,16 +107455,6 @@
    "source_file": "c:/star/code/game/effect/effectparticleshape.cpp",
    "source_origin": "interpolated"
   },
-  "0x0018749E": {
-   "va": "0x0018749E",
-   "end": "0x00187560",
-   "size": 194,
-   "section": ".text",
-   "detected": true,
-   "name": "sub_0018749E",
-   "source_file": "c:/star/code/game/effect/effectparticleshape.cpp",
-   "source_origin": "interpolated"
-  },
   "0x00187560": {
    "va": "0x00187560",
    "end": "0x0018766D",
@@ -108049,16 +107532,6 @@
    "object": "effectParticleShape.obj",
    "source_file": "c:/star/code/game/effect/effectparticleshape.cpp",
    "source_origin": "direct"
-  },
-  "0x00188016": {
-   "va": "0x00188016",
-   "end": "0x001880F0",
-   "size": 218,
-   "section": ".text",
-   "detected": true,
-   "name": "sub_00188016",
-   "source_file": "c:/star/code/game/effect/effectparticleshape.cpp",
-   "source_origin": "interpolated"
   },
   "0x001880F0": {
    "va": "0x001880F0",
@@ -108151,20 +107624,10 @@
    "source_file": "c:/star/code/game/effect/effectparticleshape.cpp",
    "source_origin": "direct"
   },
-  "0x0018892A": {
-   "va": "0x0018892A",
-   "end": "0x001889D5",
-   "size": 171,
-   "section": ".text",
-   "detected": true,
-   "name": "sub_0018892A",
-   "source_file": "c:/star/code/game/effect/effectparticleshape.cpp",
-   "source_origin": "interpolated"
-  },
   "0x001889D0": {
    "va": "0x001889D0",
-   "end": "0x001889D5",
-   "size": 5,
+   "end": "0x001889E0",
+   "size": 16,
    "section": ".text",
    "detected": true,
    "mangled": "?Free@cEffectDustShape@@UAEXXZ",
@@ -108212,16 +107675,6 @@
    "object": "effectParticleShape.obj",
    "source_file": "c:/star/code/game/effect/effectparticleshape.cpp",
    "source_origin": "direct"
-  },
-  "0x00188F06": {
-   "va": "0x00188F06",
-   "end": "0x00188F60",
-   "size": 90,
-   "section": ".text",
-   "detected": true,
-   "name": "sub_00188F06",
-   "source_file": "c:/star/code/game/effect/effectparticleshape.cpp",
-   "source_origin": "interpolated"
   },
   "0x00188F60": {
    "va": "0x00188F60",
@@ -110047,16 +109500,6 @@
    "source_file": "c:/star/code/game/effect/effectparticlesys.cpp",
    "source_origin": "direct"
   },
-  "0x00198996": {
-   "va": "0x00198996",
-   "end": "0x00198A40",
-   "size": 170,
-   "section": ".text",
-   "detected": true,
-   "name": "sub_00198996",
-   "source_file": "c:/star/code/game/effect/effectparticlesys.cpp",
-   "source_origin": "interpolated"
-  },
   "0x00198A40": {
    "va": "0x00198A40",
    "end": "0x00198ACF",
@@ -111309,20 +110752,10 @@
    "source_file": "c:/star/code/game/effect/effectplayer.cpp",
    "source_origin": "direct"
   },
-  "0x001A1086": {
-   "va": "0x001A1086",
-   "end": "0x001A1135",
-   "size": 175,
-   "section": ".text",
-   "detected": true,
-   "name": "sub_001A1086",
-   "source_file": "c:/star/code/game/effect/effectplayer.cpp",
-   "source_origin": "interpolated"
-  },
   "0x001A10A0": {
    "va": "0x001A10A0",
-   "end": "0x001A1135",
-   "size": 149,
+   "end": "0x001A1140",
+   "size": 160,
    "section": ".text",
    "detected": true,
    "mangled": "?Render@cEffectMelee@@UAEXXZ",
@@ -111370,16 +110803,6 @@
    "object": "effectPlayer.obj",
    "source_file": "c:/star/code/game/effect/effectplayer.cpp",
    "source_origin": "direct"
-  },
-  "0x001A147E": {
-   "va": "0x001A147E",
-   "end": "0x001A15DD",
-   "size": 351,
-   "section": ".text",
-   "detected": true,
-   "name": "sub_001A147E",
-   "source_file": "c:/star/code/game/effect/effectplayer.cpp",
-   "source_origin": "interpolated"
   },
   "0x001A15E0": {
    "va": "0x001A15E0",
@@ -111549,16 +110972,6 @@
    "object": "effectPsiShield.obj",
    "source_file": "c:/star/code/game/effect/effectpsishield.cpp",
    "source_origin": "direct"
-  },
-  "0x001A25AE": {
-   "va": "0x001A25AE",
-   "end": "0x001A2600",
-   "size": 82,
-   "section": ".text",
-   "detected": true,
-   "name": "sub_001A25AE",
-   "source_file": "c:/star/code/game/effect/effectpsishield.cpp",
-   "source_origin": "interpolated"
   },
   "0x001A2600": {
    "va": "0x001A2600",
@@ -113000,16 +112413,6 @@
    "source_file": "c:/star/code/game/effect/effectweapon.cpp",
    "source_origin": "direct"
   },
-  "0x001A8B0E": {
-   "va": "0x001A8B0E",
-   "end": "0x001A8B60",
-   "size": 82,
-   "section": ".text",
-   "detected": true,
-   "name": "sub_001A8B0E",
-   "source_file": "c:/star/code/game/effect/effectweapon.cpp",
-   "source_origin": "interpolated"
-  },
   "0x001A8B60": {
    "va": "0x001A8B60",
    "end": "0x001A8B98",
@@ -113780,29 +113183,6 @@
    "name": "sub_001AE30E",
    "source_file": "c:/star/code/game/effect/effectweapon.cpp",
    "source_origin": "interpolated"
-  },
-  "0x001AE3FE": {
-   "va": "0x001AE3FE",
-   "end": "0x001AE643",
-   "size": 581,
-   "section": ".text",
-   "detected": true,
-   "name": "sub_001AE3FE",
-   "source_file": "c:/star/code/game/effect/effectweapon.cpp",
-   "source_origin": "interpolated"
-  },
-  "0x001AE4E0": {
-   "va": "0x001AE4E0",
-   "end": "0x001AE643",
-   "size": 355,
-   "section": ".text",
-   "detected": true,
-   "mangled": "?FireWeapon@cEffectGun@@UAEXXZ",
-   "demangled": "public: virtual void __thiscall cEffectGun::FireWeapon(void)",
-   "name": "cEffectGun_FireWeapon_001AE4E0",
-   "object": "effectWeapon.obj",
-   "source_file": "c:/star/code/game/effect/effectweapon.cpp",
-   "source_origin": "direct"
   },
   "0x001AE650": {
    "va": "0x001AE650",
@@ -120084,18 +119464,10 @@
    "name": "cParticleToggle_Triggered_001C6960",
    "object": "xGameScript:effectsScript.obj"
   },
-  "0x001C6A3E": {
-   "va": "0x001C6A3E",
-   "end": "0x001C6A82",
-   "size": 68,
-   "section": ".text",
-   "detected": true,
-   "name": "sub_001C6A3E"
-  },
   "0x001C6A50": {
    "va": "0x001C6A50",
-   "end": "0x001C6A82",
-   "size": 50,
+   "end": "0x001C6A90",
+   "size": 64,
    "section": ".text",
    "detected": true,
    "mangled": "?Timer@cParticleToggle@@UAEXEMMMMI@Z",
@@ -122479,14 +121851,6 @@
    "name": "cConstraint_CreateConstraint_001CDDA0",
    "object": "xGameScript:generalScript.obj"
   },
-  "0x001CE5B2": {
-   "va": "0x001CE5B2",
-   "end": "0x001CE5D0",
-   "size": 30,
-   "section": ".text",
-   "detected": true,
-   "name": "sub_001CE5B2"
-  },
   "0x001CE5D0": {
    "va": "0x001CE5D0",
    "end": "0x001CE687",
@@ -122704,18 +122068,10 @@
    "name": "cTriggerRelay_Timer_001CF340",
    "object": "xGameScript:generalScript.obj"
   },
-  "0x001CF712": {
-   "va": "0x001CF712",
-   "end": "0x001CF9ED",
-   "size": 731,
-   "section": ".text",
-   "detected": true,
-   "name": "sub_001CF712"
-  },
   "0x001CF750": {
    "va": "0x001CF750",
-   "end": "0x001CF9ED",
-   "size": 669,
+   "end": "0x001CF9F0",
+   "size": 672,
    "section": ".text",
    "detected": true,
    "mangled": "?Triggered@cObjectRemove@@UAEXIIHMMMMI@Z",
@@ -129475,18 +128831,10 @@
    "name": "cM131_Drilling_Timer_001E4C70",
    "object": "xGameScript:M131_script.obj"
   },
-  "0x001E4E9E": {
-   "va": "0x001E4E9E",
-   "end": "0x001E4F09",
-   "size": 107,
-   "section": ".text",
-   "detected": true,
-   "name": "sub_001E4E9E"
-  },
   "0x001E4ED0": {
    "va": "0x001E4ED0",
-   "end": "0x001E4F09",
-   "size": 57,
+   "end": "0x001E4F10",
+   "size": 64,
    "section": ".text",
    "detected": true,
    "mangled": "?NewInstance@cM131_ShuttleEscape@@UAEPAVcGameScript@@XZ",
@@ -130635,18 +129983,10 @@
    "name": "cM431_MarineDispenser_AlarmChanged_001E8C90",
    "object": "xGameScript:M431_script.obj"
   },
-  "0x001E8D2E": {
-   "va": "0x001E8D2E",
-   "end": "0x001E8D84",
-   "size": 86,
-   "section": ".text",
-   "detected": true,
-   "name": "sub_001E8D2E"
-  },
   "0x001E8D50": {
    "va": "0x001E8D50",
-   "end": "0x001E8D84",
-   "size": 52,
+   "end": "0x001E8D90",
+   "size": 64,
    "section": ".text",
    "detected": true,
    "mangled": "?NewInstance@cM431_BackupElevator@@UAEPAVcGameScript@@XZ",
@@ -134115,14 +133455,6 @@
    "name": "mathTrig_SinCos_001F8250",
    "object": "xMath:mathTrig.obj"
   },
-  "0x001F84D2": {
-   "va": "0x001F84D2",
-   "end": "0x001F84F0",
-   "size": 30,
-   "section": ".text",
-   "detected": true,
-   "name": "sub_001F84D2"
-  },
   "0x001F84F0": {
    "va": "0x001F84F0",
    "end": "0x001F8626",
@@ -134133,14 +133465,6 @@
    "demangled": "float __cdecl mathTrig_Tan(float)",
    "name": "mathTrig_Tan_001F84F0",
    "object": "xMath:mathTrig.obj"
-  },
-  "0x001F8626": {
-   "va": "0x001F8626",
-   "end": "0x001F8640",
-   "size": 26,
-   "section": ".text",
-   "detected": true,
-   "name": "sub_001F8626"
   },
   "0x001F8640": {
    "va": "0x001F8640",
@@ -136733,14 +136057,6 @@
    "name": "cRenderState_SetMacroMode_002087F0",
    "object": "xDirect:directMode.obj"
   },
-  "0x0020A8DA": {
-   "va": "0x0020A8DA",
-   "end": "0x0020A8DC",
-   "size": 2,
-   "section": ".text",
-   "detected": true,
-   "name": "sub_0020A8DA"
-  },
   "0x0020A9F0": {
    "va": "0x0020A9F0",
    "end": "0x0020AA2C",
@@ -138938,14 +138254,6 @@
    "name": "cLavaShader_ParseToken_00211A80",
    "object": "xDirect:directShaderGeneral.obj"
   },
-  "0x00211B72": {
-   "va": "0x00211B72",
-   "end": "0x00211BB0",
-   "size": 62,
-   "section": ".text",
-   "detected": true,
-   "name": "sub_00211B72"
-  },
   "0x00211BB0": {
    "va": "0x00211BB0",
    "end": "0x00211D2D",
@@ -140326,18 +139634,10 @@
    "name": "cCloakShader_ParseToken_0021B5A0",
    "object": "xDirect:directShaderEffects.obj"
   },
-  "0x0021B662": {
-   "va": "0x0021B662",
-   "end": "0x0021B6C2",
-   "size": 96,
-   "section": ".text",
-   "detected": true,
-   "name": "sub_0021B662"
-  },
   "0x0021B6B0": {
    "va": "0x0021B6B0",
-   "end": "0x0021B6C2",
-   "size": 18,
+   "end": "0x0021B6D0",
+   "size": 32,
    "section": ".text",
    "detected": true,
    "mangled": "?Init@cCloakShader@@UAEXXZ",
@@ -140582,6 +139882,17 @@
    "mangled": "?RenderMeshGroup@cPsiShieldHitShader@@UAEIPAVcMeshGroup@@PAVcModelInst@@I@Z",
    "demangled": "public: virtual unsigned int __thiscall cPsiShieldHitShader::RenderMeshGroup(class cMeshGroup *, class cModelInst *, unsigned int)",
    "name": "cPsiShieldHitShader_RenderMeshGroup_0021D600",
+   "object": "xDirect:directShaderEffects.obj"
+  },
+  "0x0021D7E0": {
+   "va": "0x0021D7E0",
+   "end": "0x0021DCB4",
+   "size": 1236,
+   "section": ".text",
+   "detected": true,
+   "mangled": "?RenderSetup@cCloakShader@@UAEIII@Z",
+   "demangled": "public: virtual unsigned int __thiscall cCloakShader::RenderSetup(unsigned int, unsigned int)",
+   "name": "cCloakShader_RenderSetup_0021D7E0",
    "object": "xDirect:directShaderEffects.obj"
   },
   "0x0021DCC0": {
@@ -142029,14 +141340,6 @@
    "demangled": "public: virtual int __thiscall cWaterShader::ParseToken(unsigned int, char *)",
    "name": "cWaterShader_ParseToken_002270F0",
    "object": "xDirect:directShaderWater.obj"
-  },
-  "0x00227196": {
-   "va": "0x00227196",
-   "end": "0x002271C0",
-   "size": 42,
-   "section": ".text",
-   "detected": true,
-   "name": "sub_00227196"
   },
   "0x002271C0": {
    "va": "0x002271C0",
@@ -145551,18 +144854,10 @@
    "name": "hkDefaultMonitorFactory_createMonitor_0023D710",
    "object": "hkbase:hkDefaultMonitorFactory.obj"
   },
-  "0x0023D9F2": {
-   "va": "0x0023D9F2",
-   "end": "0x0023DA2D",
-   "size": 59,
-   "section": ".text",
-   "detected": true,
-   "name": "sub_0023D9F2"
-  },
   "0x0023DA10": {
    "va": "0x0023DA10",
-   "end": "0x0023DA2D",
-   "size": 29,
+   "end": "0x0023DA30",
+   "size": 32,
    "section": ".text",
    "detected": true,
    "mangled": "?getTickCounter@hkWindowsSystemClock@@UAE_KXZ",
@@ -146053,14 +145348,6 @@
    "demangled": "public: virtual void __thiscall hkConvexVerticesShape::getSupportingVertex(class hkVector4 const &, class hkVector4 &, int &) const",
    "name": "hkConvexVerticesShape_getSupportingVertex_0023F2C0",
    "object": "hkcollide2:hkConvexVerticesShape.obj"
-  },
-  "0x0023F47E": {
-   "va": "0x0023F47E",
-   "end": "0x0023F4B0",
-   "size": 50,
-   "section": ".text",
-   "detected": true,
-   "name": "sub_0023F47E"
   },
   "0x0023F4B0": {
    "va": "0x0023F4B0",
@@ -149064,14 +148351,6 @@
    "name": "hkMoppSphereVirtualMachine_querySphereOnTree_0024B360",
    "object": "hkcollide2:hkMoppSphereVirtualMachine.obj"
   },
-  "0x0024B8A2": {
-   "va": "0x0024B8A2",
-   "end": "0x0024B990",
-   "size": 238,
-   "section": ".text",
-   "detected": true,
-   "name": "sub_0024B8A2"
-  },
   "0x0024B990": {
    "va": "0x0024B990",
    "end": "0x0024BA66",
@@ -149093,14 +148372,6 @@
    "demangled": "private: void __thiscall hkMoppObbVirtualMachine::queryOBBOnTree(struct hkMoppObbVirtualMachineQuery const *, unsigned char const *)",
    "name": "hkMoppObbVirtualMachine_queryOBBOnTree_0024BA70",
    "object": "hkcollide2:hkMoppObbVirtualMachine.obj"
-  },
-  "0x0024C042": {
-   "va": "0x0024C042",
-   "end": "0x0024C130",
-   "size": 238,
-   "section": ".text",
-   "detected": true,
-   "name": "sub_0024C042"
   },
   "0x0024C130": {
    "va": "0x0024C130",
@@ -149156,14 +148427,6 @@
    "demangled": "private: void __thiscall hkMoppLongRayVirtualMachine::queryRayOnTree(struct hkMoppLongRayVirtualMachineQueryInt const *, unsigned char const *, struct hkMoppLongRayVirtualMachineQueryFloat *const)",
    "name": "hkMoppLongRayVirtualMachine_queryRayOnTree_0024C830",
    "object": "hkcollide2:hkMoppLongRayVirtualMachine.obj"
-  },
-  "0x0024D55A": {
-   "va": "0x0024D55A",
-   "end": "0x0024D640",
-   "size": 230,
-   "section": ".text",
-   "detected": true,
-   "name": "sub_0024D55A"
   },
   "0x0024D640": {
    "va": "0x0024D640",
@@ -150852,14 +150115,6 @@
    "demangled": "public: enum hkGjkStatus __thiscall hkConvexPenetrationUtil::calculatePenetrationDepth(struct hkGjkOut &)",
    "name": "hkConvexPenetrationUtil_calculatePenetrationDepth_00258550",
    "object": "hkcollide2:hkConvexPenetrationUtil.obj"
-  },
-  "0x00258E06": {
-   "va": "0x00258E06",
-   "end": "0x00258E20",
-   "size": 26,
-   "section": ".text",
-   "detected": true,
-   "name": "sub_00258E06"
   },
   "0x00258E20": {
    "va": "0x00258E20",
@@ -157893,14 +157148,6 @@
    "name": "qh_distplane_00281230",
    "object": "hkgeometryutil2:qhull_geom.obj"
   },
-  "0x002813FE": {
-   "va": "0x002813FE",
-   "end": "0x00281420",
-   "size": 34,
-   "section": ".text",
-   "detected": true,
-   "name": "sub_002813FE"
-  },
   "0x00281420": {
    "va": "0x00281420",
    "end": "0x002816F2",
@@ -159356,14 +158603,6 @@
    "demangled": "void __cdecl qh_printafacet(void *, int, struct facetT *, unsigned int)",
    "name": "qh_printafacet_0028DB10",
    "object": "hkgeometryutil2:qhull_io.obj"
-  },
-  "0x0028E236": {
-   "va": "0x0028E236",
-   "end": "0x0028E2A0",
-   "size": 106,
-   "section": ".text",
-   "detected": true,
-   "name": "sub_0028E236"
   },
   "0x0028E2A0": {
    "va": "0x0028E2A0",
@@ -180525,14 +179764,6 @@
    "name": "D3D_MapToLinearD3DFORMAT_002C8280",
    "object": "d3d8:pixeljar.obj"
   },
-  "0x002C82E2": {
-   "va": "0x002C82E2",
-   "end": "0x002C8340",
-   "size": 94,
-   "section": "D3D",
-   "detected": true,
-   "name": "sub_002C82E2"
-  },
   "0x002C8340": {
    "va": "0x002C8340",
    "end": "0x002C835A",
@@ -180587,14 +179818,6 @@
    "demangled": "void __stdcall D3D::PixelJar::GetDepthBufferScale(struct D3DPixelContainer *, float *)",
    "name": "D3D_PixelJar_GetDepthBufferScale_002C84F0",
    "object": "d3d8:pixeljar.obj"
-  },
-  "0x002C8536": {
-   "va": "0x002C8536",
-   "end": "0x002C8560",
-   "size": 42,
-   "section": "D3D",
-   "detected": true,
-   "name": "sub_002C8536"
   },
   "0x002C8560": {
    "va": "0x002C8560",
@@ -181145,14 +180368,6 @@
    "demangled": "void __stdcall D3D::LazySetTextureTransform(class D3D::CDevice *)",
    "name": "D3D_LazySetTextureTransform_002CB450",
    "object": "d3d8:lazy.obj"
-  },
-  "0x002CB7D0": {
-   "va": "0x002CB7D0",
-   "end": "0x002CB810",
-   "size": 64,
-   "section": "D3D",
-   "detected": true,
-   "name": "sub_002CB7D0"
   },
   "0x002CB810": {
    "va": "0x002CB810",
@@ -196217,14 +195432,6 @@
    "demangled": "",
    "name": "YUV_init_4_0031F800",
    "object": "binkxbox:yuv.obj"
-  },
-  "0x0032013E": {
-   "va": "0x0032013E",
-   "end": "0x00320160",
-   "size": 34,
-   "section": "BINK",
-   "detected": true,
-   "name": "sub_0032013E"
   },
   "0x00320160": {
    "va": "0x00320160",

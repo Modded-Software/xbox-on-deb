@@ -39,7 +39,6 @@
 0x0001354B c:/star/code/game/ui/vui.cpp
 0x00013620 c:/star/code/game/ui/vui.cpp
 0x00013650 c:/star/code/game/ui/vui.cpp
-0x000136CE c:/star/code/game/ui/vui.cpp
 0x000136F0 c:/star/code/game/ui/vui.cpp
 0x0001378C c:/star/code/game/ui/vui.cpp
 0x000137A0 c:/star/code/game/ui/vui.cpp
@@ -665,7 +664,6 @@
 0x0002A010 c:/star/code/game/ui/vuiminimap.cpp
 0x0002A050 c:/star/code/game/ui/vuiminimap.cpp
 0x0002A238 c:/star/code/game/ui/vuiminimap.cpp
-0x0002A2B2 c:/star/code/game/ui/vuiminimap.cpp
 0x0002A2E0 c:/star/code/game/ui/vuiminimap.cpp
 0x0002A430 c:/star/code/game/ui/vuiminimap.cpp
 0x0002A45D c:/star/code/game/ui/vuiminimap.cpp
@@ -753,7 +751,6 @@
 0x0002E3F0 c:/star/code/game/ui/vuiplayer.cpp
 0x0002E480 c:/star/code/game/ui/vuiplayer.cpp
 0x0002E59E c:/star/code/game/ui/vuiplayer.cpp
-0x0002E5B2 c:/star/code/game/ui/vuiplayer.cpp
 0x0002E5D0 c:/star/code/game/ui/vuiplayer.cpp
 0x0002E620 c:/star/code/game/ui/vuiplayer.cpp
 0x0002E650 c:/star/code/game/ui/vuiplayer.cpp
@@ -851,7 +848,6 @@
 0x00030ED0 c:/star/code/game/ui/vuitarget.cpp
 0x00030F20 c:/star/code/game/ui/vuitarget.cpp
 0x00030F60 c:/star/code/game/ui/vuitarget.cpp
-0x000310EE c:/star/code/game/ui/vuitarget.cpp
 0x00031110 c:/star/code/game/ui/vuitarget.cpp
 0x00031170 c:/star/code/game/ui/vuitarget.cpp
 0x00031210 c:/star/code/game/ui/vuitarget.cpp
@@ -1089,7 +1085,6 @@
 0x0003C620 c:/star/code/game/world/worldrenderdebug.cpp
 0x0003C630 c:/star/code/game/world/worldrenderdebug.cpp
 0x0003C670 c:/star/code/game/world/worldrenderdebug.cpp
-0x0003C6BA c:/star/code/game/world/worldrenderdebug.cpp
 0x0003C6F0 c:/star/code/game/world/worldrenderdebug.cpp
 0x0003C730 c:/star/code/game/world/worldrenderdebug.cpp
 0x0003C7D0 c:/star/code/game/world/worldrenderdebug.cpp
@@ -1169,7 +1164,6 @@
 0x00042FC0 c:/star/code/game/world/worldrenderdebug.cpp
 0x000430BC c:/star/code/game/world/worldrenderdebug.cpp
 0x000431D6 c:/star/code/game/world/worldrenderdebug.cpp
-0x000433AA c:/star/code/game/world/worldrenderdebug.cpp
 0x000433F0 c:/star/code/game/world/worldrenderdebug.cpp
 0x00043450 c:/star/code/game/world/worldrenderdebug.cpp
 0x00043510 c:/star/code/game/world/worldrenderdebug.cpp
@@ -1509,7 +1503,6 @@
 0x000507A0 c:/star/code/game/sim/simactor.cpp
 0x000507C0 c:/star/code/game/sim/simactor.cpp
 0x00050800 c:/star/code/game/sim/simactor.cpp
-0x000508D2 c:/star/code/game/sim/simactor.cpp
 0x000508F0 c:/star/code/game/sim/simactor.cpp
 0x00050940 c:/star/code/game/sim/simactor.cpp
 0x00050990 c:/star/code/game/sim/simactor.cpp
@@ -1741,7 +1734,6 @@
 0x0005C635 c:/star/code/game/sim/simcamera.cpp
 0x0005C9D8 c:/star/code/game/sim/simcamera.cpp
 0x0005C9F7 c:/star/code/game/sim/simcamera.cpp
-0x0005CAF2 c:/star/code/game/sim/simcamera.cpp
 0x0005CB10 c:/star/code/game/sim/simcamera.cpp
 0x0005CB3C c:/star/code/game/sim/simcamera.cpp
 0x0005CDC0 c:/star/code/game/sim/simcamera.cpp
@@ -1984,6 +1976,7 @@
 0x00067A50 c:/star/code/game/sim/simcontrol.cpp
 0x00067B50 c:/star/code/game/sim/simcontrol.cpp
 0x00067C40 c:/star/code/game/sim/simcontrol.cpp
+0x00067F10 c:/star/code/game/sim/simcontrol.cpp
 0x00068050 c:/star/code/game/sim/simcontrol.cpp
 0x00068090 c:/star/code/game/sim/simcontrol.cpp
 0x00068220 c:/star/code/game/sim/simcontrol.cpp
@@ -2037,7 +2030,6 @@
 0x0006B940 c:/star/code/game/sim/simcontrol.cpp
 0x0006BD40 c:/star/code/game/sim/simcontrol.cpp
 0x0006C07D c:/star/code/game/sim/simcontrol.cpp
-0x0006C226 c:/star/code/game/sim/simcontrol.cpp
 0x0006C260 c:/star/code/game/sim/simcontrol.cpp
 0x0006C2F4 c:/star/code/game/sim/simcontrol.cpp
 0x0006C390 c:/star/code/game/sim/simcontrol.cpp
@@ -2224,7 +2216,6 @@
 0x0007B1F0 c:/star/code/game/sim/simcontrolcombat.cpp
 0x0007B230 c:/star/code/game/sim/simcontrolcombat.cpp
 0x0007B2FF c:/star/code/game/sim/simcontrolcombat.cpp
-0x0007B74E c:/star/code/game/sim/simcontrolcombat.cpp
 0x0007B770 c:/star/code/game/sim/simcontrolcombat.cpp
 0x0007B7A0 c:/star/code/game/sim/simcontrolcombat.cpp
 0x0007B7E0 c:/star/code/game/sim/simcontrolcombat.cpp
@@ -2240,7 +2231,7 @@
 0x0007C736 c:/star/code/game/sim/simcontrolcombat.cpp
 0x0007CB80 c:/star/code/game/sim/simcontrolcombat.cpp
 0x0007CCF0 c:/star/code/game/sim/simcontrolcombat.cpp
-0x0007D456 c:/star/code/game/sim/simcontrolcombat.cpp
+0x0007D4B0 c:/star/code/game/sim/simcontrolcombat.cpp
 0x0007D4B7 c:/star/code/game/sim/simcontrolcombat.cpp
 0x0007D727 c:/star/code/game/sim/simcontrolcombat.cpp
 0x0007D7E0 c:/star/code/game/sim/simcontrolcombat.cpp
@@ -2248,7 +2239,6 @@
 0x0007DA65 c:/star/code/game/sim/simcontrolcombat.cpp
 0x0007DE00 c:/star/code/game/sim/simcontrolcombat.cpp
 0x0007E2B0 c:/star/code/game/sim/simcontrolcombat.cpp
-0x0007E58A c:/star/code/game/sim/simcontrolcombat.cpp
 0x0007E5F0 c:/star/code/game/sim/simcontrolcombat.cpp
 0x0007E620 c:/star/code/game/sim/simcontrolcombat.cpp
 0x0007E660 c:/star/code/game/sim/simcontrolcombat.cpp
@@ -2278,7 +2268,7 @@
 0x0007F780 c:/star/code/game/sim/simcontrolsniper.cpp
 0x0007F7ED c:/star/code/game/sim/simcontrolsniper.cpp
 0x0007FA90 c:/star/code/game/sim/simcontrolsniper.cpp
-0x0007FD66 c:/star/code/game/sim/simcontrolsniper.cpp
+0x0007FD90 c:/star/code/game/sim/simcontrolsniper.cpp
 0x0007FF02 c:/star/code/game/sim/simcontrolsniper.cpp
 0x0007FF10 c:/star/code/game/sim/simcontrolsniper.cpp
 0x00080000 c:/star/code/game/sim/simcontrolsniper.cpp
@@ -2416,7 +2406,6 @@
 0x00086710 c:/star/code/game/sim/simcontrolspecial.cpp
 0x00086790 c:/star/code/game/sim/simcontrolspecial.cpp
 0x000867E0 c:/star/code/game/sim/simcontrolspecial.cpp
-0x00086AC6 c:/star/code/game/sim/simcontrolspecial.cpp
 0x00086AE0 c:/star/code/game/sim/simcontrolspecial.cpp
 0x00086C80 c:/star/code/game/sim/simcontrolspecial.cpp
 0x00086D1D c:/star/code/game/sim/simcontrolspecial.cpp
@@ -2646,7 +2635,6 @@
 0x000932F0 c:/star/code/game/sim/simcutscene.cpp
 0x00093850 c:/star/code/game/sim/simcutscene.cpp
 0x00093950 c:/star/code/game/sim/simcutscene.cpp
-0x00093D02 c:/star/code/game/sim/simcutscene.cpp
 0x00093D20 c:/star/code/game/sim/simcutscene.cpp
 0x00093E20 c:/star/code/game/sim/simcutscene.cpp
 0x00094760 c:/star/code/game/sim/simcutscene.cpp
@@ -3015,7 +3003,6 @@
 0x000A7530 c:/star/code/game/sim/simphysics.cpp
 0x000A78B0 c:/star/code/game/sim/simphysics.cpp
 0x000A7972 c:/star/code/game/sim/simphysics.cpp
-0x000A7C86 c:/star/code/game/sim/simphysics.cpp
 0x000A7CD0 c:/star/code/game/sim/simphysics.cpp
 0x000A8630 c:/star/code/game/sim/simphysics.cpp
 0x000A90A0 c:/star/code/game/sim/simphysics.cpp
@@ -3035,7 +3022,6 @@
 0x000AB400 c:/star/code/game/sim/simphysics.cpp
 0x000ABD50 c:/star/code/game/sim/simphysics.cpp
 0x000AC570 c:/star/code/game/sim/simphysics.cpp
-0x000ACD06 c:/star/code/game/sim/simphysics.cpp
 0x000ACD50 c:/star/code/game/sim/simphysics.cpp
 0x000AD630 c:/star/code/game/sim/simphysics.cpp
 0x000AD8E0 c:/star/code/game/sim/simphysics.cpp
@@ -3170,7 +3156,6 @@
 0x000B4020 c:/star/code/game/sim/simthing.cpp
 0x000B4050 c:/star/code/game/sim/simthing.cpp
 0x000B4130 c:/star/code/game/sim/simthing.cpp
-0x000B43D6 c:/star/code/game/sim/simthing.cpp
 0x000B4400 c:/star/code/game/sim/simthing.cpp
 0x000B44E4 c:/star/code/game/sim/simthing.cpp
 0x000B4AA0 c:/star/code/game/sim/simthing.cpp
@@ -3195,7 +3180,6 @@
 0x000B6130 c:/star/code/game/script/script.cpp
 0x000B6150 c:/star/code/game/script/script.cpp
 0x000B61C0 c:/star/code/game/script/script.cpp
-0x000B620A c:/star/code/game/script/script.cpp
 0x000B6230 c:/star/code/game/script/script.cpp
 0x000B62C0 c:/star/code/game/script/script.cpp
 0x000B6370 c:/star/code/game/script/script.cpp
@@ -3287,7 +3271,6 @@
 0x000B7C70 c:/star/code/game/script/scriptmain.cpp
 0x000B7CB0 c:/star/code/game/script/scriptmain.cpp
 0x000B7D84 c:/star/code/game/script/scriptmain.cpp
-0x000B7DAE c:/star/code/game/script/scriptmain.cpp
 0x000B7DF0 c:/star/code/game/script/scriptmain.cpp
 0x000B7E50 c:/star/code/game/script/scriptmain.cpp
 0x000B7EB0 c:/star/code/game/script/scriptmain.cpp
@@ -4083,20 +4066,14 @@
 0x000C7020 c:/star/code/game/ai/aidebug.cpp
 0x000C70A0 c:/star/code/game/ai/aidebug.cpp
 0x000C70E0 c:/star/code/game/ai/aidebug.cpp
-0x000C711A c:/star/code/game/ai/aidebug.cpp
 0x000C7140 c:/star/code/game/ai/aidebug.cpp
 0x000C7190 c:/star/code/game/ai/aidebug.cpp
-0x000C722E c:/star/code/game/ai/aidebug.cpp
 0x000C72A6 c:/star/code/game/ai/aidebug.cpp
 0x000C72AC c:/star/code/game/ai/aidebug.cpp
 0x000C72B2 c:/star/code/game/ai/aidebug.cpp
-0x000C72B8 c:/star/code/game/ai/aidebug.cpp
-0x000C72BE c:/star/code/game/ai/aidebug.cpp
 0x000C72E0 c:/star/code/game/ai/aidebug.cpp
 0x000C7330 c:/star/code/game/ai/aidebug.cpp
-0x000C735E c:/star/code/game/ai/aidebug.cpp
 0x000C7370 c:/star/code/game/ai/aidebug.cpp
-0x000C73B6 c:/star/code/game/ai/aidebug.cpp
 0x000C7420 c:/star/code/game/ai/aidebug.cpp
 0x000C7430 c:/star/code/game/ai/aidebug.cpp
 0x000C7450 c:/star/code/game/ai/aidebug.cpp
@@ -4135,7 +4112,6 @@
 0x000C9220 c:/star/code/game/ai/aidebug.cpp
 0x000C9270 c:/star/code/game/ai/aidebug.cpp
 0x000C92D0 c:/star/code/game/ai/aidebug.cpp
-0x000C936A c:/star/code/game/ai/aidebug.cpp
 0x000C93D0 c:/star/code/game/ai/aidebug.cpp
 0x000C9430 c:/star/code/game/ai/aidebug.cpp
 0x000C94A0 c:/star/code/game/ai/aidebug.cpp
@@ -4284,7 +4260,6 @@
 0x000CE5E2 c:/star/code/game/ai/aimain.cpp
 0x000CE9B0 c:/star/code/game/ai/aimain.cpp
 0x000CEE60 c:/star/code/game/ai/aimain.cpp
-0x000CF2FE c:/star/code/game/ai/aimain.cpp
 0x000CF400 c:/star/code/game/ai/aimain.cpp
 0x000CF410 c:/star/code/game/ai/aimain.cpp
 0x000CF750 c:/star/code/game/ai/aimain.cpp
@@ -5731,7 +5706,6 @@
 0x00105980 c:/star/code/game/ai/aiclassbasebossbrain.cpp
 0x00105A60 c:/star/code/game/ai/aiclassbasebossbrain.cpp
 0x00105AE0 c:/star/code/game/ai/aiclassbasebossbrain.cpp
-0x00105B66 c:/star/code/game/ai/aiclassbasebossbrain.cpp
 0x00105B90 c:/star/code/game/ai/aiclassbasebossbrain.cpp
 0x00105BA0 c:/star/code/game/ai/aiclassbasebossbrain.cpp
 0x00105BC0 c:/star/code/game/ai/aiclassbasebossbrain.cpp
@@ -5744,7 +5718,6 @@
 0x00105D60 c:/star/code/game/ai/aiclassbasebossbrain.cpp
 0x00105D70 c:/star/code/game/ai/aiclassbasebossbrain.cpp
 0x00105D80 c:/star/code/game/ai/aiclassbasebossbrain.cpp
-0x00105DCE c:/star/code/game/ai/aiclassbasebossbrain.cpp
 0x00105E00 c:/star/code/game/ai/aiclassbasebossbrain.cpp
 0x00105E10 c:/star/code/game/ai/aiclassbasebossbrain.cpp
 0x00105E60 c:/star/code/game/ai/aiclassbasebossbrain.cpp
@@ -5776,7 +5749,6 @@
 0x00106E40 c:/star/code/game/ai/aiclassbasebossgoliath.cpp
 0x00106FA0 c:/star/code/game/ai/aiclassbasebossgoliath.cpp
 0x00107060 c:/star/code/game/ai/aiclassbasebossgoliath.cpp
-0x00107142 c:/star/code/game/ai/aiclassbasebossgoliath.cpp
 0x00107180 c:/star/code/game/ai/aiclassbasebossgoliath.cpp
 0x00107190 c:/star/code/game/ai/aiclassbasebossgoliath.cpp
 0x001071B0 c:/star/code/game/ai/aiclassbasebossgoliath.cpp
@@ -5795,7 +5767,6 @@
 0x00107440 c:/star/code/game/ai/aiclassbasebossgoliath.cpp
 0x00107450 c:/star/code/game/ai/aiclassbasebossgoliath.cpp
 0x00107460 c:/star/code/game/ai/aiclassbasebossgoliath.cpp
-0x001074D2 c:/star/code/game/ai/aiclassbasebossgoliath.cpp
 0x00107520 c:/star/code/game/ai/aiclassbasebossgoliath.cpp
 0x001075A0 c:/star/code/game/ai/aiclassbasebossgoliath.cpp
 0x001076D0 c:/star/code/game/ai/aiclassbasebossgoliath.cpp
@@ -5859,7 +5830,6 @@
 0x00109490 c:/star/code/game/ai/aiclassbaseflyer.cpp
 0x001094A0 c:/star/code/game/ai/aiclassbaseflyer.cpp
 0x00109580 c:/star/code/game/ai/aiclassbaseflyer.cpp
-0x00109606 c:/star/code/game/ai/aiclassbaseflyer.cpp
 0x00109630 c:/star/code/game/ai/aiclassbaseflyer.cpp
 0x00109640 c:/star/code/game/ai/aiclassbaseflyer.cpp
 0x00109650 c:/star/code/game/ai/aiclassbaseflyer.cpp
@@ -5871,7 +5841,6 @@
 0x001097F0 c:/star/code/game/ai/aiclassbaseflyer.cpp
 0x00109800 c:/star/code/game/ai/aiclassbaseflyer.cpp
 0x00109810 c:/star/code/game/ai/aiclassbaseflyer.cpp
-0x00109852 c:/star/code/game/ai/aiclassbaseflyer.cpp
 0x00109880 c:/star/code/game/ai/aiclassbaseflyer.cpp
 0x001098B0 c:/star/code/game/ai/aiclassbaseflyer.cpp
 0x001099E0 c:/star/code/game/ai/aiclassbaseflyer.cpp
@@ -5908,7 +5877,6 @@
 0x0010A9E0 c:/star/code/game/ai/aiclassbasevehicle.cpp
 0x0010A9F0 c:/star/code/game/ai/aiclassbasevehicle.cpp
 0x0010AA00 c:/star/code/game/ai/aiclassbasevehicle.cpp
-0x0010AA36 c:/star/code/game/ai/aiclassbasevehicle.cpp
 0x0010AA60 c:/star/code/game/ai/aiclassbasevehicle.cpp
 0x0010AA70 c:/star/code/game/ai/aiclassbasevehicle.cpp
 0x0010AAA0 c:/star/code/game/ai/aiclassbasevehicle.cpp
@@ -6084,7 +6052,6 @@
 0x00111D60 c:/star/code/game/ai/aiclassbasewalker.cpp
 0x00112430 c:/star/code/game/ai/aiclassbasewalker.cpp
 0x00112540 c:/star/code/game/ai/aiclassbasewalker.cpp
-0x00112836 c:/star/code/game/ai/aiclassbasewalker.cpp
 0x00112850 c:/star/code/game/ai/aiclassbasewalker.cpp
 0x001128E0 c:/star/code/game/ai/aiclassbasewalker.cpp
 0x00112960 c:/star/code/game/ai/aiclassbasewalker.cpp
@@ -6139,7 +6106,6 @@
 0x001169A0 c:/star/code/game/ai/aiclassbasewalkercontrol.cpp
 0x001169B0 c:/star/code/game/ai/aiclassbasewalkercontrol.cpp
 0x00116D5A c:/star/code/game/ai/aiclassbasewalkercontrol.cpp
-0x00116E42 c:/star/code/game/ai/aiclassbasewalkercontrol.cpp
 0x00116F30 c:/star/code/game/ai/aiclassbasewalkercontrol.cpp
 0x00116F40 c:/star/code/game/ai/aiclassbasewalkercontrol.cpp
 0x00116FC0 c:/star/code/game/ai/aiclassbasewalkercontrol.cpp
@@ -6329,7 +6295,6 @@
 0x0011EB30 c:/star/code/game/ai/aiclassbasewalkermove.cpp
 0x0011ECA0 c:/star/code/game/ai/aiclassbasewalkermove.cpp
 0x0011ED70 c:/star/code/game/ai/aiclassbasewalkermove.cpp
-0x0011EF3E c:/star/code/game/ai/aiclassbasewalkermove.cpp
 0x0011EF60 c:/star/code/game/ai/aiclassbasewalkermove.cpp
 0x0011F0DC c:/star/code/game/ai/aiclassbasewalkermove.cpp
 0x0011F420 c:/star/code/game/ai/aiclassbasewalkermove.cpp
@@ -6412,7 +6377,6 @@
 0x00123650 c:/star/code/game/ai/aiclassbasewanderer.cpp
 0x001236B0 c:/star/code/game/gamelib/gameactor.cpp
 0x00123700 c:/star/code/game/gamelib/gameactor.cpp
-0x0012394A c:/star/code/game/gamelib/gameactor.cpp
 0x00123A50 c:/star/code/game/gamelib/gameactor.cpp
 0x00123AC0 c:/star/code/game/gamelib/gameactor.cpp
 0x00123AF0 c:/star/code/game/gamelib/gameactor.cpp
@@ -6849,7 +6813,6 @@
 0x00132260 c:/star/code/game/gamelib/gameobject.cpp
 0x001322D0 c:/star/code/game/gamelib/gameobject.cpp
 0x001322E0 c:/star/code/game/gamelib/gameobject.cpp
-0x0013252E c:/star/code/game/gamelib/gameobject.cpp
 0x00132630 c:/star/code/game/gamelib/gameobject.cpp
 0x00132760 c:/star/code/game/gamelib/gameobject.cpp
 0x00132820 c:/star/code/game/gamelib/gameobject.cpp
@@ -7035,7 +6998,6 @@
 0x00139D10 c:/star/code/game/gamelib/gameplayer.cpp
 0x00139DA0 c:/star/code/game/gamelib/gameplayer.cpp
 0x00139DC1 c:/star/code/game/gamelib/gameplayer.cpp
-0x00139FFA c:/star/code/game/gamelib/gameplayer.cpp
 0x0013A020 c:/star/code/game/gamelib/gameplayer.cpp
 0x0013A080 c:/star/code/game/gamelib/gameplayer.cpp
 0x0013A0E0 c:/star/code/game/gamelib/gameplayer.cpp
@@ -7103,7 +7065,6 @@
 0x0013CF40 c:/star/code/game/gamelib/gameprojectile.cpp
 0x0013D0B0 c:/star/code/game/gamelib/gameprojectile.cpp
 0x0013D5B0 c:/star/code/game/gamelib/gameprojectile.cpp
-0x0013D852 c:/star/code/game/gamelib/gameprojectile.cpp
 0x0013D880 c:/star/code/game/gamelib/gameprojectile.cpp
 0x0013DA20 c:/star/code/game/gamelib/gameprojectile.cpp
 0x0013DAE0 c:/star/code/game/gamelib/gameprojectile.cpp
@@ -7272,7 +7233,6 @@
 0x00146140 c:/star/code/game/gamelib/gamexboxmixer.cpp
 0x00146170 c:/star/code/game/gamelib/gamexboxmixer.cpp
 0x00146180 c:/star/code/game/gamelib/gamexboxmixer.cpp
-0x001461F2 c:/star/code/game/gamelib/gamexboxmixer.cpp
 0x00146210 c:/star/code/game/gamelib/gamexboxmixer.cpp
 0x00146270 c:/star/code/game/gamelib/gamexboxmixer.cpp
 0x001462F0 c:/star/code/game/gamelib/gamexboxmixer.cpp
@@ -7320,7 +7280,6 @@
 0x001479F0 c:/star/code/game/shell/shell.cpp
 0x00147A10 c:/star/code/game/shell/shell.cpp
 0x00147A20 c:/star/code/game/shell/shell.cpp
-0x00147BF2 c:/star/code/game/shell/shell.cpp
 0x00147C80 c:/star/code/game/shell/shell.cpp
 0x00147DB0 c:/star/code/game/shell/shell.cpp
 0x00147E00 c:/star/code/game/shell/shell.cpp
@@ -7338,7 +7297,6 @@
 0x00148480 c:/star/code/game/shell/shell.cpp
 0x001484A0 c:/star/code/game/shell/shell.cpp
 0x001486BA c:/star/code/game/shell/shell.cpp
-0x001487AE c:/star/code/game/shell/shell.cpp
 0x001487C0 c:/star/code/game/shell/shell.cpp
 0x00148C20 c:/star/code/game/shell/shell.cpp
 0x00148C90 c:/star/code/game/shell/shell.cpp
@@ -7556,7 +7514,6 @@
 0x00153F40 c:/star/code/game/shell/shellhacksys.cpp
 0x00154020 c:/star/code/game/shell/shellhacksys.cpp
 0x00154040 c:/star/code/game/shell/shellhacksys.cpp
-0x0015412A c:/star/code/game/shell/shellhacksys.cpp
 0x00154150 c:/star/code/game/shell/shellhacksys.cpp
 0x00154170 c:/star/code/game/shell/shellhacksys.cpp
 0x00154190 c:/star/code/game/shell/shellhacksys.cpp
@@ -7920,7 +7877,6 @@
 0x00165330 c:/star/code/game/effect/effectbillboard.cpp
 0x001654A0 c:/star/code/game/effect/effectbillboard.cpp
 0x00165590 c:/star/code/game/effect/effectbillboard.cpp
-0x00165852 c:/star/code/game/effect/effectbillboard.cpp
 0x001658E0 c:/star/code/game/effect/effectbillboard.cpp
 0x001659B0 c:/star/code/game/effect/effectbillboard.cpp
 0x00165DC0 c:/star/code/game/effect/effectbillboard.cpp
@@ -7933,7 +7889,6 @@
 0x001669E0 c:/star/code/game/effect/effectcalldown.cpp
 0x00166BF0 c:/star/code/game/effect/effectcalldown.cpp
 0x00167100 c:/star/code/game/effect/effectcalldown.cpp
-0x0016736E c:/star/code/game/effect/effectcalldown.cpp
 0x001673E0 c:/star/code/game/effect/effectcalldown.cpp
 0x001675A0 c:/star/code/game/effect/effectcalldown.cpp
 0x00167750 c:/star/code/game/effect/effectdamage.cpp
@@ -7963,10 +7918,8 @@
 0x00168D83 c:/star/code/game/effect/effectenergy.cpp
 0x00168F50 c:/star/code/game/effect/effectenergy.cpp
 0x001698B0 c:/star/code/game/effect/effectenergy.cpp
-0x00169D5A c:/star/code/game/effect/effectenergy.cpp
 0x00169E00 c:/star/code/game/effect/effectenergy.cpp
 0x0016A0D0 c:/star/code/game/effect/effectenergy.cpp
-0x0016A406 c:/star/code/game/effect/effectenergy.cpp
 0x0016A4C0 c:/star/code/game/effect/effectenergy.cpp
 0x0016A4F0 c:/star/code/game/effect/effectenergy.cpp
 0x0016A500 c:/star/code/game/effect/effectexplosion.cpp
@@ -8174,7 +8127,6 @@
 0x00179110 c:/star/code/game/effect/effectlight.cpp
 0x001793D0 c:/star/code/game/effect/effectlight.cpp
 0x00179466 c:/star/code/game/effect/effectlight.cpp
-0x0017973E c:/star/code/game/effect/effectlight.cpp
 0x001797D0 c:/star/code/game/effect/effectlight.cpp
 0x001799A0 c:/star/code/game/effect/effectlight.cpp
 0x00179A60 c:/star/code/game/effect/effectlight.cpp
@@ -8187,12 +8139,10 @@
 0x0017A330 c:/star/code/game/effect/effectlight.cpp
 0x0017A3E0 c:/star/code/game/effect/effectlight.cpp
 0x0017A550 c:/star/code/game/effect/effectlight.cpp
-0x0017A98E c:/star/code/game/effect/effectlight.cpp
 0x0017AA30 c:/star/code/game/effect/effectlight.cpp
 0x0017AE70 c:/star/code/game/effect/effectlight.cpp
 0x0017B240 c:/star/code/game/effect/effectlight.cpp
 0x0017B3F4 c:/star/code/game/effect/effectlight.cpp
-0x0017B60A c:/star/code/game/effect/effectlight.cpp
 0x0017B6A0 c:/star/code/game/effect/effectlight.cpp
 0x0017B810 c:/star/code/game/effect/effectlight.cpp
 0x0017B990 c:/star/code/game/effect/effectlight.cpp
@@ -8488,14 +8438,12 @@
 0x00186E20 c:/star/code/game/effect/effectparticleshape.cpp
 0x00186EB0 c:/star/code/game/effect/effectparticleshape.cpp
 0x00187000 c:/star/code/game/effect/effectparticleshape.cpp
-0x0018749E c:/star/code/game/effect/effectparticleshape.cpp
 0x00187560 c:/star/code/game/effect/effectparticleshape.cpp
 0x00187670 c:/star/code/game/effect/effectparticleshape.cpp
 0x00187720 c:/star/code/game/effect/effectparticleshape.cpp
 0x00187770 c:/star/code/game/effect/effectparticleshape.cpp
 0x001877A0 c:/star/code/game/effect/effectparticleshape.cpp
 0x00187950 c:/star/code/game/effect/effectparticleshape.cpp
-0x00188016 c:/star/code/game/effect/effectparticleshape.cpp
 0x001880F0 c:/star/code/game/effect/effectparticleshape.cpp
 0x001881A0 c:/star/code/game/effect/effectparticleshape.cpp
 0x00188220 c:/star/code/game/effect/effectparticleshape.cpp
@@ -8503,12 +8451,10 @@
 0x001882B0 c:/star/code/game/effect/effectparticleshape.cpp
 0x001882E0 c:/star/code/game/effect/effectparticleshape.cpp
 0x00188480 c:/star/code/game/effect/effectparticleshape.cpp
-0x0018892A c:/star/code/game/effect/effectparticleshape.cpp
 0x001889D0 c:/star/code/game/effect/effectparticleshape.cpp
 0x001889E0 c:/star/code/game/effect/effectparticleshape.cpp
 0x00188A00 c:/star/code/game/effect/effectparticleshape.cpp
 0x00188CA0 c:/star/code/game/effect/effectparticleshape.cpp
-0x00188F06 c:/star/code/game/effect/effectparticleshape.cpp
 0x00188F60 c:/star/code/game/effect/effectparticleshape.cpp
 0x00188FC0 c:/star/code/game/effect/effectparticleshape.cpp
 0x00189000 c:/star/code/game/effect/effectparticleshape.cpp
@@ -8650,7 +8596,6 @@
 0x001979D0 c:/star/code/game/effect/effectparticlesys.cpp
 0x00197A5D c:/star/code/game/effect/effectparticlesys.cpp
 0x00198440 c:/star/code/game/effect/effectparticlesys.cpp
-0x00198996 c:/star/code/game/effect/effectparticlesys.cpp
 0x00198A40 c:/star/code/game/effect/effectparticlesys.cpp
 0x00198AD0 c:/star/code/game/effect/effectparticlesys.cpp
 0x00198B20 c:/star/code/game/effect/effectparticlesys.cpp
@@ -8748,12 +8693,10 @@
 0x001A0EA0 c:/star/code/game/effect/effectplayer.cpp
 0x001A0F50 c:/star/code/game/effect/effectplayer.cpp
 0x001A0FA0 c:/star/code/game/effect/effectplayer.cpp
-0x001A1086 c:/star/code/game/effect/effectplayer.cpp
 0x001A10A0 c:/star/code/game/effect/effectplayer.cpp
 0x001A1140 c:/star/code/game/effect/effectplayer.cpp
 0x001A1280 c:/star/code/game/effect/effectplayer.cpp
 0x001A1350 c:/star/code/game/effect/effectplayer.cpp
-0x001A147E c:/star/code/game/effect/effectplayer.cpp
 0x001A15E0 c:/star/code/game/effect/effectplayer.cpp
 0x001A15F0 c:/star/code/game/effect/effectplayer.cpp
 0x001A1770 c:/star/code/game/effect/effectpsishield.cpp
@@ -8767,7 +8710,6 @@
 0x001A1F20 c:/star/code/game/effect/effectpsishield.cpp
 0x001A2130 c:/star/code/game/effect/effectpsishield.cpp
 0x001A23E0 c:/star/code/game/effect/effectpsishield.cpp
-0x001A25AE c:/star/code/game/effect/effectpsishield.cpp
 0x001A2600 c:/star/code/game/effect/effectpsishield.cpp
 0x001A2680 c:/star/code/game/effect/effectpsishield.cpp
 0x001A26D0 c:/star/code/game/effect/effectpsishield.cpp
@@ -8879,7 +8821,6 @@
 0x001A89E0 c:/star/code/game/effect/effectweapon.cpp
 0x001A8A10 c:/star/code/game/effect/effectweapon.cpp
 0x001A8A20 c:/star/code/game/effect/effectweapon.cpp
-0x001A8B0E c:/star/code/game/effect/effectweapon.cpp
 0x001A8B60 c:/star/code/game/effect/effectweapon.cpp
 0x001A8BA0 c:/star/code/game/effect/effectweapon.cpp
 0x001A8C20 c:/star/code/game/effect/effectweapon.cpp
@@ -8940,8 +8881,6 @@
 0x001AD4E0 c:/star/code/game/effect/effectweapon.cpp
 0x001ADCB0 c:/star/code/game/effect/effectweapon.cpp
 0x001AE30E c:/star/code/game/effect/effectweapon.cpp
-0x001AE3FE c:/star/code/game/effect/effectweapon.cpp
-0x001AE4E0 c:/star/code/game/effect/effectweapon.cpp
 0x001AE650 c:/star/code/game/effect/effectweapon.cpp
 0x001AE720 c:/star/code/game/effect/effectweapon.cpp
 0x001AE740 c:/star/code/game/effect/effectweapon.cpp
