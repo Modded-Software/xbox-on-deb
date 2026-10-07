@@ -6,10 +6,10 @@
   --bg: #0b0f0c;
   --panel: #141a13;
   --panel-2: #1d261b;
-  --ink: #d7e4d0;
-  --muted: #8fa08a;
+  --ink: #f2f5f1;
+  --muted: #bcc3b9;
   --line: #2b3a29;
-  --phosphor: #8dff9f;
+  --phosphor: #c6ffcf;
   --amber: #ffb454;
   --info: #6cb6ff;
   --danger: #ff6b5e;
@@ -18,6 +18,7 @@
   --rail: 13.5rem;
   --sans: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
   --mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace;
+  --hex: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='111' height='192' viewBox='0 0 27.712 48'%3E%3Cpath d='M0 -16L13.856 -8L13.856 8L0 16L-13.856 8L-13.856 -8ZM27.712 -16L41.568 -8L41.568 8L27.712 16L13.856 8L13.856 -8ZM0 32L13.856 40L13.856 56L0 64L-13.856 56L-13.856 40ZM27.712 32L41.568 40L41.568 56L27.712 64L13.856 56L13.856 40ZM13.856 8L27.712 16L27.712 32L13.856 40L0 32L0 16Z' fill='none' stroke='%23131a12' stroke-width='0.5'/%3E%3C/svg%3E");
 }
 
 @media (prefers-color-scheme: light) {
@@ -34,6 +35,7 @@
     --info: #10538f;
     --danger: #a82a1f;
     --gold: #7a5c00;
+    --hex: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='111' height='192' viewBox='0 0 27.712 48'%3E%3Cpath d='M0 -16L13.856 -8L13.856 8L0 16L-13.856 8L-13.856 -8ZM27.712 -16L41.568 -8L41.568 8L27.712 16L13.856 8L13.856 -8ZM0 32L13.856 40L13.856 56L0 64L-13.856 56L-13.856 40ZM27.712 32L41.568 40L41.568 56L27.712 64L13.856 56L13.856 40ZM13.856 8L27.712 16L27.712 32L13.856 40L0 32L0 16Z' fill='none' stroke='%23e6ebdf' stroke-width='0.5'/%3E%3C/svg%3E");
   }
 }
 
@@ -42,17 +44,43 @@
 }
 
 html {
-  background: var(--bg);
+  background-color: var(--bg);
+  background-image: var(--hex);
+  background-size: 111px 192px;
+  background-attachment: fixed;
+  background-repeat: repeat;
   color: var(--ink);
   font-family: var(--sans);
   line-height: 1.55;
   -webkit-text-size-adjust: 100%;
+  cursor: var(--cur-default, url("/assets/media/cursors/arrow-0.png") 2 2), default;
 }
 
 body {
   margin: 0;
   min-height: 100vh;
-  background: var(--bg);
+}
+
+/* Cursor-following hexagon color shift, masked to the lattice, behind content. */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  background-image: radial-gradient(circle 260px at var(--mx, 50%) var(--my, 50%), var(--phosphor), transparent 68%);
+  -webkit-mask-image: var(--hex);
+  mask-image: var(--hex);
+  -webkit-mask-size: 111px 192px;
+  mask-size: 111px 192px;
+  -webkit-mask-repeat: repeat;
+  mask-repeat: repeat;
+}
+
+html[data-pointer] body:hover::after {
+  opacity: 0.18;
 }
 
 a {
@@ -64,6 +92,37 @@ a:focus-visible,
 button:focus-visible {
   outline: 2px solid var(--phosphor);
   outline-offset: 2px;
+}
+
+/* StarCraft Brood War cursor pack (lifted from res/cursor-pack). */
+a,
+button,
+[role="button"] {
+  cursor: var(--cur-link, url("/assets/media/cursors/link-0.png") 2 2), pointer;
+}
+
+main,
+footer,
+.index,
+input,
+textarea {
+  cursor: var(--cur-text, url("/assets/media/cursors/text-0.png") 16 16), text;
+}
+
+img,
+.hero {
+  cursor: var(--cur-default, url("/assets/media/cursors/arrow-0.png") 2 2), default;
+  -webkit-user-drag: none;
+}
+
+/* Dragging hand while the button is held. */
+html.dragging,
+html.dragging main,
+html.dragging footer,
+html.dragging .index,
+html.dragging img,
+html.dragging .hero {
+  cursor: var(--cur-grabbing, url("/assets/media/cursors/grabbing.png") 16 16), grabbing;
 }
 
 .skip-link {
@@ -113,7 +172,6 @@ button:focus-visible {
   display: flex;
   gap: 0.5rem;
   padding: 0.3rem 0.4rem;
-  border-left: 2px solid transparent;
   color: var(--muted);
   text-decoration: none;
 }
@@ -124,7 +182,6 @@ button:focus-visible {
 }
 
 .index a[aria-current="page"] {
-  border-left-color: var(--phosphor);
   background: var(--panel);
   color: var(--phosphor);
 }
@@ -166,13 +223,6 @@ h2 {
   padding-bottom: 0.3rem;
   border-bottom: 1px solid var(--line);
   font-size: 1.15rem;
-}
-
-h2::before {
-  content: "// ";
-  color: var(--phosphor);
-  font-family: var(--mono);
-  font-size: 0.82em;
 }
 
 h3 {
@@ -266,10 +316,6 @@ figure.plate::after {
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--muted);
-}
-
-.panel h2::before {
-  content: none;
 }
 
 .panel dl {
@@ -573,14 +619,7 @@ footer a {
   }
 
   .index a {
-    border-left: 0;
-    border-bottom: 2px solid transparent;
     white-space: nowrap;
-  }
-
-  .index a[aria-current="page"] {
-    border-left-color: transparent;
-    border-bottom-color: var(--phosphor);
   }
 
   main {
