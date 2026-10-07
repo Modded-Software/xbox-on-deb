@@ -236,8 +236,18 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     _putenv_s("RECOMP_WINDOW_TITLE", YOUR_GAME_TITLE);
     if (!getenv("RECOMP_AC97_READY"))
         _putenv_s("RECOMP_AC97_READY", "1");
-    if (!getenv("RECOMP_DSP_ACK") && !getenv("RECOMP_APU_DSP_ACK"))
-        _putenv_s("RECOMP_APU_DSP_ACK", "gp:0x810");
+    /* Doorbell ACK. Default: none -- the DSP56300 engine runs the guest's real
+     * effects-image command, which is what produces faithful audio. The fake
+     * acknowledgement (RECOMP_APU_DSP_ACK=gp:0x810) is an explicitly enabled
+     * diagnostic bypass; it skips the command and yields broken output. See
+     * doc 13 G19/G21. */
+    /* Lift the ordinary heap above the contiguous DMA arena. A contiguous VA
+     * 0x80000000+P and an ordinary VA P share physical P, so without this the
+     * guest's DSP and GPU buffers overprint each other: corrupted textures and
+     * garbled audio. Required on the real DSP command path. See doc 13 G19/G21
+     * and RECOMP_HEAP_BASE. */
+    if (!getenv("RECOMP_HEAP_BASE"))
+        _putenv_s("RECOMP_HEAP_BASE", "0x04000000");
     if (!getenv("RECOMP_USB"))
         _putenv_s("RECOMP_USB", "1");
     if (!getenv("RECOMP_USB_NDP"))

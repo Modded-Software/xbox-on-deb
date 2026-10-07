@@ -7,9 +7,14 @@ It is the follow-on to [12-runtime-defects-audit.md](12-runtime-defects-audit.md
 bug: it is a stub in the middle of the hardware pipeline.
 
 Authoritative references are **xemu** (`hw/xbox/mcpx/apu/`) and **MAME**
-(`xbox_pci.cpp` + `dsp563xx`). Cxbx is deliberately excluded: its audio is also
-incomplete, so it cannot be used to decide what "correct" is. Where a claim about
-this title is made, it comes from a named symbol, XBE section, or source line.
+(`xbox_pci.cpp` + `dsp563xx`). Cxbx is deliberately excluded: its APU is not
+implemented at all (`src/devices/audio/APUDevice.cpp` returns 0 for every GP/EP/
+VP MMIO read; it HLEs DirectSound instead), so it cannot be used to decide what
+"correct" is. xemu remains the register/hardware reference, but note the user
+reports **xemu's audio for this title is also broken**, so no emulator is a
+working end-to-end oracle here: correctness must come from the guest's own code
+plus a register trace. Where a claim about this title is made, it comes from a
+named symbol, XBE section, or source line.
 
 Scope: the `recomp/` runtime direction. The emulator direction at the repository
 root is out of scope.
@@ -184,6 +189,52 @@ counters only. There is no golden-output test for the DSP, the mixdown, or the
 downloaded effects program; "unmuted peak > 0" cannot tell a correct mixdown
 from the surrogate.
 
+### P0 - gaps found after the Phase-1 engine went live
+
+These were discovered by rooting the "no 3D mission audio" symptom on an
+engine-on run (`logs/runtime-20261007-161806.log`), not by reading the plan.
+
+**G18 - The 3D/HRTF voice path is never exercised by the guest.** The title
+links a full Full-HRTF DirectSound and calls it unconditionally after the
+effects-image download: `DirectSoundUseFullHRTF_0_002F199B` is invoked at
+`recomp_0029.c:2798` (inside `cGameMixer_APIStartup_001472A0`), and the pipeline
+exists in guest code — `DirectSound_CHRTFSource_*`,
+`DirectSound_CDirectSoundVoice_Set3DVoiceData_002F1D2D`
+(`recomp_0062.c:14098` → `DirectSound_CMcpxVoiceClient_Apply3dSettings_002F8FCB`
+→ `LoadHRTFFilter_002F8481`). The runtime VP already implements the hardware side
+faithfully (`apu_vp.c:1213` HRTF processing; `NV1BA0_PIO_SET_VOICE_TAR_HRTF` at
+`:381`; HRIR at `:526`; xemu `vp.c:1458`). On hardware, 3D voices are exactly
+`v < MCPX_HW_MAX_3D_VOICES` (64, `apu_regs.h:331`) and receive HRTF. **But the
+guest never starts one:** every `[APU-START]` in the run is `list=1` (the 2D
+list), `NV_PAPU_TVL3D`/`TVLMP` stay `FFFF`, and no `class=3D` `[APU-ROUTE]`
+appears. So this is *not yet* an APU-side defect — the guest's cue 3D flag or an
+init/notify result upstream is wrong. Next step is to prove whether the guest
+reaches `XACT_CSoundCueInstance_Set3DProperties_0031685E`
+(`recomp_0065.c:3264`, called from `recomp_0064.c:13300`) and
+`Set3DVoiceData`, or diverts earlier. Note: Cxbx cannot adjudicate this (its APU
+is a stub) and xemu's audio is reported broken, so neither validates the result.
+
+**G19 - The doorbell ACK was still armed while the real engine ran (fixed).**
+G6's fake ACK was not retired when the engine was enabled: `main.c` forced
+`RECOMP_APU_DSP_ACK=gp:0x810` unconditionally, and `mcpx_apu_dsp_ack_frame`
+runs on every audio-loop iteration (`apu_core.c:630`), independent of the DSP
+frame. It therefore cleared the guest's command word *before*
+`dsp_frame_engine` could run. Log proof, same engine-on run:
+`[APU] diagnostic DSP passthrough ack: 1 mailbox(es); DSP commands are NOT
+emulated` and `[APU] diagnostic DSP doorbell physical 0x01590810: command
+0x00000002/0x00000003 bypassed (passthrough)` — printed alongside `[APU] DSP
+GP/EP initialized (DSP56300 engine)`. So `DownloadEffectsImage` (G5/G6) never
+actually ran the program. Fixed: the ACK default is now armed only in stub mode
+(`main.c`); an explicit `RECOMP_APU_DSP_ACK` still wins. Re-verify that command
+0x2/0x3 now reach the GP and that the effects image is processed.
+
+**G20 - `[ICALL] Failed to resolve VA 0x00354B77` is a false positive.**
+0x00354B77 is the exclusive end of `CXnIp_IpConfigProbe_00354AF2`
+(`0x00354AF2-0x00354B77`, `recomp_0067.c:23238`) and is stored as a code pointer
+(`recomp_0067.c:24649`). It is a stored return/continuation address in the Xbox
+networking stack, not a missing audio function boundary. No audio impact; do not
+chase it.
+
 ## 5. Wiring gaps (not code, but where the stubs are made permanent)
 
 - `main.c:234-237` force `RECOMP_AC97_READY=1` and `RECOMP_APU_DSP_ACK=gp:0x810`.
@@ -198,6 +249,13 @@ from the surrogate.
   mixdown is the default behaviour.
 
 ## 6. Port plan
+
+Status: **Phase 1 and Phase 2 are landed** (DSP56300 engine in `src/apu/dsp/`,
+GP/EP MMIO + DMA wired in `apu_dsp.c`, trap widened to `0x80000`,
+`RECOMP_APU_DSP` engine default-on; commits `refs/xboxrecomp` `ff9e6ea`,
+`bfae28d`). G6's ACK was *not* retired and actively broke the protocol — see G19,
+now patched. G7/G8 (VP→GP feed, EP output sink) are wired in `dsp_frame_engine`.
+What is now blocking audio is **G18** (guest never submits a 3D voice) and G9/G10.
 
 **Phase 1 - DSP engine, no new features (P0).** Port xemu's
 `dsp/dsp.c`, `dsp_c.c`, `dsp/dsp_dma.c`, `dsp/interp/*` into `src/apu/dsp/`,

@@ -13,6 +13,8 @@ recomp/tests/run.py --attach        # use an already-running game (fast loop)
 recomp/tests/run.py --only dpad     # only tests whose name contains "dpad"
 recomp/tests/run.py --scene         # print the current scene fingerprint
 recomp/tests/run.py --scene --record  # append it to baselines/scenes.txt
+recomp/tests/run.py --user-state --only a-mash   # default user launch + A-mash
+recomp/tests/run.py --user-state --only audible  # audio after the mission loads
 ```
 
 ## Layout
@@ -21,7 +23,7 @@ recomp/tests/run.py --scene --record  # append it to baselines/scenes.txt
 |---|---|
 | `xinject.py` | Inject X11 key/button/mouse events via XTEST (ctypes; no compiler). Also `list`/`focus`/`title`/`wait` to find and focus the game window. |
 | `framework.py` | `Game` (launch/attach, inject, read telemetry) and the `@test` registry/runner. |
-| `test_*.py` | Test modules; importing them registers their cases. `test_input.py` (keys/sticks/d-pad), `test_mouse.py` (input-layer mouse), `test_zzz_gameplay.py` (drives into a mission; sorts last). |
+| `test_*.py` | Test modules; importing them registers their cases. `test_input.py` (keys/sticks/d-pad), `test_mouse.py` (input-layer mouse), `test_mission_reach.py` (user-state launch + scripted A-mash into the first mission), `test_mission_audio.py` (the mission is audible; measures the captured APU PCM), `test_zzz_gameplay.py` (drives into a mission; sorts last). |
 | `run.py` | Discovers `test_*.py`, starts one game, runs the tests, reports. |
 | `baselines/` | Recorded scene fingerprints (created by `--record`). |
 
@@ -52,19 +54,20 @@ from framework import Game, test, hold, START
 
 @test("Start pauses the game")
 def start_pauses(g: Game):
-    sample = hold(g, "Tab", expect={"buttons": START})   # press, sample, release
+    sample = hold(g, "Tab", expect={"buttons": START})   # Start = Tab
     assert sample["buttons"] & START, sample
 ```
 
 `hold()` presses a key and keeps it down until a fresh `[INPUT]` sample
 satisfies `expect` (a bitmask is ANDed), then releases. The default KBM layout
-is `Return`=A, `E`=B, `space`=X, `Tab`=Start, `Esc`/`BackSpace`=Back; see
-`src/input/xinput_device.c` and `docs/08-input.md`.
+is `Space`=A, `E`=B, `F`=X, `R`=Y, `Shift`=Black, `Q`=White, `Control`=LT,
+`Tab`=Start, `Escape`=Back; see `src/input/xinput_device.c` and
+`docs/08-input.md`. A is `Space`, not `Return` -- `Return` is unmapped.
 For scene checks, hash before and after:
 
 ```python
 before = g.capture_hash()
-g.key("Return", "press")
+g.key("space", "press")   # A
 assert g.capture_hash() != before
 ```
 

@@ -52,10 +52,14 @@ def main():
     parser.add_argument("--record", action="store_true",
                         help="with --scene, append the fingerprint to baselines/scenes.txt")
     parser.add_argument("--boot-timeout", type=float, default=90.0)
+    parser.add_argument("--user-state", action="store_true",
+                        help="launch the default user configuration "
+                             "(scripts/18-launch-user.sh) instead of the test env")
     args = parser.parse_args()
 
     load_tests()
-    game = Game(attach=args.attach, boot_timeout=args.boot_timeout)
+    game = Game(attach=args.attach, boot_timeout=args.boot_timeout,
+                user_state=args.user_state)
     ok = False
     try:
         game.start()

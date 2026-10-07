@@ -25,6 +25,7 @@ Usage (from a test module):
         before = g.wait_input(hold(g, "Return"))
         assert before["buttons"] & 0x10
 """
+import json
 import os
 import re
 import signal
@@ -99,6 +100,84 @@ def kill_ghost():
     return len(pids)
 
 
+def _pw_nodes():
+    """(id, props) for every PipeWire node, from pw-dump. Empty on failure."""
+    result = subprocess.run(["pw-dump"], capture_output=True, text=True)
+    if result.returncode != 0:
+        return []
+    try:
+        data = json.loads(result.stdout)
+    except json.JSONDecodeError:
+        return []
+    nodes = []
+    for obj in data:
+        if obj.get("type") != "PipeWire:Interface:Node":
+            continue
+        props = obj.get("info", {}).get("props") or {}
+        nodes.append((obj.get("id"), props))
+    return nodes
+
+
+def _ghost_audio_nodes():
+    """PipeWire playback streams that belong to ghost.exe.
+
+    Matched by process id first (Proton keeps the wine process whose cmdline
+    contains the exe path), then by an application/binary/name that mentions
+    ghost, wine or FAudio, since the Wine audio backend's ids vary."""
+    pids = set(_ghost_pids())
+    wanted = ("ghost", "wine", "faudio")
+    found = []
+    for node_id, props in _pw_nodes():
+        if props.get("media.class") != "Stream/Output/Audio":
+            continue
+        blob = " ".join(str(props.get(k, "")) for k in (
+            "application.name", "application.process.binary",
+            "node.name", "media.name")).lower()
+        if props.get("application.process.id") in pids or any(w in blob for w in wanted):
+            found.append((node_id, props))
+    return found
+
+
+class Recorder:
+    """A running pw-record capture; stop() finalises the WAV and returns it."""
+
+    def __init__(self, proc, path, node_id=None, restore=None):
+        self.proc = proc
+        self.path = path
+        self.node_id = node_id
+        self.restore = restore
+
+    def stop(self):
+        if self.proc.poll() is None:
+            self.proc.terminate()
+            try:
+                self.proc.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                self.proc.kill()
+                self.proc.wait()
+        if self.node_id is not None and self.restore is not None:
+            subprocess.run(["wpctl", "set-mute", str(self.node_id),
+                            "1" if self.restore[0] else "0"])
+            subprocess.run(["wpctl", "set-volume", str(self.node_id),
+                            f"{self.restore[1]:.4f}"])
+        return self.path
+
+
+def _stream_volume(node_id):
+    """(muted, volume) for a PipeWire node, via wpctl. (False, 1.0) if unknown."""
+    try:
+        out = subprocess.run(["wpctl", "get-volume", str(node_id)],
+                             capture_output=True, text=True).stdout
+    except OSError:
+        return False, 1.0
+    muted = "MUTED" in out
+    volume = 1.0
+    match = re.search(r"Volume:\s*([0-9.]+)", out)
+    if match:
+        volume = float(match.group(1))
+    return muted, volume
+
+
 def hold(game, name, wait=4.0, expect=None):
     """Press a key and return an input sample taken while it is held.
 
@@ -123,16 +202,21 @@ def hold(game, name, wait=4.0, expect=None):
 
 
 class Game:
-    def __init__(self, attach=False, kbm=True, boot_timeout=90):
+    def __init__(self, attach=False, kbm=True, boot_timeout=90, user_state=False):
         self.attach = attach
         self.kbm = kbm
         self.boot_timeout = boot_timeout
+        self.user_state = user_state
         self.proc = None
         self._log_pos = 0
 
     # -- lifecycle ---------------------------------------------------------
 
     def start(self):
+        if self.user_state:
+            self._start_user_state()
+            self.focus()
+            return self
         if self.attach:
             if not os.path.exists(LOG):
                 raise RuntimeError(f"attach requested but {LOG} does not exist")
@@ -162,6 +246,34 @@ class Game:
             self._log_pos = 0
         self.focus()
         return self
+
+    def _start_user_state(self):
+        """Launch the default user configuration (scripts/18-launch-user.sh).
+
+        This is the same entry point a human uses: it selects keyboard+mouse,
+        input/key tracing, the default resolution, the emulated APU, and its
+        own timestamped runtime log. It redirects the log to
+        logs/latest-runtime.log, which is where this Game then reads telemetry
+        from -- so the module-level LOG is repointed for the one live game."""
+        global LOG
+        env = dict(os.environ)  # ambient env passes through (diagnostic knobs included)
+        # Capture the decoded/played APU PCM so an audio assertion has a signal
+        # to measure. RECOMP_APU_WAV=<path> writes <path>.emu.raw (post-DSP,
+        # pre-mixer) and <path>.mix.raw (post-mixer, what is played).
+        env.setdefault("RECOMP_APU_WAV", os.path.join("/tmp/opencode", "mission_audio"))
+        self.audio_raw = env["RECOMP_APU_WAV"]
+        out = open(os.path.join("/tmp/opencode", "test_mission.out"), "w")
+        try:
+            subprocess.Popen(
+                ["bash", "scripts/18-launch-user.sh"], cwd=ROOT, env=env,
+                stdout=out, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL,
+                start_new_session=True)
+        finally:
+            out.close()
+        _run("wait", WINDOW_TITLE, str(self.boot_timeout))
+        latest = os.path.join(ROOT, "logs", "latest-runtime.log")
+        LOG = os.path.realpath(latest) if os.path.exists(latest) else LOG
+        self._log_pos = 0
 
     def stop(self):
         if self.attach:
@@ -210,11 +322,60 @@ class Game:
         time.sleep(gap)
 
     def start_new_game(self, taps=5, gap=1.5):
-        """Advance the menus into a mission by tapping A (Return), as a human
-        would. Returns the frame counter when the taps finish."""
+        """Advance the menus into a mission by tapping A, as a human would.
+
+        A is Space in the default KBM layout (src/input/xinput_device.c), not
+        Return -- Return is unmapped, so tapping it does nothing. Returns the
+        frame counter when the taps finish."""
         for _ in range(taps):
-            self.tap("Return", gap=gap)
+            self.tap("space", gap=gap)
         return self.frame()
+
+    # -- scripted navigation ----------------------------------------------
+
+    MISSION_MAP = "1_3_1b_Hive_StationOuter"
+
+    def goto_mission(self, key="space", gap=2.0, timeout=240.0):
+        """Mash A every `gap` seconds until the first mission's map loads.
+
+        Arrival is detected from the runtime log: the level manager logs the
+        map it streams in ([PATH] ...\\Levels\\1_3_1b_Hive_StationOuter.nhc).
+        Returns the map name, or None on timeout. `key` defaults to Space (A).
+        """
+        deadline = time.time() + timeout
+        while time.time() < deadline:
+            self.tap(key, hold=0.35, gap=0.0)
+            time.sleep(max(0.0, gap - 0.35))
+            if self._last_line(self.MISSION_MAP):
+                return self.MISSION_MAP
+        return None
+
+    def start_app_recording(self, path):
+        """Record only ghost.exe's own PipeWire output to `path` (s16 WAV).
+
+        This is the audible signal -- what the sound server actually plays --
+        not the runtime's internal PCM. Returns a Recorder; call stop().
+        Raises if ghost.exe has no playback stream at all."""
+        nodes = _ghost_audio_nodes()
+        if not nodes:
+            raise RuntimeError(
+                "ghost.exe has no PipeWire Stream/Output/Audio node: its audio "
+                "is not reaching the sound server")
+        node_id, props = nodes[0]
+        target = props.get("node.name") or str(props.get("object.serial", node_id))
+        # The desktop may remember a low/muted per-app volume (WirePlumber's
+        # restore-stream), which is not the game's doing. Normalise it for the
+        # measurement and put it back afterwards, so the test measures whether
+        # the game emits audio, not how the mixer was left.
+        restore = _stream_volume(node_id)
+        subprocess.run(["wpctl", "set-mute", str(node_id), "0"])
+        subprocess.run(["wpctl", "set-volume", str(node_id), "1.0"])
+        proc = subprocess.Popen(
+            ["pw-record", "--target", target, "--rate", "48000",
+             "--channels", "2", "--format", "s16", path],
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+            start_new_session=True)
+        return Recorder(proc, path, node_id=node_id, restore=restore)
 
     # -- telemetry: mouse / right stick -----------------------------------
 
@@ -384,9 +545,9 @@ class Game:
 _REGISTRY = []
 
 
-def test(name=None):
+def test(name=None, timeout=None):
     def decorate(fn):
-        _REGISTRY.append((name or fn.__name__, fn))
+        _REGISTRY.append((name or fn.__name__, fn, timeout))
         return fn
     return decorate
 
@@ -402,10 +563,10 @@ def _test_alarm(_signum, _frame):
 def run_all(game, only=None, per_test_timeout=90):
     passed, failed = 0, 0
     previous = signal.signal(signal.SIGALRM, _test_alarm)
-    for name, fn in registered():
+    for name, fn, timeout in registered():
         if only and only not in name:
             continue
-        signal.alarm(per_test_timeout)
+        signal.alarm(timeout or per_test_timeout)
         try:
             game.focus()
             fn(game)
