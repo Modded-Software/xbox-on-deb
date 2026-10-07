@@ -318,16 +318,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     if (getenv("RECOMP_HEAP_SELFTEST"))
         xbox_HeapSelfTest();
 
-    if (xbox_Nv2aNativeFencesEnabled() && !getenv("RECOMP_VBLANK"))
-        _putenv_s("RECOMP_VBLANK", "1");
-
-    /* Bring up the emulated APU (mapped variant: it resolves both contiguous
-     * allocations and ordinary-RAM payloads through the APU mapper, which
-     * prefers a live contiguous block over a colliding ordinary page). */
+    /* Bring up the emulated APU. It walks Xbox physical RAM to find voice
+     * buffers, so it gets the guest RAM base; physical resolution of both the
+     * contiguous window and ordinary payloads goes through the runtime's
+     * provenance resolver. */
     if (getenv("RECOMP_AC97_READY")) {
-        g_apu_state = mcpx_apu_init_standalone_mapped(
-            (uint8_t *)((uintptr_t)g_xbox_mem_offset + XBOX_CONTIG_BASE),
-            xbox_ApuPhysicalPointer);
+        g_apu_state = mcpx_apu_init_standalone((uint8_t *)xbox_GetMemoryBase());
         fprintf(stderr, "[BOOT] emulated APU %s\n",
                 g_apu_state ? "up" : "FAILED to initialise");
     }
@@ -348,23 +344,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     xbox_InputInit();
     xbox_OhciInit();
 
-    /* Step 6: NV2A software-method dispatcher. The title's D3D miniport calls
-     * the software method routine with a context pointer; registering both is
-     * what lets present/fence/vblank actually happen. */
-    if (xbox_Nv2aNativeFencesEnabled()) {
-        if (xbox_Nv2aSoftwareMethodHandler(0x002C99B0u, 0x002D3D78u) < 0)
-            return EXIT_FAILURE;
-    } else {
-        xbox_Nv2aMirrorFence(0x002D2148u, 0x2Cu, 0x30u);
-        xbox_Nv2aFrameCounter(0x002D2148u, 0x1DE8u);
-    }
-    /* D3D::BlockOnTime waits on the device's embedded completion event at
-     * +0x1DCC; the GPU interrupt signals it on hardware. Register it in both
-     * modes so the ack thread releases the wait instead of it resolving to an
-     * invalid handle and spinning. */
-    xbox_Nv2aSignalEvent(0x002D2148u, 0x1DCCu);
-
-    /* Step 7: Initialize stack */
+    /* Step 6: stack */
     g_esp = XBOX_STACK_TOP;
 
     printf("\n=== Initialization complete ===\n");
