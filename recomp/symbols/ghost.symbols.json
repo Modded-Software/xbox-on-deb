@@ -10,13 +10,13 @@
   "source": "Ghost.map (pub+static, with Lib:Object) + Ghost.pdb (modules/files)"
  },
  "coverage": {
-  "functions_detected": 17236,
-  "functions_named_from_map": 16131,
-  "functions_with_source_file": 9006,
-  "functions_with_source_direct": 8190,
-  "functions_with_source_interpolated": 816,
-  "named_percent": 93.59,
-  "sourced_percent": 52.25,
+  "functions_detected": 17244,
+  "functions_named_from_map": 16140,
+  "functions_with_source_file": 9012,
+  "functions_with_source_direct": 8195,
+  "functions_with_source_interpolated": 817,
+  "named_percent": 93.6,
+  "sourced_percent": 52.26,
   "distinct_source_files": 222
  },
  "functions": {
@@ -6676,6 +6676,16 @@
    "section": ".text",
    "detected": true,
    "name": "sub_00024D9F",
+   "source_file": "c:/star/code/game/ui/vuiconsole.cpp",
+   "source_origin": "interpolated"
+  },
+  "0x00024DEE": {
+   "va": "0x00024DEE",
+   "end": "0x00024E50",
+   "size": 98,
+   "section": ".text",
+   "detected": true,
+   "name": "sub_00024DEE",
    "source_file": "c:/star/code/game/ui/vuiconsole.cpp",
    "source_origin": "interpolated"
   },
@@ -58790,6 +58800,19 @@
    "source_file": "c:/star/code/game/ai/aiclassterranmarine.cpp",
    "source_origin": "direct"
   },
+  "0x000DF750": {
+   "va": "0x000DF750",
+   "end": "0x000DF850",
+   "size": 256,
+   "section": ".text",
+   "detected": true,
+   "mangled": "?SetLightOn@cAITerranMarine@@UAEXXZ",
+   "demangled": "public: virtual void __thiscall cAITerranMarine::SetLightOn(void)",
+   "name": "cAITerranMarine_SetLightOn_000DF750",
+   "object": "aiClassTerranMarine.obj",
+   "source_file": "c:/star/code/game/ai/aiclassterranmarine.cpp",
+   "source_origin": "direct"
+  },
   "0x000DF850": {
    "va": "0x000DF850",
    "end": "0x000DF8E5",
@@ -67708,6 +67731,19 @@
    "mangled": "?IsTargettable@cAIZergTankCritter@@UAEHPAVtActor@@@Z",
    "demangled": "public: virtual int __thiscall cAIZergTankCritter::IsTargettable(class tActor *)",
    "name": "cAIZergTankCritter_IsTargettable_000F81E0",
+   "object": "aiClassZergTankCritter.obj",
+   "source_file": "c:/star/code/game/ai/aiclasszergtankcritter.cpp",
+   "source_origin": "direct"
+  },
+  "0x000F8240": {
+   "va": "0x000F8240",
+   "end": "0x000F83C0",
+   "size": 384,
+   "section": ".text",
+   "detected": true,
+   "mangled": "?ALStateChanged@cAIZergTankCritter@@UAEXW4eAIAlertState@@0@Z",
+   "demangled": "public: virtual void __thiscall cAIZergTankCritter::ALStateChanged(enum eAIAlertState, enum eAIAlertState)",
+   "name": "cAIZergTankCritter_ALStateChanged_000F8240",
    "object": "aiClassZergTankCritter.obj",
    "source_file": "c:/star/code/game/ai/aiclasszergtankcritter.cpp",
    "source_origin": "direct"
@@ -99958,6 +99994,19 @@
    "source_file": "c:/star/code/game/effect/effectactor.cpp",
    "source_origin": "direct"
   },
+  "0x00164940": {
+   "va": "0x00164940",
+   "end": "0x00164A20",
+   "size": 224,
+   "section": ".text",
+   "detected": true,
+   "mangled": "?Init@cEffectRadiusEffect@@UAEXXZ",
+   "demangled": "public: virtual void __thiscall cEffectRadiusEffect::Init(void)",
+   "name": "cEffectRadiusEffect_Init_00164940",
+   "object": "effectActor.obj",
+   "source_file": "c:/star/code/game/effect/effectactor.cpp",
+   "source_origin": "direct"
+  },
   "0x00164A20": {
    "va": "0x00164A20",
    "end": "0x00164B53",
@@ -111724,6 +111773,19 @@
    "source_file": "c:/star/code/game/effect/effecttrail.cpp",
    "source_origin": "direct"
   },
+  "0x001A60B0": {
+   "va": "0x001A60B0",
+   "end": "0x001A6250",
+   "size": 416,
+   "section": ".text",
+   "detected": true,
+   "mangled": "?Init@cEffectDirtTrail@@UAEXXZ",
+   "demangled": "public: virtual void __thiscall cEffectDirtTrail::Init(void)",
+   "name": "cEffectDirtTrail_Init_001A60B0",
+   "object": "effectTrail.obj",
+   "source_file": "c:/star/code/game/effect/effecttrail.cpp",
+   "source_origin": "direct"
+  },
   "0x001A6250": {
    "va": "0x001A6250",
    "end": "0x001A643E",
@@ -113183,6 +113245,19 @@
    "name": "sub_001AE30E",
    "source_file": "c:/star/code/game/effect/effectweapon.cpp",
    "source_origin": "interpolated"
+  },
+  "0x001AE4E0": {
+   "va": "0x001AE4E0",
+   "end": "0x001AE650",
+   "size": 368,
+   "section": ".text",
+   "detected": true,
+   "mangled": "?FireWeapon@cEffectGun@@UAEXXZ",
+   "demangled": "public: virtual void __thiscall cEffectGun::FireWeapon(void)",
+   "name": "cEffectGun_FireWeapon_001AE4E0",
+   "object": "effectWeapon.obj",
+   "source_file": "c:/star/code/game/effect/effectweapon.cpp",
+   "source_origin": "direct"
   },
   "0x001AE650": {
    "va": "0x001AE650",
@@ -126387,6 +126462,17 @@
    "name": "cM121_WraithCrash_CutsceneEvent_001DCE40",
    "object": "xGameScript:M121_script.obj"
   },
+  "0x001DD240": {
+   "va": "0x001DD240",
+   "end": "0x001DD320",
+   "size": 224,
+   "section": ".text",
+   "detected": true,
+   "mangled": "?Entered@cM121_ExplosionDeterrent@@UAEXIII@Z",
+   "demangled": "public: virtual void __thiscall cM121_ExplosionDeterrent::Entered(unsigned int, unsigned int, unsigned int)",
+   "name": "cM121_ExplosionDeterrent_Entered_001DD240",
+   "object": "xGameScript:M121_script.obj"
+  },
   "0x001DD320": {
    "va": "0x001DD320",
    "end": "0x001DD3DE",
@@ -129392,6 +129478,17 @@
    "name": "cM431_Bellows_Timer_001E6D90",
    "object": "xGameScript:M431_script.obj"
   },
+  "0x001E6E40": {
+   "va": "0x001E6E40",
+   "end": "0x001E6F90",
+   "size": 336,
+   "section": ".text",
+   "detected": true,
+   "mangled": "?BeginScene@cM431_MarineDispenser@@UAEXXZ",
+   "demangled": "public: virtual void __thiscall cM431_MarineDispenser::BeginScene(void)",
+   "name": "cM431_MarineDispenser_BeginScene_001E6E40",
+   "object": "xGameScript:M431_script.obj"
+  },
   "0x001E6F90": {
    "va": "0x001E6F90",
    "end": "0x001E70A3",
@@ -130715,6 +130812,17 @@
    "mangled": "?DoEvent@cCutscenePlay@@AAEXIMMM@Z",
    "demangled": "private: void __thiscall cCutscenePlay::DoEvent(unsigned int, float, float, float)",
    "name": "cCutscenePlay_DoEvent_001EC2D0",
+   "object": "xGameScript:cutsceneScript.obj"
+  },
+  "0x001EC440": {
+   "va": "0x001EC440",
+   "end": "0x001EC540",
+   "size": 256,
+   "section": ".text",
+   "detected": true,
+   "mangled": "?Init@cTextDisplay@@UAEXXZ",
+   "demangled": "public: virtual void __thiscall cTextDisplay::Init(void)",
+   "name": "cTextDisplay_Init_001EC440",
    "object": "xGameScript:cutsceneScript.obj"
   },
   "0x001EC540": {
@@ -159896,6 +160004,17 @@
    "mangled": "?sendGeometryData@hkSerializingDisplayHandler@@AAEXABV?$hkArray@PAVhkDisplayGeometry@@@@@Z",
    "demangled": "private: void __thiscall hkSerializingDisplayHandler::sendGeometryData(class hkArray<class hkDisplayGeometry *> const &)",
    "name": "hkSerializingDisplayHandler_sendGeometryData_00295000",
+   "object": "hkutilities2:hkSerializingDisplayHandler.obj"
+  },
+  "0x00295490": {
+   "va": "0x00295490",
+   "end": "0x002955A0",
+   "size": 272,
+   "section": ".text",
+   "detected": true,
+   "mangled": "?addGeometry@hkSerializingDisplayHandler@@UAE?AW4Status@hkDisplayHandler@@ABV?$hkArray@PAVhkDisplayGeometry@@@@ABVhkTransform@@HH@Z",
+   "demangled": "public: virtual enum hkDisplayHandler::Status __thiscall hkSerializingDisplayHandler::addGeometry(class hkArray<class hkDisplayGeometry *> const &, class hkTransform const &, int, int)",
+   "name": "hkSerializingDisplayHandler_addGeometry_00295490",
    "object": "hkutilities2:hkSerializingDisplayHandler.obj"
   },
   "0x002955A0": {
@@ -191031,14 +191150,6 @@
    "detected": true,
    "name": "sub_0030002F"
   },
-  "0x003045D0": {
-   "va": "0x003045D0",
-   "end": "0x0030FCA0",
-   "size": 46800,
-   "section": "DSOUND",
-   "detected": true,
-   "name": "sub_003045D0"
-  },
   "0x0030FCA0": {
    "va": "0x0030FCA0",
    "end": "0x0030FCBE",
@@ -196264,14 +196375,6 @@
    "demangled": "",
    "name": "YUV_16a1_4x2_even_MMX_4_0032DA50",
    "object": "binkxbox:rgb16a1.obj"
-  },
-  "0x0032E000": {
-   "va": "0x0032E000",
-   "end": "0x0032EAA0",
-   "size": 2720,
-   "section": "BINKYUY2",
-   "detected": true,
-   "name": "sub_0032E000"
   },
   "0x0032EAA0": {
    "va": "0x0032EAA0",

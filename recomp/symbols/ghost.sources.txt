@@ -547,6 +547,7 @@
 0x00024C30 c:/star/code/game/ui/vuiconsole.cpp
 0x00024CF0 c:/star/code/game/ui/vuiconsole.cpp
 0x00024D9F c:/star/code/game/ui/vuiconsole.cpp
+0x00024DEE c:/star/code/game/ui/vuiconsole.cpp
 0x00024E50 c:/star/code/game/ui/vuiconsole.cpp
 0x00024E70 c:/star/code/game/ui/vuiconsole.cpp
 0x00024ED0 c:/star/code/game/ui/vuiconsole.cpp
@@ -4660,6 +4661,7 @@
 0x000DF5F0 c:/star/code/game/ai/aiclassterranlightinfantry.cpp
 0x000DF660 c:/star/code/game/ai/aiclassterranlightinfantry.cpp
 0x000DF6B0 c:/star/code/game/ai/aiclassterranmarine.cpp
+0x000DF750 c:/star/code/game/ai/aiclassterranmarine.cpp
 0x000DF850 c:/star/code/game/ai/aiclassterranmarine.cpp
 0x000DF8F0 c:/star/code/game/ai/aiclassterranmarine.cpp
 0x000DF930 c:/star/code/game/ai/aiclassterranmarine.cpp
@@ -5349,6 +5351,7 @@
 0x000F8060 c:/star/code/game/ai/aiclasszergtankcritter.cpp
 0x000F8130 c:/star/code/game/ai/aiclasszergtankcritter.cpp
 0x000F81E0 c:/star/code/game/ai/aiclasszergtankcritter.cpp
+0x000F8240 c:/star/code/game/ai/aiclasszergtankcritter.cpp
 0x000F83C0 c:/star/code/game/ai/aiclasszergtankcritter.cpp
 0x000F8400 c:/star/code/game/ai/aiclasszergling.cpp
 0x000F8420 c:/star/code/game/ai/aiclasszergling.cpp
@@ -7856,6 +7859,7 @@
 0x00164410 c:/star/code/game/effect/effectactor.cpp
 0x00164550 c:/star/code/game/effect/effectactor.cpp
 0x001647E0 c:/star/code/game/effect/effectactor.cpp
+0x00164940 c:/star/code/game/effect/effectactor.cpp
 0x00164A20 c:/star/code/game/effect/effectactor.cpp
 0x00164B60 c:/star/code/game/effect/effectactor.cpp
 0x00164BD0 c:/star/code/game/effect/effectactor.cpp
@@ -8768,6 +8772,7 @@
 0x001A59F0 c:/star/code/game/effect/effecttrail.cpp
 0x001A5A40 c:/star/code/game/effect/effecttrail.cpp
 0x001A5BB0 c:/star/code/game/effect/effecttrail.cpp
+0x001A60B0 c:/star/code/game/effect/effecttrail.cpp
 0x001A6250 c:/star/code/game/effect/effecttrail.cpp
 0x001A6440 c:/star/code/game/effect/effecttrail.cpp
 0x001A64B0 c:/star/code/game/effect/effecttrail.cpp
@@ -8881,6 +8886,7 @@
 0x001AD4E0 c:/star/code/game/effect/effectweapon.cpp
 0x001ADCB0 c:/star/code/game/effect/effectweapon.cpp
 0x001AE30E c:/star/code/game/effect/effectweapon.cpp
+0x001AE4E0 c:/star/code/game/effect/effectweapon.cpp
 0x001AE650 c:/star/code/game/effect/effectweapon.cpp
 0x001AE720 c:/star/code/game/effect/effectweapon.cpp
 0x001AE740 c:/star/code/game/effect/effectweapon.cpp
