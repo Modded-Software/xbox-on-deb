@@ -185,3 +185,12 @@ Recorded for completeness; these live in the runtime repo, not regenerated:
   mapped RAM, since heap sample buffers now live above 64 MB.
 - `nv2a_pb_exec.c` `[DMA-AMBIG]`: counter now counts only ambiguous hits (it
   used to count every promotion, so it went silent after 256).
+- `src/apu/apu_core.c` `mcpx_apu_monitor_frame`: the XAudio2 path used to
+  `memset(d->monitor.frame_buf)` and then render only `mixer_render` (the
+  software DirectSound/Bink bridge), discarding the GP/EP mixdown that
+  `ep_sink_samples`/`dsp_frame_stub` had just memcpy'd into that same buffer.
+  Result: Bink FMV audio (software buffer) played while all VP/DSP game audio
+  was silent -- `run.py --user-state --only audible` recorded a zero stream.
+  Now the path overdubs the test tone / software voices onto the existing
+  buffer and submits one 256-frame window without wiping it. Verified:
+  `--only audible` PASSes.

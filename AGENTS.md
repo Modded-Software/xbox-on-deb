@@ -175,8 +175,11 @@ technical or design questions **instead of stalling or guessing**.
   `0x04000000..0x08000000` and any number ≥ 64 MB unambiguously means RAM.
   `[DMA-AMBIG]` must stay 0; if `xbox_HeapAlloc: out of memory` appears, raise
   `RECOMP_TOTAL_RAM_MB`, don't lower the base.
-- **Audio dead in-game** (DSP/MCPX): all in-game audio is silent (menu/FMV
-  audio separate). Next investigation. See `refs/xboxrecomp/src/apu/`.
+- **Audio in-game (FIXED)**: `mcpx_apu_monitor_frame` (`apu_core.c`) memset the
+  EP/DSP mixdown in `monitor.frame_buf` before submitting, so only the software
+  (Bink/DirectSound) bridge was audible; VP/DSP game audio was silent. It now
+  overdubs voices onto the existing buffer and submits one 256-frame window.
+  `--only audible` PASSes. See MANUAL_PATCHES.md.
 - **Bink FMV stall**: during a video the main thread spins inside the guest
   software YUV→RGB blit `YUV_blit_0031EAE0` (`recomp_0065.c`), call chain
   `cVideoTexture_Update → BinkCopyToBuffer → BinkCopyToBufferRect →
