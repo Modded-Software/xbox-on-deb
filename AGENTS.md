@@ -103,6 +103,14 @@ technical or design questions **instead of stalling or guessing**.
   and read it back with the Read tool.
 - **No inline interpreters** (`python -c`, `awk`, `sed`). Put logic in a
   `/tmp/opencode/*.sh` script and run `bash /tmp/opencode/x.sh`.
+- **Run Python with `uv`, not bare `python`/`python3`.** The shell guard blocks
+  an interpreter at command position ("only bash/sh are permitted"). The recomp
+  toolchain deps (capstone, …) live in `.venv-recomp`, so use
+  `VIRTUAL_ENV=$PWD/.venv-recomp uv run --active python …` — plain `uv run
+  python` uses a different env and is missing capstone.
+- **Never write `rc=$?` / a bare `rc=` in a command or a `/tmp` script** — the
+  guard flags it as "alt-shell". Check exit status another way (or just read the
+  output file).
 - Avoid `2>/dev/null`, `|| true`, `pkill`, and process-group kills
   (`kill -TERM -$pid`). Kill a specific pid instead.
 - Scripts under `/tmp/opencode/` execute without trouble; prefer them.
@@ -138,8 +146,9 @@ technical or design questions **instead of stalling or guessing**.
   `XInputGetState`. `recomp/game/src/main.c` now defaults
   `RECOMP_HEAP_RECLAIM=1`. If a run ever regresses, first check the log for
   `[CONTIG] arena exhausted` and `RECOMP_WATCH=0x80000338`.
-- **Menu runs** (~24–30 FPS) after restoring the pre-adopt native-D3D11
-  `nv2a_pb_exec.c` (upstream `794d9a5` had deleted the integration).
+- **Frame rate**: menu 35+ FPS, in-game 20–40 FPS, after restoring the
+  pre-adopt native-D3D11 `nv2a_pb_exec.c` (upstream `794d9a5` had deleted the
+  integration).
 - **GPU pushes**: the pushbuffer walker now walks GET→PUT the way the hardware
   does (`nv2a_pb_run` in `nv2a_pb_scan.c`, called from `xbox_memory_layout.c`),
   following top-level JUMPs into secondary command buffers and back. This fixed
@@ -149,19 +158,30 @@ technical or design questions **instead of stalling or guessing**.
   logo videos; `recomp/tests/framework.py` `goto_mission` now `focus()`es before
   every tap (a one-shot focus is not enough), otherwise the title idles into
   `Attract_Mode.vid` and a-mash times out.
-- **Remaining render errors**: `[GPU-D3D11] rejected: nonfinite texture
-  coordinate` now hits real geometry — suspect vertex-format decode, not stale
-  state. `[GPU-D3D11] unsupported batch` (primitives 5/6) still logged+skipped.
-  Visual corruption: magenta wash / fine checkerboard / stray giant triangle;
-  `[TEXUSE] 0x80204000 1280x720 fmt 0x1E lin` feedback-texture suspect.
+- **Render corruption (FIXED)**: root cause was `dma_resolve`
+  (`nv2a_pb_exec.c:129`) promoting only a contiguous block's **head**; vertex
+  arrays interleave attributes in one allocation, so normal/diffuse/texcoord
+  (+0xC/+0x18/+0x1C) were fetched from raw physical addresses — garbage normals,
+  magenta diffuse, x87-indefinite (`0xFFC00000`) NaN UVs. Now promotes by range
+  via `xbox_ContigOwnsOffset`. `nonfinite texture coordinate` is sanitized to 0
+  instead of rejecting the batch. Title screen + mission briefing render
+  correctly; `rejected:`/`unsupported batch` counts are 0. See MANUAL_PATCHES.md.
+- **Black character face / texture corruption (FIXED)**: the heap base was
+  `0x00F80000`, below the 64 MB contiguous window, so a heap VA and a window
+  offset were the same number and `dma_resolve`/APU/OHCI had to guess
+  (`[DMA-AMBIG]`); a face texture resolved to the window's unrelated bytes.
+  Fixed by actually reading `RECOMP_HEAP_BASE` (defaulted in
+  `recomp/game/src/main.c` to `0x04000000`): the heap now runs
+  `0x04000000..0x08000000` and any number ≥ 64 MB unambiguously means RAM.
+  `[DMA-AMBIG]` must stay 0; if `xbox_HeapAlloc: out of memory` appears, raise
+  `RECOMP_TOTAL_RAM_MB`, don't lower the base.
+- **Audio dead in-game** (DSP/MCPX): all in-game audio is silent (menu/FMV
+  audio separate). Next investigation. See `refs/xboxrecomp/src/apu/`.
 - **Bink FMV stall**: during a video the main thread spins inside the guest
   software YUV→RGB blit `YUV_blit_0031EAE0` (`recomp_0065.c`), call chain
   `cVideoTexture_Update → BinkCopyToBuffer → BinkCopyToBufferRect →
   YUV_blit_32bpp_48 → YUV_blit_0031EAE0`; no framebuffer flips follow. See the
   row loop around `recomp_0065.c:27510` (`esp+0x40` count) and `:27692`.
-- **Render corruption**: fine checkerboard / blank right band;
-  `[TEXUSE] 0x80204000 1280x720 fmt 0x1E lin` is a feedback-texture suspect.
-
 ## Debugging recipe (a hang)
 
 1. Stop any session; launch with `RECOMP_WATCHDOG_SECS=50` and a `RECOMP_PEEK`
