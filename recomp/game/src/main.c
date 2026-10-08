@@ -270,6 +270,17 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
         _putenv_s("RECOMP_PB_EXEC", "1");
     if (!getenv("RECOMP_NV2A_NATIVE_FENCES"))
         _putenv_s("RECOMP_NV2A_NATIVE_FENCES", "1");
+    /* The title paces itself on the NV2A vblank interrupt; with no ISR to
+     * claim it, it spins in an RtlEnter/LeaveCriticalSection loop and never
+     * leaves the first screen. Enable the synthetic vblank by default. */
+    if (!getenv("RECOMP_VBLANK"))
+        _putenv_s("RECOMP_VBLANK", "1");
+    /* The contiguous arena is a 64 MB bump allocator; without reclaim the title
+     * exhausts it (~66.9 MB used) and a failed allocation (returns 0) is used
+     * as physical 0x338, corrupting the XDK USB handle arena at 0x80000338 and
+     * crashing the input poll. Reclaim makes freed framebuffer blocks reusable. */
+    if (!getenv("RECOMP_HEAP_RECLAIM"))
+        _putenv_s("RECOMP_HEAP_RECLAIM", "1");
 
     printf("=== %s - Static Recompilation ===\n", YOUR_GAME_TITLE);
     printf("Loading XBE...\n");
@@ -344,7 +355,19 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     xbox_InputInit();
     xbox_OhciInit();
 
-    /* Step 6: stack */
+    /* Step 6: NV2A completion plumbing. The pushbuffer executor presents on
+     * flip and advances the frame counter; these register the fence mirror,
+     * the frame counter and the D3D retirement event so a title that waits on
+     * GPU completion (D3D::BlockOnTime) is released instead of spinning on an
+     * event nothing ever signals. */
+    xbox_Nv2aMirrorFence(0x002D2148u, 0x2Cu, 0x30u);
+    xbox_Nv2aFrameCounter(0x002D2148u, 0x1DE8u);
+    xbox_Nv2aSignalEvent(0x002D2148u, 0x1DCCu);
+    /* D3D::CMiniport::SoftwareMethod pushes GPU commands through this routine;
+     * the executor calls it on method 0x0100 and must not be left waiting. */
+    xbox_Nv2aSoftwareMethodHandler(0x002C99B0u, 0x002D3D78u);
+
+    /* Step 7: stack */
     g_esp = XBOX_STACK_TOP;
 
     printf("\n=== Initialization complete ===\n");

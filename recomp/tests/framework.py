@@ -274,6 +274,7 @@ class Game:
         latest = os.path.join(ROOT, "logs", "latest-runtime.log")
         LOG = os.path.realpath(latest) if os.path.exists(latest) else LOG
         self._log_pos = 0
+        self.focus()
 
     def stop(self):
         if self.attach:
@@ -344,6 +345,11 @@ class Game:
         """
         deadline = time.time() + timeout
         while time.time() < deadline:
+            # The game window loses keyboard focus after the logo videos, so
+            # a one-shot focus() at launch is not enough: without re-focusing
+            # each tap, every press goes to whatever window stole focus and
+            # the title idles into attract mode.
+            self.focus()
             self.tap(key, hold=0.35, gap=0.0)
             time.sleep(max(0.0, gap - 0.35))
             if self._last_line(self.MISSION_MAP):
