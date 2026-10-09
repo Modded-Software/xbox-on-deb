@@ -10,6 +10,10 @@ Commands:
   xinject list                        list top-level windows (id, size, name)
   xinject focus <title-substr>        raise + focus a matching window
   xinject key <name> down|up|press    XTest key event (name is an X keysym)
+  xinject sendkey <title> <name> down|up|press
+                                      same, but addressed to the window with
+                                      XSendEvent: no input focus needed, so an
+                                      automated run never steals the user's
   xinject btn <1-3> down|up|click     XTest mouse button
   xinject move <dx> <dy> [n] [ms]      relative pointer motion, n times (sustained)
 
@@ -18,6 +22,8 @@ can assert on it. Nothing here is game-specific; it is a general X11 tool.
 """
 
 import ctypes
+import os
+import re
 import sys
 import time
 
@@ -83,6 +89,11 @@ ClientMessage = 33
 SubstructureRedirectMask = 1 << 20
 SubstructureNotifyMask = 1 << 19
 
+KeyPress = 2
+KeyRelease = 3
+KeyPressMask = 1 << 0
+KeyReleaseMask = 1 << 1
+
 
 class _XClientMessageEvent(ctypes.Structure):
     _fields_ = [
@@ -97,8 +108,29 @@ class _XClientMessageEvent(ctypes.Structure):
     ]
 
 
+class _XKeyEvent(ctypes.Structure):
+    _fields_ = [
+        ("type", ctypes.c_int),
+        ("serial", ctypes.c_ulong),
+        ("send_event", ctypes.c_int),
+        ("display", c_void_p),
+        ("window", ctypes.c_ulong),
+        ("root", ctypes.c_ulong),
+        ("subwindow", ctypes.c_ulong),
+        ("time", ctypes.c_ulong),
+        ("x", ctypes.c_int),
+        ("y", ctypes.c_int),
+        ("x_root", ctypes.c_int),
+        ("y_root", ctypes.c_int),
+        ("state", ctypes.c_uint),
+        ("keycode", ctypes.c_uint),
+        ("same_screen", ctypes.c_int),
+    ]
+
+
 class _XEvent(ctypes.Union):
-    _fields_ = [("xclient", _XClientMessageEvent), ("pad", ctypes.c_long * 24)]
+    _fields_ = [("xclient", _XClientMessageEvent), ("xkey", _XKeyEvent),
+                ("pad", ctypes.c_long * 24)]
 
 
 _declare()
@@ -181,6 +213,58 @@ def do_key(name, action):
     return 0
 
 
+def _send_key_to(win, keycode, press):
+    """Queue one synthetic KeyPress/KeyRelease addressed to `win` only.
+
+    XSendEvent delivers the event straight to the window's client, so it does
+    not need (and does not take) the X input focus -- unlike XTEST, which the
+    server routes to whatever holds focus."""
+    root = _x11.XDefaultRootWindow(_dpy)
+    ev = _XEvent()
+    ctypes.memset(ctypes.byref(ev), 0, ctypes.sizeof(ev))
+    ev.xkey.type = KeyPress if press else KeyRelease
+    ev.xkey.send_event = 1
+    ev.xkey.display = _dpy
+    ev.xkey.window = win
+    ev.xkey.root = root
+    ev.xkey.subwindow = 0
+    ev.xkey.time = CurrentTime
+    ev.xkey.x = 1
+    ev.xkey.y = 1
+    ev.xkey.x_root = 1
+    ev.xkey.y_root = 1
+    ev.xkey.state = 0
+    ev.xkey.keycode = keycode
+    ev.xkey.same_screen = 1
+    _x11.XSendEvent(_dpy, win, 1, KeyPressMask | KeyReleaseMask, ctypes.byref(ev))
+
+
+def do_sendkey(needle, name, action):
+    """key() without focus: address the events to the matching window."""
+    win = find_window(_x11.XDefaultRootWindow(_dpy), needle)
+    if not win:
+        print(f"xinject: no window matching '{needle}'", file=sys.stderr)
+        return 4
+    keysym = _x11.XStringToKeysym(name.encode())
+    if not keysym:
+        print(f"xinject: unknown keysym '{name}'", file=sys.stderr)
+        return 3
+    keycode = _x11.XKeysymToKeycode(_dpy, keysym)
+    if not keycode:
+        print(f"xinject: no keycode for '{name}'", file=sys.stderr)
+        return 3
+    if action in ("down", "press"):
+        _send_key_to(win, keycode, True)
+    if action in ("up", "press"):
+        _send_key_to(win, keycode, False)
+    if action not in ("down", "up", "press"):
+        print("xinject: key action must be down|up|press", file=sys.stderr)
+        return 3
+    _x11.XFlush(_dpy)
+    print(f"sendkey {name} {action} keycode {keycode} -> 0x{win:08x} (no focus change)")
+    return 0
+
+
 def do_btn(number, action):
     if action in ("down", "click"):
         _xtst.XTestFakeButtonEvent(_dpy, number, 1, CurrentTime)
@@ -188,6 +272,77 @@ def do_btn(number, action):
         _xtst.XTestFakeButtonEvent(_dpy, number, 0, CurrentTime)
     _x11.XFlush(_dpy)
     print(f"btn {number} {action}")
+    return 0
+
+
+# -- off-focus injection via the runtime's control file ---------------------
+#
+# XTEST needs the window focused and XSendEvent sticks keys under Wine, so key
+# injection for automated runs goes through a small file the runtime polls
+# (src/video/fb_present.c:fb_inject_poll). It writes the held virtual-key set
+# there; no X input focus is touched.
+INPUT_HOST = os.environ.get(
+    "RECOMP_INPUT_HOST",
+    os.path.expanduser("~/Games/scghost-prefix/pfx/drive_c/recomp-input.txt"))
+
+_VK = {
+    "space": 0x20, "return": 0x0D, "enter": 0x0D, "escape": 0x1B, "esc": 0x1B,
+    "tab": 0x09, "backspace": 0x08, "shift": 0x10, "ctrl": 0x11,
+    "control": 0x11, "alt": 0x12, "up": 0x26, "down": 0x28,
+    "left": 0x25, "right": 0x27,
+}
+for _i in range(12):
+    _VK["f%d" % (_i + 1)] = 0x70 + _i
+
+
+def vk_of(name):
+    n = name.lower()
+    if n in _VK:
+        return _VK[n]
+    if len(n) == 1 and n.isalnum():
+        return ord(n.upper())
+    raise KeyError(name)
+
+
+def _read_held():
+    try:
+        with open(INPUT_HOST) as handle:
+            text = handle.read()
+    except OSError:
+        return set()
+    return {int(tok, 16) for tok in re.findall(r"[0-9a-fA-F]{1,2}", text)}
+
+
+def _write_held(held):
+    tmp = INPUT_HOST + ".tmp"
+    with open(tmp, "w") as handle:
+        handle.write(" ".join("%02X" % v for v in sorted(held)))
+    os.replace(tmp, INPUT_HOST)      # atomic: a poller never sees a blank set
+
+
+def do_keyfile(name, action):
+    try:
+        vk = vk_of(name)
+    except KeyError:
+        print(f"xinject: no VK mapping for '{name}'", file=sys.stderr)
+        return 3
+    if action not in ("down", "up", "press"):
+        print("xinject: key action must be down|up|press", file=sys.stderr)
+        return 3
+    held = _read_held()
+    if action == "down":
+        held.add(vk)
+        _write_held(held)
+    elif action == "up":
+        held.discard(vk)
+        _write_held(held)
+    else:  # press: a real held window so the poller observes the edge
+        held.add(vk)
+        _write_held(held)
+        time.sleep(0.15)
+        held.discard(vk)
+        _write_held(held)
+    print(f"keyfile {name} {action} vk=0x{vk:02X} held={sorted(held)}")
     return 0
 
 
@@ -283,6 +438,10 @@ def main(argv):
         print(f"0x{win:08x} {window_name(win)}")
     elif cmd == "key" and len(argv) >= 4:
         return do_key(argv[2], argv[3])
+    elif cmd == "keyfile" and len(argv) >= 4:
+        return do_keyfile(argv[2], argv[3])
+    elif cmd == "sendkey" and len(argv) >= 5:
+        return do_sendkey(argv[2], argv[3], argv[4])
     elif cmd == "btn" and len(argv) >= 4:
         return do_btn(int(argv[2]), argv[3])
     elif cmd == "move" and len(argv) >= 4:

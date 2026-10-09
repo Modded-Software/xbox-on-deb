@@ -4,7 +4,7 @@
 Launches the *default user configuration* (scripts/18-launch-user.sh -- the same
 entry point a human uses) and then drives it exactly as scripted: press A
 (Space in the default KBM layout) every two seconds until the first mission's
-map loads.
+map loads, then on past the loading screen and briefing into gameplay.
 
 Run it with:
 
@@ -21,7 +21,5 @@ from framework import Game, test
 
 @test("a-mash reaches the first mission")
 def a_mash_reaches_mission(g: Game):
-    name = g.goto_mission(key="space", gap=2.0, timeout=240.0)
-    assert name == g.MISSION_MAP, f"never reached the first mission (got {name})"
-    assert g.wait_frame_advance(timeout=10.0), \
-        "mission map loaded but the game is not rendering"
+    assert g.goto_gameplay(key="space", gap=2.0, timeout=240.0), \
+        "never reached gameplay (level .nhc, world shaders, quiet streaming)"

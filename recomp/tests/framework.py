@@ -35,11 +35,23 @@ import time
 import hashlib
 
 ROOT = "/home/agent/WORKSPACE-VM/projects/xbox-on-deb"
-GAME_DIR = os.path.join(ROOT, "recomp", "game")
+# RECOMP_GAME_DIR selects a parallel game tree (e.g. recomp/game-backup, built
+# against refs/xboxrecomp.backup) so a second runtime can be A/B'd.
+GAME_DIR = os.environ.get("RECOMP_GAME_DIR", os.path.join(ROOT, "recomp", "game"))
 LOG = os.path.join(GAME_DIR, "recomp_boot.log")
 XINJECT = os.path.join(ROOT, "recomp", "tests", "xinject.py")
 CAPTURE = os.path.join(GAME_DIR, "framebuffer.bmp")
 WINDOW_TITLE = "StarCraft"
+
+# Off-focus key injection: the runtime polls this control file
+# (src/video/fb_present.c:fb_inject_poll) instead of taking X input focus, so
+# an automated run never pulls focus from the user. RECOMP_INPUT_HOST is the
+# host path xinject writes; RECOMP_INPUT_FILE is how the runtime opens it.
+INPUT_HOST = os.path.expanduser(
+    os.environ.get("RECOMP_INPUT_HOST",
+                   "~/Games/scghost-prefix/pfx/drive_c/recomp-input.txt"))
+INPUT_FILE = os.environ.get("RECOMP_INPUT_FILE", r"C:\recomp-input.txt")
+os.environ["RECOMP_INPUT_HOST"] = INPUT_HOST
 
 # XInput button bits we assert on (see xinput_xbox.h).
 START = 0x0010
@@ -213,6 +225,10 @@ class Game:
     # -- lifecycle ---------------------------------------------------------
 
     def start(self):
+        try:                       # start each run with no key held
+            open(INPUT_HOST, "w").close()
+        except OSError:
+            pass
         if self.user_state:
             self._start_user_state()
             self.focus()
@@ -225,11 +241,14 @@ class Game:
         else:
             kill_ghost()  # clear any stale instance so runs never stack
             env = dict(os.environ)
+            env["GHOST_GAME_DIR"] = GAME_DIR
             env["KBM"] = "1" if self.kbm else "0"
             env["DIAG"] = "1"
             env["RECOMP_KEY_TRACE"] = "1"
             env["RECOMP_KBM_TRACE"] = "1"
             env["RECOMP_FB_CAPTURE"] = CAPTURE
+            env["RECOMP_INPUT_FILE"] = INPUT_FILE
+            env.setdefault("RECOMP_NO_FOCUS", "1")
             try:
                 os.remove(LOG)
             except FileNotFoundError:
@@ -257,6 +276,9 @@ class Game:
         from -- so the module-level LOG is repointed for the one live game."""
         global LOG
         env = dict(os.environ)  # ambient env passes through (diagnostic knobs included)
+        env["GHOST_GAME_DIR"] = GAME_DIR
+        env["RECOMP_INPUT_FILE"] = INPUT_FILE
+        env.setdefault("RECOMP_NO_FOCUS", "1")
         # Capture the decoded/played APU PCM so an audio assertion has a signal
         # to measure. RECOMP_APU_WAV=<path> writes <path>.emu.raw (post-DSP,
         # pre-mixer) and <path>.mix.raw (post-mixer, what is played).
@@ -300,10 +322,16 @@ class Game:
     # -- injection ---------------------------------------------------------
 
     def focus(self):
-        return _run("focus", WINDOW_TITLE)
+        """No-op under file injection; kept for callers. Set
+        RECOMP_LEGACY_FOCUS=1 to fall back to the XTest/focus path."""
+        if os.environ.get("RECOMP_LEGACY_FOCUS"):
+            return _run("focus", WINDOW_TITLE)
+        return ""
 
     def key(self, name, action):
-        return _run("key", name, action)
+        # Keys go through the runtime's control file: no X input focus needed,
+        # so taps do not steal the user's window.
+        return _run("keyfile", name, action)
 
     def btn(self, number, action):
         return _run("btn", str(number), action)
@@ -352,9 +380,55 @@ class Game:
             self.focus()
             self.tap(key, hold=0.35, gap=0.0)
             time.sleep(max(0.0, gap - 0.35))
-            if self._last_line(self.MISSION_MAP):
+            # Only the level file itself: the bare map name first appears in
+            # the asset manifest (<map>.reslog) and .nnb/.xpr/.nmb loads,
+            # which all stream in while the menu cutscene is still running.
+            if self._last_line(f"\\Levels\\{self.MISSION_MAP}.nhc"):
                 return self.MISSION_MAP
         return None
+
+    # World-geometry vertex shaders: first loaded when the level itself is
+    # drawn (after the "press A" loading screen), never by the menu.
+    WORLD_SHADER = "\\VertexShaders\\xbox\\DefaultWorld"
+
+    def wait_quiet(self, tag="[PATH]", quiet=5.0, timeout=120.0, key=None, gap=2.0):
+        """Wait until no new `tag` log line appeared for `quiet` seconds while
+        frames kept advancing. With `key`, tap it every `gap` s meanwhile (to
+        get past press-A screens). False on timeout."""
+        offset = self.log_offset()
+        calm, frame = time.time(), self.frame()
+        deadline = time.time() + timeout
+        while time.time() < deadline:
+            if key:
+                self.focus()
+                self.tap(key, hold=0.35, gap=max(0.0, gap - 0.35))
+            else:
+                time.sleep(0.5)
+            offset, text = self._read_from(offset)
+            if tag in text:
+                calm, frame = time.time(), self.frame()
+            elif time.time() - calm >= quiet and self.frame() > frame:
+                return True
+        return False
+
+    def goto_gameplay(self, key="space", gap=2.0, timeout=240.0, quiet=5.0):
+        """Reach the first mission and keep going until it is actually playable.
+
+        `goto_mission` stops at the level .nhc, which only *starts* the load.
+        After it the game sits on a "press A" loading screen, then a comms
+        briefing (shuttleescape.NCS + 02_131b.bik) that also waits for A. Keep
+        tapping A until the world shaders have loaded and [PATH] streaming
+        has been quiet for `quiet` s with frames advancing.
+        """
+        if self.goto_mission(key=key, gap=gap, timeout=timeout) != self.MISSION_MAP:
+            return False
+        deadline = time.time() + timeout
+        while not self._last_line(self.WORLD_SHADER):
+            if time.time() > deadline:
+                return False
+            self.focus()
+            self.tap(key, hold=0.35, gap=max(0.0, gap - 0.35))
+        return self.wait_quiet(quiet=quiet, timeout=timeout, key=key, gap=gap)
 
     def start_app_recording(self, path):
         """Record only ghost.exe's own PipeWire output to `path` (s16 WAV).
@@ -518,6 +592,24 @@ class Game:
     def fps(self):
         match = re.search(r"([\d.]+) FPS", self.title())
         return float(match.group(1)) if match else -1.0
+
+    def measure_fps(self, seconds=6.0, interval=0.5):
+        """Sample the window-caption FPS for `seconds`.
+
+        Returns {"min","max","mean","n"} over every valid sample, or None if
+        the caption never reported a framerate (e.g. the game is not rendering).
+        """
+        samples = []
+        deadline = time.time() + seconds
+        while time.time() < deadline:
+            value = self.fps()
+            if value >= 0:
+                samples.append(value)
+            time.sleep(interval)
+        if not samples:
+            return None
+        return {"min": min(samples), "max": max(samples),
+                "mean": sum(samples) / len(samples), "n": len(samples)}
 
     def wait_frame_advance(self, timeout=10.0):
         start = self.frame()

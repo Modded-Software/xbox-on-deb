@@ -12,18 +12,14 @@ from framework import Game, test
 def _ensure_mission(g: Game):
     if getattr(g, "_in_mission", False):
         return
-    g.start_new_game(taps=5, gap=1.5)
+    assert g.goto_gameplay(key="space", gap=2.0, timeout=240.0), \
+        "never reached gameplay"
     g._in_mission = True
 
 
-@test("five A presses leave the menu")
-def five_a_presses(g: Game):
-    menu = g.capture_hash()
-    g.start_new_game(taps=5, gap=1.5)
-    time.sleep(2.0)
-    scene = g.capture_hash()
-    assert scene and scene != menu, f"still in the menu ({menu} -> {scene})"
-    g._in_mission = True
+@test("the A-mash reaches gameplay")
+def a_mash_reaches_gameplay(g: Game):
+    _ensure_mission(g)
 
 
 @test("a mission renders at a usable framerate")
