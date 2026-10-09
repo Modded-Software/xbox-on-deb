@@ -197,16 +197,27 @@ technical or design questions **instead of stalling or guessing**.
   `cVideoTexture_Update → BinkCopyToBuffer → BinkCopyToBufferRect →
   YUV_blit_32bpp_48 → YUV_blit_0031EAE0`; no framebuffer flips follow. See the
   row loop around `recomp_0065.c:27510` (`esp+0x40` count) and `:27692`.
-- **Sound quality regression (OPEN, 2026-10-09)**: many in-game sounds play
-  flangy / stuttery / garbled (periodic/doubled, phasey). This is an **audio
-  quality** fault, not a liveness one — `--only audible` still PASSes because
-  the captured APU PCM is non-silent. The GPU-phase work that landed alongside
-  it (lazy surface publication, Phase 1) does not touch the audio path, so the
-  prime suspect is the APU mixdown, notably the `mcpx_apu_monitor_frame`
-  overdub added in the "Audio in-game (FIXED)" change above — a doubled/delayed
-  voice mixdown sounds exactly like flanging. Bisect by comparing against a
-  pre-session build and by ear; `RECOMP_LAZY_FLIP=0` is available if GPU
-  publication is suspected. See `recomp/docs/17-executor-roadmap.md`.
+- **Sound quality (OPEN, 2026-10-09)**: some voices play flangy / stuttery /
+  garbled. Audio quality, not liveness (`--only audible` PASSes; PCM non-silent).
+  The earlier "prime suspect" in this file — the `mcpx_apu_monitor_frame`
+  overdub — is **wrong**: `apu_mixer_*` has **zero callers** (grep the tree), so
+  `mixer_render` iterates only inactive voices and mixes nothing. The real
+  defects, all read from the code:
+  - **No resampling.** `voice_resample` (`apu_vp.c:949`) discards `rate`
+    (`(void)rate;` at `:967`): every voice consumes exactly 32 source samples per
+    48 kHz output frame regardless of pitch. Non-48 kHz samples, pitch-shifted
+    SFX and 3D/doppler voices play at the wrong rate, and streaming voices
+    over/under-run their CBO/loop because the guest scales consumption by rate.
+  - Nearest-neighbour, no interpolation (`voice_get_samples`), so aliasing.
+  - `monitor.frame_buf` (`apu_state.h:410`, 256 = 8×32) is never cleared; it is
+    only valid if the EP DMA sink rewrites the whole 1024 bytes every window
+    (`ep_sink_samples`, `apu_dsp.c:431`; the `assert(len == sizeof(frame_buf))`
+    is compiled out). A window the EP skips replays 5.33 ms-old audio → comb /
+    flange. Produce-and-consume latency is also 8 frames.
+  - XAudio2 stops/re-starts the source on an empty queue (`apu_xaudio2.c:150`),
+    audible as gaps; `empty_queue_events` counts them.
+  See `recomp/docs/17-executor-roadmap.md`.
+
 ## Debugging recipe (a hang)
 
 1. Stop any session; launch with `RECOMP_WATCHDOG_SECS=50` and a `RECOMP_PEEK`
