@@ -12,7 +12,10 @@ set -euo pipefail
 source "$PWD/scripts/config.env"
 detect_ge_proton
 
-GAME_DIR="$REPO_ROOT/recomp/game"
+# GHOST_GAME_DIR lets a second, parallel game tree (e.g. recomp/game-backup,
+# built against refs/xboxrecomp.backup) be launched without touching the main
+# one -- the A/B path for pinpointing performance regressions.
+GAME_DIR="${GHOST_GAME_DIR:-$REPO_ROOT/recomp/game}"
 EXE="$GAME_DIR/build/ghost.exe"
 
 if [ ! -f "$EXE" ]; then

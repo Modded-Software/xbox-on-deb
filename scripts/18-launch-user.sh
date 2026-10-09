@@ -13,6 +13,7 @@
 set -u
 ROOT=/home/agent/WORKSPACE-VM/projects/xbox-on-deb
 cd "$ROOT"
+source "$ROOT/scripts/config.env"   # GPU pin (DRI_PRIME) etc. loaded here too
 mkdir -p logs
 
 # stop any stale instance (wineserver -k covers the whole prefix)
