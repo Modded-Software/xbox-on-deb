@@ -503,3 +503,18 @@ CPU. The `pb_sync_light` completion waits (~5800/10 s, the deliberate throttle)
 and the readback wait remain the largest sync buckets; removing them outright
 was already measured as a net loss, so the next real step is a sync-model change,
 not another micro-optimisation.
+
+### Bounded run-ahead of the ordering-event completion wait
+
+The ordering events (`WAIT_FOR_IDLE`, semaphore release) each did
+`End + Flush + spin-GetData` (`nv2a_gpu_wait`), a full GPU round trip ~39×/frame
+(~2.0 s/10 s). Draining nothing was a net loss (the guest races ahead), but
+waiting for every event is the most expensive throttle. `RECOMP_SYNC_LAG`
+(default 2) keeps a ring of 8 event queries and waits only for the one from L
+events ago, so the GPU runs a bounded distance ahead. `RECOMP_SYNC_LAG=0` is the
+old per-event wait (A/B knob).
+
+Median-of-3: **16.0 → 18.8 FPS**, `[KICK]` walk avg ~1170 → ~960 µs, kicks/s
+~830 → ~990, `ack cpu` ~91%. No decode/create/reject failures; `a-mash` still
+reaches the first mission. (Claude estimates lazy color publication adds
+~+1.5–2 FPS more; the `memcmp` texture validation is the next CPU cost.)
