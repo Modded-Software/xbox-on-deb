@@ -510,7 +510,7 @@ The ordering events (`WAIT_FOR_IDLE`, semaphore release) each did
 `End + Flush + spin-GetData` (`nv2a_gpu_wait`), a full GPU round trip ~39×/frame
 (~2.0 s/10 s). Draining nothing was a net loss (the guest races ahead), but
 waiting for every event is the most expensive throttle. `RECOMP_SYNC_LAG`
-(default 2) keeps a ring of 8 event queries and waits only for the one from L
+(default 4) keeps a ring of 8 event queries and waits only for the one from L
 events ago, so the GPU runs a bounded distance ahead. `RECOMP_SYNC_LAG=0` is the
 old per-event wait (A/B knob).
 
