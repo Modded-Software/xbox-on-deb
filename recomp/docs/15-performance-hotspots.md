@@ -358,3 +358,50 @@ Ordered by what the verified gameplay numbers say matters:
 - Code: `recomp/game/src/recomp/gen/recomp_0059.c:15738` (`D3D_ComputeGap`),
   `:16847` (`D3D_BlockOnTime`); `refs/xboxrecomp/src/apu/apu_dsp.c:45,668`;
   `refs/xboxrecomp/src/apu/dsp/dsp.c:146`.
+
+## Update 2026-10-09 — GPU1 unpinned *and* measurement variance; the per-event drain is load-bearing
+
+Two corrections from the first autonomous optimisation pass.
+
+**GPU pinning changes the baseline.** `scripts/config.env` now pins `DRI_PRIME`
+to GPU1 (PCI 09:00.0/renderD129; GPU0 is shared with the host). On the now-free
+GPU the same build measured **~12–20 FPS in gameplay**, not the ~8 FPS above
+(which was taken while GPU0 was contended). The 45 FPS target is against this
+new baseline.
+
+**Run-to-run variance is ±30–40%**, larger than most single optimisations, so a
+single 10 s measurement proves nothing. Same build, same `goto_gameplay`,
+`--only performance`, back to back:
+
+| run | mean | window FPS | kicks/s | µs/kick |
+|---|---:|---:|---:|---:|
+| control | 14.1 | — | — | — |
+| `RECOMP_ORDER_NO_WAIT=1` #1 | 16.5 | 16.79 | ~620 | ~1550 |
+| control #2 | 19.0 | 20.39 | ~510 | ~1900 |
+| `RECOMP_ORDER_NO_WAIT=1` #2 | 12.6 | 12.50 | ~670 | ~1450 |
+
+The flag controls one thing: `gpu_sync_impl(false)` (the ordering path,
+`nv2a_gpu_d3d11.cpp:1119`) `End()+Flush()` then waits for every prior draw to
+retire; the experiment made it return without draining, leaving `pending_draws`
+set for the next real publish.
+
+**Result: the drain is load-bearing, and the experiment is a net loss.** Without
+it the guest is not back-pressured per ordering event, so it races ahead
+(~670 kicks/s vs ~510), each kick is *cheaper* (~1.45 ms vs ~1.9 ms — the
+completion waits collapse from 4.6 s to 0.15 s over the run), but the flip
+`nv2a_gpu_sync()` then has to drain the whole deepened backlog, so FPS *falls*
+(12.5 vs 20.4). Shallow, per-event draining keeps the CPU and GPU in lockstep;
+deep queuing is worse. (The first flag-on run's 16.5 was variance.) The code is
+reverted; do not retry this direction. `/tmp/opencode/perf_{control,nowait}.log`.
+
+Implication: **kicks/s and µs/kick move in opposite directions under this knob,
+so neither is the metric — wall FPS is, and it is too noisy at n=1.** Before the
+next optimisation, raise the confidence of the measurement (repeat and take the
+median/mean, longer window, or a deterministic scene) or the next "win" will be
+noise too.
+
+Still standing from the evidence above: per-flip executor work is dominated by
+`draw`/`texture`/`sync` (`[GPU-D3D11] time:` — ~28 ms draw/flip, ~19 ms
+sync/flip, ~15 ms texture/flip at the control's cadence), ~794 draws/flip, and
+`texture` alone is ~15 ms/flip while `hash` (the once-per-frame validation
+`memcmp`) is <1 s over the whole run.

@@ -163,7 +163,7 @@ def record(perf_data, secs=30.0, settle=5.0, user_state=True):
     game.start()
     try:
         print("a-mash until the mission map loads...", flush=True)
-        if not game.goto_gameplay(settle=settle):
+        if not game.goto_gameplay(quiet=settle):
             raise RuntimeError("never reached the first mission")
         print("mission loaded: frame=%s fps=%s hash=%s"
               % (game.frame(), game.fps(), game.capture_hash()), flush=True)
