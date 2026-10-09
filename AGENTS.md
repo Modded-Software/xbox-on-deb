@@ -189,6 +189,16 @@ technical or design questions **instead of stalling or guessing**.
   `cVideoTexture_Update → BinkCopyToBuffer → BinkCopyToBufferRect →
   YUV_blit_32bpp_48 → YUV_blit_0031EAE0`; no framebuffer flips follow. See the
   row loop around `recomp_0065.c:27510` (`esp+0x40` count) and `:27692`.
+- **Sound quality regression (OPEN, 2026-10-09)**: many in-game sounds play
+  flangy / stuttery / garbled (periodic/doubled, phasey). This is an **audio
+  quality** fault, not a liveness one — `--only audible` still PASSes because
+  the captured APU PCM is non-silent. The GPU-phase work that landed alongside
+  it (lazy surface publication, Phase 1) does not touch the audio path, so the
+  prime suspect is the APU mixdown, notably the `mcpx_apu_monitor_frame`
+  overdub added in the "Audio in-game (FIXED)" change above — a doubled/delayed
+  voice mixdown sounds exactly like flanging. Bisect by comparing against a
+  pre-session build and by ear; `RECOMP_LAZY_FLIP=0` is available if GPU
+  publication is suspected. See `recomp/docs/17-executor-roadmap.md`.
 ## Debugging recipe (a hang)
 
 1. Stop any session; launch with `RECOMP_WATCHDOG_SECS=50` and a `RECOMP_PEEK`
