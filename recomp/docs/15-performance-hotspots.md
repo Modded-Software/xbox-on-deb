@@ -526,3 +526,45 @@ drawn). So the full per-flip publication of every dirty colour target is
 load-bearing for correctness here, not just cost; off-screen targets' guest
 copies ARE read by the title between frames. Reverted. The `memcmp`
 texture-validation remains the next CPU cost, but CPU cuts do not move FPS.
+
+### Deferred (later): guest-memory read tracking to unlock lazy publication
+
+The ~39 FPS glimpse above is the biggest prize left, and it is gated on one
+question: *which surfaces does the guest actually read?* If the runtime tracked
+guest-RAM reads/writes (page protection + VEH under Wine, or a shadow map), the
+flip could publish only the surfaces the guest truly consumes, making lazy
+publication safe. Rough size: a real memory-tracking subsystem; Claude's estimate
+is ~30 FPS. Deferred — not attempted. Do **not** re-try the naive
+only-presented-surface version (it corrupts).
+
+## Update 2026-10-09 (later) — ack-thread CPU cuts; outsourcing consult
+
+Landed two correctness-preserving ack-thread reductions (runtime commit
+`5f18610`, branch `origin/aknavj-rebased`):
+
+- **One combined vertex+index stream.** Vertex and index data share a single
+  dynamic buffer written under one `Map`/`Unmap`, halving driver round trips
+  per draw (~1500 maps/frame → ~half). Rendering verified correct (mission HUD +
+  character captured intact).
+- **Texture cache indexed by source address.** Binds used to scan every cached
+  texture comparing key fields; now an `unordered_map<source, index>` gives O(1)
+  lookup, falling back to the linear scan when key fields differ (cache rebuilds
+  on size change). The `hash` phase block dropped to ~0.14 s/10 s (was ~0.34).
+
+FPS stayed noise-bound (~19–20 real-gameplay; single-run range 17.9–21.9), so
+neither is a headline win — they shave ack CPU, which only matters once the
+critical path is CPU, and it is only marginally so.
+
+**Outsourcing consult (Claude, 2026-10-09).** Asked what could move to spare host
+threads without saturating the ~2 effective cores. Answers: the DSP56k APU
+interpreter is *already* on its own thread (`mcpu.apu_thread`) and is not the
+lever; per-draw vertex fetch/transform threading is 0 or negative (fork/join per
+draw over ~794 small draws, `fetch_shader_vertex` is not reentrant); Bink YUV
+blit is FMV-only; texture-validation memcmp is only ~0.34 s → at most +0.6 FPS.
+The **only** change that shortens the critical path is a **render thread that
+owns the D3D11 immediate context** (ack builds vertices, render thread does
+texture validate/decode/upload + stream map + draws + submit, publishing a
+completion sequence the bounded run-ahead gates on). Estimated ceiling ~35 FPS,
+realistic ~25–28, using exactly one extra core. Also noted: `D3D_ComputeGap`
+35% is a guest busy-spin — turning it into a sleeping wait frees a core but adds
+no FPS. Next major apple is the render-thread split; not yet attempted.
