@@ -405,3 +405,46 @@ Still standing from the evidence above: per-flip executor work is dominated by
 sync/flip, ~15 ms texture/flip at the control's cadence), ~794 draws/flip, and
 `texture` alone is ~15 ms/flip while `hash` (the once-per-frame validation
 `memcmp`) is <1 s over the whole run.
+
+## Update 2026-10-09 (later) — executor is CPU-bound; per-kick wins are consumed
+
+Two hard findings, both measured on GPU1.
+
+**The executor is CPU-bound, not GPU-wait-bound.** `[KICK]` now also reports the
+ack thread's own CPU time (`GetThreadTimes`) over the window: `ack cpu` is
+**86–90% of the window at ~1 core**, so `nv2a_pb_run` really is burning CPU (only
+~10–14% is `SwitchToThread` yielding while the GPU finishes). Combined with the
+GPU sample math (**~21 ms GPU/frame at ~30% utilisation**, GS invoked on nearly
+every draw), the frame is limited by the ack thread's CPU, with ~2× GPU headroom.
+
+**Per-kick speedups do not raise FPS — the guest just kicks more.** Fixed an
+O(n) diagnostic in the hot path: `note()` (`nv2a_pb_scan.c:60`) ran once per
+pushbuffer method word and linearly scanned up to `PB_MAX_METHODS` (4096) seen
+entries. The title submits **~24k vertex-program words + ~13k constant words per
+frame** (`[GPU] vertex uploads:`), so this was a real cost. Made it an O(1)
+direct-index table. Result: per-kick walk fell (~2.0 → ~1.42 ms) and kicks/s
+rose (~510 → ~670), but total executor work stayed at **~0.95 wall-s/s** and FPS
+was unchanged (median 13.7 over 3 windows, tight; `/tmp/opencode/perf_note.txt`).
+
+Read together with the no-wait result: the guest's submission rate is set by
+`DMA_GET` back-pressure, and whatever executor capacity is freed is immediately
+refilled with **redundant per-frame state** (the same vertex program, constants
+and vertex arrays re-sent every frame). So the lever is **total executor work per
+frame**, not per-kick latency.
+
+Open measurement problem: the mission-start scene still varies run to run enough
+that FPS spans ~13–20 on identical binaries (`perf_control.log` 19.0 vs
+`perf_note.txt` 13.7). Per the note above this must be fixed (deterministic scene
+/ longer window / flips-from-`[GPU] presentation`) before the next change can be
+judged; until then, judge changes by the *executor* metrics (`kick walk avg`,
+`ack cpu`, per-flip `[GPU-D3D11]` phase deltas), which are far less scene-sensitive.
+
+Structural candidates for the 3× needed (runtime-only, high risk, unimplemented):
+1. **Don't re-process unchanged state**: the guest re-sends the vertex program,
+   constants and vertex arrays every frame. Cache the process/translate results
+   keyed on content so the executor can skip the per-word work.
+2. **Offload preparation off the ack thread**: vertex fetch/convert, texture
+   decode and constant packing are pure CPU and dominate `preparation`; the
+   D3D11 immediate context must stay serial, but the prep can be threaded.
+3. **Skip the geometry shader** on draws that do not need it (GPU has headroom
+   but GS runs on ~every draw).
