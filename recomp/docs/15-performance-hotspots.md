@@ -448,3 +448,34 @@ Structural candidates for the 3× needed (runtime-only, high risk, unimplemented
    D3D11 immediate context must stay serial, but the prep can be threaded.
 3. **Skip the geometry shader** on draws that do not need it (GPU has headroom
    but GS runs on ~every draw).
+
+## Update 2026-10-09 (later still) — GPU1 hard-locked; swizzled render-target aliases sampled directly
+
+**GPU1 is now enforced by UUID, not by enumeration order.** `DRI_PRIME` only
+reorders the Vulkan device list; DXVK still enumerates (and opens) every device,
+so both render nodes showed up. `scripts/config.env` now also exports
+`DXVK_FILTER_DEVICE_UUID` (default `8680a0560800000009000000000000` = bus 09; the
+bus-03 UUID when `DRI_PRIME` is pinned to GPU0). DXVK's log confirms the bus-03
+A770 and llvmpipe are skipped with `Skipping: UUID filter`. Every launch/test path
+sources `config.env` (`14`, `18`→`14`, `15`→`14`, `06`, `11`, `profile-launch`,
+`measure_load`; `framework.py` shells out to `14`/`18`).
+
+**Biggest GPU sync eliminated (Claude finding #1, corrected).** The per-frame
+full `nv2a_gpu_sync()` in `get_texture` was not the back buffer: it is a
+**256×256 format-`0x07`, `linear=0` (swizzled)** texture aliasing a still-dirty
+colour surface at the same memory/pitch (`0x99753000`). `direct` was always null
+because the selector (`nv2a_gpu_d3d11.cpp:1671`) required `binding.linear` and
+`{0x12,0x1E}`. A colour surface is always created `DXGI_FORMAT_B8G8R8A8_UNORM`
+(`:971`) and `0x07` maps to the same format (`:1794`), so the surface view is
+byte-compatible and holds the resolved pixels — the guest swizzle is a storage
+detail. The selector now accepts `0x07` regardless of `binding.linear`
+(`surface_viewable`), so this bind samples the surface view directly instead of
+publishing every frame. (`0x07` with matching memory/width/height/pitch only;
+format `0x06`, which aliases a 512×512 surface at a *different* pitch, is still
+correctly excluded.)
+
+Effect (median of 3, same test): **13.7 → 15.1 FPS**, `[KICK]` walk avg
+~1500 → ~1330 µs, kicks/s ~600 → ~720; `ack cpu` ~89.5%. No decode/create
+failures, 0 `rejected`/`unsupported`, no `nonfinite`. Remaining `fmt=6` alias
+syncs are rare (a handful/run), not per-frame. Still CPU-bound and still far from
+45; this removes ~1–2 ms/frame of GPU sync, not the executor wall.
