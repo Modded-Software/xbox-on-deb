@@ -516,5 +516,13 @@ old per-event wait (A/B knob).
 
 Median-of-3: **16.0 → 18.8 FPS**, `[KICK]` walk avg ~1170 → ~960 µs, kicks/s
 ~830 → ~990, `ack cpu` ~91%. No decode/create/reject failures; `a-mash` still
-reaches the first mission. (Claude estimates lazy color publication adds
-~+1.5–2 FPS more; the `memcmp` texture validation is the next CPU cost.)
+reaches the first mission.
+
+**Failed: lazy colour publication at flip (do not retry).** Publishing only the
+presented surface at `NV097_FLIP_STALL` (`nv2a_gpu_flip_publish`, keeping
+off-screen colour targets dirty) reached ~39 FPS but **corrupted rendering** —
+the scene was wrong (geometry/lighting gone, only a fragment of the character
+drawn). So the full per-flip publication of every dirty colour target is
+load-bearing for correctness here, not just cost; off-screen targets' guest
+copies ARE read by the title between frames. Reverted. The `memcmp`
+texture-validation remains the next CPU cost, but CPU cuts do not move FPS.
