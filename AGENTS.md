@@ -146,9 +146,13 @@ technical or design questions **instead of stalling or guessing**.
   `XInputGetState`. `recomp/game/src/main.c` now defaults
   `RECOMP_HEAP_RECLAIM=1`. If a run ever regresses, first check the log for
   `[CONTIG] arena exhausted` and `RECOMP_WATCH=0x80000338`.
-- **Frame rate**: menu 35+ FPS, in-game 20–40 FPS, after restoring the
-  pre-adopt native-D3D11 `nv2a_pb_exec.c` (upstream `794d9a5` had deleted the
-  integration).
+- **Frame rate** (measured 2026-10-09, `goto_gameplay` + caption): menu
+  (`menucut1.NCS` 3D background) ~12.5 FPS; "press A" loading screen ~27 FPS;
+  comms briefing ~9 FPS; **real gameplay (HUD + objective) ~8 FPS**. Only
+  trust numbers taken after `Game.goto_gameplay()`; the level `.nhc` alone is
+  just the start of the load, followed by the loading screen and briefing.
+  `RECOMP_KICK_STATS=1` prints `[KICK]`; ~400–450 kicks/s and ~96% walk time
+  in *every* phase.
 - **GPU pushes**: the pushbuffer walker now walks GET→PUT the way the hardware
   does (`nv2a_pb_run` in `nv2a_pb_scan.c`, called from `xbox_memory_layout.c`),
   following top-level JUMPs into secondary command buffers and back. This fixed
