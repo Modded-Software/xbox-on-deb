@@ -11,15 +11,17 @@ description is [10-architecture.md](10-architecture.md); the earlier budgets are
 
 ## Bottom line
 
-- **40 FPS is reachable, but no single change gets there.** Two combinations
-  should: *correct lazy publication + GPU vertex pulling* (~40–45), or *correct
-  lazy publication + per-draw trimming* (~35–42).
+- **40 FPS is reachable, but no single change gets there.** Correct lazy
+  publication is in (+10%). GPU vertex pulling was tried and **rejected**
+  (3–4% slower — it only covers 16% of draws and moves the copy into the
+  backend). The first real win was **bulk-unswizzling the 0x06/0x07 texture
+  decode**: 21.9 → 24.9 FPS (+14%). See "Phase 2 results".
 - **60 FPS is not realistic yet.** It needs every phase below, a GPU frame under
   16.7 ms (measured 15–21 ms today), *and* the title not being vblank-capped at
-  30 (unverified — Phase 0's hard gate).
-- **Not worth doing:** splitting work across the two GPUs; a worker pool for
-  vertex prep (fork/join over ~1,250 small draws costs more than it saves —
-  Phase 2 deletes that work instead).
+  30 (**Phase 0 settled this: it is not capped**).
+- **Not worth doing:** splitting work across the two GPUs; GPU vertex pulling
+  (measured slower, not faster); a worker pool for vertex prep (fork/join over
+  ~1,250 small draws costs more than it saves).
 
 ## Where a frame goes (per flip)
 
@@ -104,9 +106,15 @@ Expected **19 → 28–38 FPS**; risk medium (high only if VEH turns out necessa
 Implement the invariants (a)–(e) above. This also deletes the ~5.4 ms/flip
 per-texel re-decode and ~5.7 full-surface memcmps/flip.
 
-### Phase 2 — GPU vertex pulling (the strongest pure-CPU cut)
+### Phase 2 — GPU vertex pulling (REJECTED after implementation; see results)
 
-Expected **−12 to −14 ms/flip**, ~+30–40% alone; risk medium-high.
+Expected **−12 to −14 ms/flip**, ~+30–40% alone; risk medium-high. Built and
+measured; it came out **3–4% slower**, not faster. Root cause: vertex
+preparation is only ~18% of the executor interval (backend draw is ~50%), the
+pull path only covers the vertex-program branch (~16% of draws; the other 84%
+are fixed-function), and the per-draw raw-span copy (2.29 GiB, avg 45 KB/draw)
+moved work *into* the backend and cancelled the fetch saving. Ripped out; the
+tree is back to the committed Phase 1 state. Details in "Phase 2 results".
 
 - Bind the guest vertex byte range as a `ByteAddressBuffer`.
 - Pass per-attribute offset/stride/type in a constant buffer.
@@ -210,14 +218,44 @@ is still deferred; `RECOMP_LAZY_FLIP=0` is the escape hatch.
 
 ### What the numbers say about the remaining targets
 
-The gameplay window (lazy) is still `draw`-dominated: ~1,180 draws/flip, draw
-~55% of wall, `texture` + `streams` phases the largest sub-costs. Phase 1 did
-**not** make the texture round-trip the gameplay bottleneck (it removed it
-cleanly — `refresh_surface` full-uploads stopped at 69 total and the ~200/flip
-full syncs are gone), but the per-draw cost is. That keeps **Phase 2 (GPU vertex
-pulling)** as the strongest next cut, with **Phase 3 (per-draw trimming:
-vertex constants out of `Constants`, per-stage texture-bind fast path)** behind
-it. Re-run the A/B with `RECOMP_LAZY_FLIP=0` after Phase 2 to attribute gains.
+The gameplay window (lazy) is still `draw`-dominated: ~1,240 draws/flip, draw
+~66–70% of wall. Phase 1 did **not** make the texture round-trip the gameplay
+bottleneck (it removed it cleanly — `refresh_surface` full-uploads stopped at 69
+total and the ~200/flip full syncs are gone), but the per-draw cost is. The
+draw-phase breakdown (per 10 s of gameplay, `runtime-20261009-204914.log`) is:
+
+| draw sub-phase | s / 10 s |
+|---|---:|
+| textures | 2.64 |
+| streams (vertex/index staging) | 1.52 |
+| submit | 0.41 |
+| setup | 0.36 |
+| shaders | 0.08 |
+
+Within `textures`: `upload` 1.67 (the per-texel decode), `hash` 0.37 (the
+per-frame source memcmp), the rest alias scans/refresh. **GPU vertex pulling
+(Phase 2) was the wrong first move**: it targets `streams`/prep while only
+covering 16% of draws, and it was measured slower. The decode was the real wall.
+
+### Phase 2 results — vertex pull rejected, swizzled-32bpp decode fixed instead
+
+- **Vertex pull: 3–4% slower.** Measured same-scene (per 10 s): preparation
+  `1.83 → 1.11 s` (the fetch saving, as designed) but backend `5.00 → 5.99 s`,
+  net `+0.3 s`. Only `54,803 / 339,607` batches (16%) hit the pull branch; the
+  raw span is ~45 KB/draw (9× the ~5 KB of referenced vertices), so the
+  per-draw copy cost more than the fetches it removed. Fully reverted.
+- **Swizzled 32bpp decode: gameplay 21.9 → 24.9 FPS (+14%).** Format `0x06`
+  (swizzled A8R8G8B8, linear twin `0x12`) was **78% of all upload bytes**
+  (~1 MB/upload, ~1/frame) and was decoded through a per-texel indirect
+  callback. `xbox_unswizzle_rect` (already in `d3d8_swizzle.h`) bulk-unswizzles
+  `0x06`/`0x07` by Morton order in `get_texture` (`nv2a_gpu_d3d11.cpp`). Texture
+  phase halved (`2.64 → 1.36 s/10 s`), draw `70.3% → 65.9%` of wall. 0
+  `rejected`, 0 decode failures; `a-mash` and `audible` PASS.
+
+Remaining targets, in order: `streams` staging (1.5 s), `submit`+`setup`
+per-draw D3D11 overhead (0.8 s), the texture `hash` memcmp (0.37 s), then
+Phase 3 (vertex constants out of `Constants`, per-stage texture-bind fast
+path) and Phase 4 (render thread).
 
 ### Known regression alongside this work: garbled / flangy sound
 

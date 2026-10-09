@@ -146,13 +146,21 @@ technical or design questions **instead of stalling or guessing**.
   `XInputGetState`. `recomp/game/src/main.c` now defaults
   `RECOMP_HEAP_RECLAIM=1`. If a run ever regresses, first check the log for
   `[CONTIG] arena exhausted` and `RECOMP_WATCH=0x80000338`.
-- **Frame rate** (measured 2026-10-09, `goto_gameplay` + caption): menu
-  (`menucut1.NCS` 3D background) ~12.5 FPS; "press A" loading screen ~27 FPS;
-  comms briefing ~9 FPS; **real gameplay (HUD + objective) ~8 FPS**. Only
+- **Frame rate** (measured 2026-10-09, `goto_gameplay`, 25 s median n=24):
+  **real gameplay ~24.9 FPS** (was 21.9 before the swizzle fix; the older ~8 FPS
+  note predates correct lazy publication). Menu 3D background ~38 FPS. Only
   trust numbers taken after `Game.goto_gameplay()`; the level `.nhc` alone is
   just the start of the load, followed by the loading screen and briefing.
   `RECOMP_KICK_STATS=1` prints `[KICK]`; ~400–450 kicks/s and ~96% walk time
   in *every* phase.
+- **Swizzled-texture decode (FIXED 2026-10-09)**: format `0x06` (swizzled
+  A8R8G8B8) was 78% of all texture upload bytes and went through a per-texel
+  indirect decode callback. `get_texture` (`nv2a_gpu_d3d11.cpp`) now
+  bulk-unswizzles `0x06`/`0x07` with `xbox_unswizzle_rect` (`d3d8_swizzle.h`).
+  Gameplay +14% (21.9 → 24.9 FPS), texture phase halved. Confirms the general
+  rule: measure the phase first — GPU vertex pulling was tried and rejected
+  (3–4% **slower**; prep is only ~18% of the interval and pull covers only the
+  16% of draws on the vertex-program path). See `docs/17-executor-roadmap.md`.
 - **GPU pushes**: the pushbuffer walker now walks GET→PUT the way the hardware
   does (`nv2a_pb_run` in `nv2a_pb_scan.c`, called from `xbox_memory_layout.c`),
   following top-level JUMPs into secondary command buffers and back. This fixed
