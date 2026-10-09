@@ -76,6 +76,8 @@ def _declare():
     _xtst.XTestFakeRelativeMotionEvent.restype = ctypes.c_int
     _xtst.XTestFakeRelativeMotionEvent.argtypes = [c_void_p, ctypes.c_int, ctypes.c_int, ctypes.c_ulong]
 
+    _x11.XSetErrorHandler.restype = c_void_p
+    _x11.XSetErrorHandler.argtypes = [c_void_p]
     _x11.XInternAtom.restype = ctypes.c_ulong
     _x11.XInternAtom.argtypes = [c_void_p, ctypes.c_char_p, ctypes.c_int]
     _x11.XSendEvent.restype = ctypes.c_int
@@ -134,6 +136,18 @@ class _XEvent(ctypes.Union):
 
 
 _declare()
+
+# Wine helper windows (e.g. xalia) come and go; a window can be destroyed
+# between XQueryTree and XFetchName. Xlib's default error handler prints and
+# exits, which aborts the window walk mid-run. Ignore protocol errors.
+_X_ERROR_HANDLER = ctypes.CFUNCTYPE(ctypes.c_int, c_void_p, c_void_p)
+
+
+def _ignore_x_error(display, event):
+    return 0
+
+
+_ignore_x_error_c = _X_ERROR_HANDLER(_ignore_x_error)
 
 
 def window_name(win):
@@ -398,6 +412,7 @@ def main(argv):
     if not _dpy:
         print("xinject: cannot open X display", file=sys.stderr)
         return 2
+    _x11.XSetErrorHandler(_ignore_x_error_c)
 
     cmd = argv[1]
     if cmd == "list":

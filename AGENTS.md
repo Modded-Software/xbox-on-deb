@@ -197,25 +197,32 @@ technical or design questions **instead of stalling or guessing**.
   `cVideoTexture_Update → BinkCopyToBuffer → BinkCopyToBufferRect →
   YUV_blit_32bpp_48 → YUV_blit_0031EAE0`; no framebuffer flips follow. See the
   row loop around `recomp_0065.c:27510` (`esp+0x40` count) and `:27692`.
-- **Sound quality (OPEN, 2026-10-09)**: some voices play flangy / stuttery /
-  garbled. Audio quality, not liveness (`--only audible` PASSes; PCM non-silent).
-  The earlier "prime suspect" in this file — the `mcpx_apu_monitor_frame`
-  overdub — is **wrong**: `apu_mixer_*` has **zero callers** (grep the tree), so
-  `mixer_render` iterates only inactive voices and mixes nothing. The real
-  defects, all read from the code:
-  - **No resampling.** `voice_resample` (`apu_vp.c:949`) discards `rate`
-    (`(void)rate;` at `:967`): every voice consumes exactly 32 source samples per
-    48 kHz output frame regardless of pitch. Non-48 kHz samples, pitch-shifted
-    SFX and 3D/doppler voices play at the wrong rate, and streaming voices
-    over/under-run their CBO/loop because the guest scales consumption by rate.
-  - Nearest-neighbour, no interpolation (`voice_get_samples`), so aliasing.
-  - `monitor.frame_buf` (`apu_state.h:410`, 256 = 8×32) is never cleared; it is
-    only valid if the EP DMA sink rewrites the whole 1024 bytes every window
-    (`ep_sink_samples`, `apu_dsp.c:431`; the `assert(len == sizeof(frame_buf))`
-    is compiled out). A window the EP skips replays 5.33 ms-old audio → comb /
-    flange. Produce-and-consume latency is also 8 frames.
-  - XAudio2 stops/re-starts the source on an empty queue (`apu_xaudio2.c:150`),
-    audible as gaps; `empty_queue_events` counts them.
+- **Sound quality (FIXED 2026-10-09)**: the "56k modem" buzz and the cut-off
+  clicks are fixed; `--only audible` and `a-mash` PASS. Root causes and fixes:
+  - **187.5 Hz comb** (`48000/256`): the frame thread's inactive branch ticked
+    `ep_frame_div` + `monitor_frame` WITHOUT running the GP, so the EP reader
+    overtook the GP writer and every 256-sample window carried a cursor seam.
+    Fix (`apu_core.c`): run the full `se_frame` whenever `XCNTMODE != OFF`
+    (transient FECTL TRAPPED/HALTED is fine — the GP just does a no-op frame);
+    when truly OFF, advance the clock alone (no DSP runs).
+  - **No resampling**: `voice_resample` (`apu_vp.c`) dropped `rate`. Now uses
+    the vendored **libsamplerate** (`src/apu/third_party/samplerate/`, wired in
+    `src/apu/CMakeLists.txt`; `apu_shim.h` stubs replaced by the real header)
+    with a `src_callback_read` callback that pulls via `voice_get_samples`,
+    matching xemu. Rejected earlier linear/nearest resampling.
+  - **Cut-off / "reload" gaps**: XAudio2 stopped the source on an empty queue and
+    required a 4-buffer prefill to restart. Now the source runs permanently
+    (`apu_xaudio2.c`); an empty queue just emits silence. `XA2_NUM_BUFS` 8→16
+    (~85 ms headroom). `empty_queue_events` counts residual drains.
+  - **Cut-off peaks/clicks**: an abruptly cut sound makes the mix step full
+    scale to 0 (captured: constant `-10497` for ~3 s then a `+10497` step — the
+    "horrible peak"). `apu_declick` (`apu_core.c`) ramps any `|Δsample|>8000`
+    discontinuity over 32 samples across window boundaries.
+  - `monitor.frame_buf` is now explicitly zeroed on inactive windows, so a stale
+    window is never replayed. `apu_mixer_*` still has **zero callers**, so
+    `mixer_render` mixes nothing (soft mixer is a no-op).
+  - Diagnostic: `RECOMP_APU_WAV=<base>` writes `<base>.emu.raw` (pre-mixer) and
+    `<base>.mix.raw` (submitted); `RECOMP_APU_DIAG=1` prints `[XA2]` queue stats.
   See `recomp/docs/17-executor-roadmap.md`.
 
 ## Debugging recipe (a hang)
