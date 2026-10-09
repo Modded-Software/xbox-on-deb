@@ -282,6 +282,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     if (!getenv("RECOMP_HEAP_RECLAIM"))
         _putenv_s("RECOMP_HEAP_RECLAIM", "1");
 
+    /* This title never reads depth back to guest RAM: nothing presents depth and
+     * no targeted publish carries it, so the per-flip CopyResource+Map+swizzle
+     * of every dirty depth surface is pure wall-clock (~+0.9 FPS). */
+    if (!getenv("RECOMP_DEPTH_PUBLISH"))
+        _putenv_s("RECOMP_DEPTH_PUBLISH", "0");
+
     printf("=== %s - Static Recompilation ===\n", YOUR_GAME_TITLE);
     printf("Loading XBE...\n");
 

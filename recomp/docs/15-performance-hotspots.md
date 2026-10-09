@@ -479,3 +479,27 @@ Effect (median of 3, same test): **13.7 → 15.1 FPS**, `[KICK]` walk avg
 failures, 0 `rejected`/`unsupported`, no `nonfinite`. Remaining `fmt=6` alias
 syncs are rare (a handful/run), not per-frame. Still CPU-bound and still far from
 45; this removes ~1–2 ms/frame of GPU sync, not the executor wall.
+
+### Bulk texture decode and depth-publish gating
+
+Two more wall-time reductions:
+
+- **Linear 32bpp textures bulk-decode by row.** `0x12`/`0x1E` linear textures are
+  the per-frame re-uploads and dominate loading; they no longer call the decode
+  callback per texel. Cuts **load time**; in-mission FPS is flat because the
+  texture phase there is off the critical path and the guest refills freed
+  executor time (update count unchanged, ~448/10 s).
+- **Depth publication skipped for this title** (`RECOMP_DEPTH_PUBLISH=0` set in
+  `recomp/game/src/main.c`; runtime default stays on). Nothing presents depth,
+  and targeted publishes never carry depth, so the per-flip
+  `CopyResource + Map + de-swizzle` of every dirty depth surface (was
+  ~1 GiB/10 s, ~10 MB/frame) was pure wall-clock. `[GPU-D3D11] surface bytes`
+  now reports `depth published 0.000 GiB`; no decode/create/reject failures.
+
+Combined with the alias fix, median-of-3 is now **16.0 FPS** (from 13.7),
+`[KICK]` walk avg ~1170 µs, kicks/s ~830, `ack cpu` ~93%. The proven lever is
+still **GPU-sync wall time** (it is not refillable by the guest), not per-kick
+CPU. The `pb_sync_light` completion waits (~5800/10 s, the deliberate throttle)
+and the readback wait remain the largest sync buckets; removing them outright
+was already measured as a net loss, so the next real step is a sync-model change,
+not another micro-optimisation.
