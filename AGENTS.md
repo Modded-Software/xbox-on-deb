@@ -21,11 +21,21 @@ Everything below is about the **recomp** path.
 
 ```bash
 bash recomp/game/build.sh          # build ghost.exe (ninja under the hood)
-bash scripts/14-launch-recomp.sh   # launch (standard state)
-bash scripts/18-launch-user.sh     # launch with a fresh user state
 bash scripts/16-stop-recomp.sh     # stop the session (ALWAYS run between runs)
 bash scripts/20-regen-recomp.sh    # regenerate the lifted C from the XBE
 ```
+
+### Launching the game for a person to play
+
+To hand the game to the user, launch the **user path** (fresh, dedicated user
+state — the one a human should play):
+
+```bash
+bash scripts/18-launch-user.sh     # USER PATH: launch game with a fresh user state
+```
+
+Do not use `scripts/14-launch-recomp.sh` (standard/shared state) for handing the
+game to the user; it is the state the automated tests build on.
 
 Stop stale sessions before launching again — a leftover `ghost.exe` under Wine
 shows up as a frozen window and confuses every test.
@@ -166,6 +176,19 @@ technical or design questions **instead of stalling or guessing**.
   following top-level JUMPs into secondary command buffers and back. This fixed
   the `[GPU] index command rejected (prim 0)` drops (32-cap → 0). `a-mash`
   passes. See MANUAL_PATCHES.md.
+- **Pushbuffer-walker crash (FIXED 2026-10-10)**: `nv2a_pb_run` followed
+  JUMP/CALL targets (`XBOX_CONTIG_BASE | (t & 0x0FFFFFFF)`) and read
+  `*(mem + va)` with no bounds check, terminating only on exact `va == put_va`.
+  When the walk desynced from PUT (misparsed packet, unbalanced CALL/RETURN, or
+  a wrapped ring) it marched into non-pushbuffer guest RAM; a stray word that
+  decoded as a JUMP sent `va` past the 64 MB `XBOX_CONTIG_SIZE` window and the
+  next read faulted — `[CRASH] Access violation ... in nv2a_pb_run+0x73`, all-zero
+  Xbox regs (host-side fault, not a guest one). Now every read and jump/call
+  target is validated against `[XBOX_CONTIG_BASE, +XBOX_CONTIG_SIZE)`; the first
+  violation logs `[PB] desync ... resync to PUT` and drops that one kick instead
+  of crashing. The signature is present in logs back to 2026-10-08, so it
+  long predates the fix. Watch `[PB] desync` / `[PB-UNK]` for the underlying
+  stream desync.
 - **Input focus (test flake)**: the game window loses keyboard focus after the
   logo videos; `recomp/tests/framework.py` `goto_mission` now `focus()`es before
   every tap (a one-shot focus is not enough), otherwise the title idles into
