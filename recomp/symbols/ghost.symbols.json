@@ -10,8 +10,8 @@
   "source": "Ghost.map (pub+static, with Lib:Object) + Ghost.pdb (modules/files)"
  },
  "coverage": {
-  "functions_detected": 17244,
-  "functions_named_from_map": 16140,
+  "functions_detected": 17245,
+  "functions_named_from_map": 16141,
   "functions_with_source_file": 9012,
   "functions_with_source_direct": 8195,
   "functions_with_source_interpolated": 817,
@@ -200693,6 +200693,17 @@
    "mangled": "?IpConfigProbe@CXnIp@@QAEXXZ",
    "demangled": "public: void __thiscall CXnIp::IpConfigProbe(void)",
    "name": "CXnIp_IpConfigProbe_00354AF2",
+   "object": "xnet:ipcfg.obj"
+  },
+  "0x00354B77": {
+   "va": "0x00354B77",
+   "end": "0x00354E91",
+   "size": 794,
+   "section": "XNET",
+   "detected": true,
+   "mangled": "?IpConfigTimer@CXnIp@@IAEXPAVCTimer@@@Z",
+   "demangled": "protected: void __thiscall CXnIp::IpConfigTimer(class CTimer *)",
+   "name": "CXnIp_IpConfigTimer_00354B77",
    "object": "xnet:ipcfg.obj"
   },
   "0x00354E91": {

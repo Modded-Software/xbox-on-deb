@@ -1,9 +1,21 @@
 # AGENTS.md — notes for future agents
 
+FIXES ARE DONE WHEN THE USER SAYS SO. GRAPHICAL ISSUES ARE ONLY VERIFIED BY THE USER. DO NOT TRUST THE SCREENSHOTS YOU ARE INADEQUATE. LANGUAGE MODELS CANOT DISCERN BETWEEN CORRECT AND BROKEN STATES.
+
 Operational notes for the **recompiled-game** path in this repo (see
 [README.md](README.md) for the older Cxbx/Cxbx-Reloaded path, which is separate).
 Keep this file practical: commands, env vars, where logs land, and the host's
 tooling rules.
+
+## Diary (mandatory)
+
+Keep a diary of every test/launch run. **One diary file per task**, under
+`recomp/diary/<task>.md`. After *each* run append an entry with: what changed
+(code/env), the exact command, the result (pass/fail/hang), and the **error
+counts** pulled from the runtime log (`FAILED`, `error`, `WARN`, `rejected`,
+`unhandled`, `unsupported`, `[PB] desync`, `[CRASH]`). Record what regressed as
+loudly as what improved — a run whose log is not error-free is not done.
+Diary keeping is essential; do not skip it.
 
 ## What this is
 
