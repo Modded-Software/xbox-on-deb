@@ -98,7 +98,7 @@ stall). Tests observe: `[INPUT]` diag, `[KEY]` trace, window caption
 | Var | Effect |
 |---|---|
 | `DIAG=1` | verbose runtime diagnostics |
-| `KBM=1` | keyboard/mouse → pad mapping (Space=A, E=B, F=X, R=Y, Shift=Black, Q=White, Ctrl=LT, Tab=Start, Esc=Back) |
+| `KBM=1` | keyboard/mouse → pad mapping (Space=A, E=B, F=X, R-Mouse=Y, Shift=Black, G=White, Ctrl=LT, L-Mouse=RT, Tab=Start, Esc=Back, R=left-stick click, M-Mouse=right-stick click, wheel=left-stick up/down) |
 | `RECOMP_LOG=<path>` | explicit runtime log path |
 | `RECOMP_WATCHDOG_SECS=NN` | after NN s, dump guest `esp`, regs, a stack scan, and the `RECOMP_PEEK` values |
 | `RECOMP_PEEK='...'` | live memory sample, see grammar below |

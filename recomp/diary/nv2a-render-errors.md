@@ -105,3 +105,28 @@ in the code, so 32 means ">= 32"; the true count is higher.
   0x0100 software method types 0xC/0xD/0xE (CMiniport::SoftwareMethod ->
   FixupPushBuffer); the executor dispatches 0x0100 *deferred* (and drops it if
   another is pending), so the walker reaches the stale tail and loops.
+### R8 — walker models JUMP-into-buffer as a call — runtime-20261010-195549.log
+- Changed: `nv2a_pb_scan.c` `nv2a_pb_run`. D3D8 draws compiled geometry by
+  JUMPing into a shared buffer that ends in a JUMP back to the caller; the
+  title rewrites that exit word per use (via the 0x0100 FixupPushBuffer software
+  method, which the deferred executor can drop). A GET->PUT batch walk reads
+  final memory and sees only the first caller's return, so every other caller
+  looped back to the first forever -> budget exhausted -> dropped kick.
+  Fix: an out-of-line forward JUMP (target on a different 64 KB page, forward)
+  pushes a return PC; a backward cross-page JUMP with one pending returns to it
+  (a real CALL still uses `ret`; a backward JUMP with nothing pending is a ring
+  wrap). Depth 4. `MANUAL_PATCHES.md` not affected (runtime source).
+- Verified offline first: a simulator over the captured FULL KICK dump
+  (`/tmp/opencode/simwalk.py`) shows CALL 80133FB4 -> RET 80133FB8,
+  CALL 80135054 -> RET 80135058 (was looping to 80133FB8).
+- Commands: `bash recomp/game/build.sh`;
+  `recomp/tests/run.py --user-state --only a-mash` -> **PASS (1 passed)**;
+  `REPLAY=1 SESSION=geom-crash scripts/18-launch-user.sh` (the exact recording
+  that crashed), stopped after ~180 s (recording ~155 s), 8166 flips.
+- Result on replay: `[PB] walk budget exhausted` **0** (was 25),
+  `[PB] desync` **0**, `index command rejected` 18 (was 22), `unhandled` 18
+  (was 15), `FAILED` 0, `[CRASH]` 0. a-mash run: budget 0, desync 0,
+  rejected 4, unhandled 4.
+- Regressed: nothing observed. Remaining: the 0x0100 FixupPushBuffer software
+  method is still dropped by the deferred executor; the walker no longer needs
+  it, but any CPU-visible tail patch it performs is still not applied.
