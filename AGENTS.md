@@ -40,6 +40,23 @@ game to the user; it is the state the automated tests build on.
 Stop stale sessions before launching again — a leftover `ghost.exe` under Wine
 shows up as a frozen window and confuses every test.
 
+### Recording and replaying input (reproducing a hands-on crash)
+
+The user launch records every input edge (key, mouse delta, button, wheel) to a
+timestamped file inside the prefix, so a session that crashes can be replayed
+hands-free. Each session has an explicit id (`SESSION=<id>`); the file is
+`pfx/drive_c/recomp-record-<SESSION>.txt`.
+
+```bash
+make record-session SESSION=ghost-crash   # play; input is recorded
+make replay-session SESSION=ghost-crash   # replay it, no hands-on input
+make sessions                             # list recorded sessions
+```
+
+Runtime side: `RECOMP_INPUT_RECORD=C:\...` records; `RECOMP_INPUT_REPLAY=C:\...`
+replays (it also captures the mouse for KBM). Recording/replay lives in
+`refs/xboxrecomp/src/video/fb_present.c` (`rec_event`, `fb_replay_poll`).
+
 ## Tests (stdio-only, no human needed)
 
 ```bash

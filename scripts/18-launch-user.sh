@@ -31,6 +31,30 @@ if [ "${VBLANK:-0}" != "0" ]; then
     EXTRA="$EXTRA RECOMP_VBLANK=1"
 fi
 
+# Input recording/replay, keyed by an explicit SESSION id so recordings never
+# collide and replay names exactly the session to reproduce. The game reads and
+# writes inside the prefix (C:\ maps to pfx/drive_c); the host path is printed.
+#   make record-session SESSION=ghost-crash
+#   make replay-session SESSION=ghost-crash
+SESSION="${SESSION:-}"
+REC_WIN=""
+if [ -n "$SESSION" ]; then
+    REC_WIN="C:\\recomp-record-${SESSION}.txt"
+    RECORD_PATH="$SCGHOST_PREFIX/pfx/drive_c/recomp-record-${SESSION}.txt"
+fi
+if [ "${REPLAY:-0}" != "0" ]; then
+    if [ -z "$SESSION" ]; then
+        echo "REPLAY=1 requires SESSION=<id> (which recording to replay)" >&2
+        exit 2
+    fi
+    EXTRA="$EXTRA RECOMP_INPUT_REPLAY=$REC_WIN"
+    RECORD=0
+elif [ "${RECORD:-1}" != "0" ] && [ -n "$SESSION" ]; then
+    EXTRA="$EXTRA RECOMP_INPUT_RECORD=$REC_WIN"
+else
+    RECORD=0
+fi
+
 # RESOLUTION=WxH is forwarded to the launcher as --resolution=WxH.
 # Default to 720p; override with RESOLUTION=1920x1080 (or empty for native).
 export RESOLUTION="${RESOLUTION-1280x720}"
@@ -42,4 +66,12 @@ echo "launched; window title is 'StarCraft: Ghost'"
 echo "  runtime log : logs/runtime-$TS.log  (logs/latest-runtime.log)"
 echo "  launcher log: logs/launch.out"
 echo "  watchdog    : ${WATCH:-0}   vblank: ${VBLANK:-0}"
+if [ "${REPLAY:-0}" != "0" ]; then
+    echo "  input replay: session '$SESSION'  -> $RECORD_PATH"
+elif [ "${RECORD:-1}" != "0" ]; then
+    echo "  input record: session '$SESSION'  -> $RECORD_PATH"
+    echo "  replay it   : make replay-session SESSION=$SESSION"
+else
+    echo "  input record: off (set SESSION=<id> to record, or RECORD=0 to silence)"
+fi
 echo "  stop with   : make stop"

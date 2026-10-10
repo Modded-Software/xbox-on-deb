@@ -21,6 +21,28 @@ relaunch: ## Stop any running game and launch a fresh one.
 watch: ## Launch with the repeating hang watchdog (diagnosis only).
 	WATCH=1 bash scripts/18-launch-user.sh
 
+# ── input record / replay ───────────────────────────────────────────────
+# The user launch records every input edge with a timestamp. Replay feeds a
+# recording back hands-free, at the same times and with no X focus, so a crash
+# seen while playing can be reproduced deterministically. Each session has an
+# explicit id; the file is pfx/drive_c/recomp-record-<SESSION>.txt in the prefix.
+SESSION ?=
+
+.PHONY: record-session
+record-session: ## Record a hands-on session: make record-session SESSION=<id>
+	@test -n "$(SESSION)" || { echo "usage: make record-session SESSION=<id>"; exit 2; }
+	SESSION=$(SESSION) bash scripts/18-launch-user.sh
+
+.PHONY: replay-session
+replay-session: ## Replay a recording: make replay-session SESSION=<id>
+	@test -n "$(SESSION)" || { echo "usage: make replay-session SESSION=<id>"; exit 2; }
+	REPLAY=1 SESSION=$(SESSION) bash scripts/18-launch-user.sh
+
+.PHONY: sessions
+sessions: ## List recorded input sessions (prefix pfx/drive_c/recomp-record-*.txt).
+	@set -- $(HOME)/Games/scghost-prefix/pfx/drive_c/recomp-record-*.txt; \
+	if [ -e "$$1" ]; then printf '%s\n' "$$@"; else echo "no recordings yet"; fi
+
 # ── recomp code generation ──────────────────────────────────────────────
 # The generated tree (recomp/game/src/recomp/gen/) is a build artifact and is
 # gitignored: it is regenerated wholesale from Ghost.xbe. Never hand-patch it.
@@ -113,6 +135,9 @@ help: ## List the targets.
 	@echo "  scene          print + record the current scene fingerprint"
 	@echo "  stop           stop the game and its wineserver (alias: kill)"
 	@echo "  relaunch       stop then launch a fresh game"
+	@echo "  record-session record input: make record-session SESSION=<id>"
+	@echo "  replay-session replay input: make replay-session SESSION=<id>"
+	@echo "  sessions       list recorded input sessions"
 	@echo "  log            tail the latest runtime log (LINES=200)"
 	@echo "  toolkit        clone/update the toolkit fork (refs/xboxrecomp)"
 	@echo "  clean          remove build output"
