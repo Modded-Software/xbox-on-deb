@@ -321,12 +321,20 @@ class Game:
 
     # -- injection ---------------------------------------------------------
 
-    def focus(self):
-        """No-op under file injection; kept for callers. Set
-        RECOMP_LEGACY_FOCUS=1 to fall back to the XTest/focus path."""
+    def minimize(self):
+        """Iconify the game window so the user's own keys cannot reach it.
+
+        Injection is off-focus (the runtime's control file), so no test needs
+        the window raised: iconifying keeps the user's typing out of the game
+        and out of the run. Set RECOMP_LEGACY_FOCUS=1 to fall back to the
+        XTest/focus path, which does need the window up."""
         if os.environ.get("RECOMP_LEGACY_FOCUS"):
             return _run("focus", WINDOW_TITLE)
-        return ""
+        return _run("minimize", WINDOW_TITLE, check=False)
+
+    def focus(self):
+        """Kept for callers; now iconifies the window (see minimize())."""
+        return self.minimize()
 
     def key(self, name, action):
         # Keys go through the runtime's control file: no X input focus needed,

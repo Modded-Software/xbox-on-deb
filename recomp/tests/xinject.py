@@ -60,6 +60,10 @@ def _declare():
     _x11.XSetInputFocus.argtypes = [c_void_p, ctypes.c_ulong, ctypes.c_int, ctypes.c_ulong]
     _x11.XRaiseWindow.restype = ctypes.c_int
     _x11.XRaiseWindow.argtypes = [c_void_p, ctypes.c_ulong]
+    _x11.XDefaultScreen.restype = ctypes.c_int
+    _x11.XDefaultScreen.argtypes = [c_void_p]
+    _x11.XIconifyWindow.restype = ctypes.c_int
+    _x11.XIconifyWindow.argtypes = [c_void_p, ctypes.c_ulong, ctypes.c_int]
     _x11.XFlush.restype = ctypes.c_int
     _x11.XFlush.argtypes = [c_void_p]
     _x11.XSync.restype = ctypes.c_int
@@ -403,6 +407,25 @@ def do_getfocus():
     return 0
 
 
+def do_minimize(needle):
+    """Iconify the matching window so it stops grabbing the user's keys.
+
+    Automated input goes through the runtime's control file, not X focus, so a
+    test never needs the window up: iconifying it keeps the user's own typing
+    out of the game (and out of the test)."""
+    win = find_window(_x11.XDefaultRootWindow(_dpy), needle)
+    if not win:
+        print(f"xinject: no window matching '{needle}'", file=sys.stderr)
+        return 4
+    screen = _x11.XDefaultScreen(_dpy)
+    if not _x11.XIconifyWindow(_dpy, win, screen):
+        print(f"xinject: XIconifyWindow failed for 0x{win:08x}", file=sys.stderr)
+        return 4
+    _x11.XFlush(_dpy)
+    print(f"minimised 0x{win:08x}")
+    return 0
+
+
 def main(argv):
     global _dpy
     if len(argv) < 2:
@@ -432,6 +455,8 @@ def main(argv):
         return do_activate(argv[2])
     elif cmd == "getfocus":
         return do_getfocus()
+    elif cmd == "minimize" and len(argv) >= 3:
+        return do_minimize(argv[2])
     elif cmd == "title" and len(argv) >= 3:
         win = find_window(_x11.XDefaultRootWindow(_dpy), argv[2])
         if not win:
