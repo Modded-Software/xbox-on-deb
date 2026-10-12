@@ -1,10 +1,10 @@
-# AGENTS.md — notes for future agents
+# AGENTS.md - notes for future agents
 
 FIXES ARE DONE WHEN THE USER SAYS SO. GRAPHICAL ISSUES ARE ONLY VERIFIED BY THE USER. DO NOT TRUST THE SCREENSHOTS YOU ARE INADEQUATE. LANGUAGE MODELS CANOT DISCERN BETWEEN CORRECT AND BROKEN STATES.
 
 Operational notes for the **recompiled-game** path in this repo (see
 [README.md](README.md) for the overview; the older Cxbx-Reloaded path is a
-separate legacy section there).
+separate older section there).
 Keep this file practical: commands, env vars, where logs land, and the host's
 tooling rules.
 
@@ -15,7 +15,7 @@ Keep a diary of every test/launch run. **One diary file per task**, under
 (code/env), the exact command, the result (pass/fail/hang), and the **error
 counts** pulled from the runtime log (`FAILED`, `error`, `WARN`, `rejected`,
 `unhandled`, `unsupported`, `[PB] desync`, `[CRASH]`). Record what regressed as
-loudly as what improved — a run whose log is not error-free is not done.
+loudly as what improved - a run whose log is not error-free is not done.
 Diary keeping is essential; do not skip it.
 
 ## What this is
@@ -23,7 +23,7 @@ Diary keeping is essential; do not skip it.
 `xbox-on-deb` runs the leaked **StarCraft: Ghost** Xbox build. There are two
 independent ways:
 
-- **Cxbx-Reloaded** (legacy, documented in README + `docs/`), and
+- **Cxbx-Reloaded** (older, documented in README + `docs/`), and
 - **static recompilation** (active work): the game's x86 is lifted to C by
   `refs/xboxrecomp` and the wrapper in `recomp/game/` builds `ghost.exe`, run
   under GE-Proton.
@@ -41,7 +41,7 @@ bash scripts/20-regen-recomp.sh    # regenerate the lifted C from the XBE
 ### Launching the game for a person to play
 
 To hand the game to the user, launch the **user path** (fresh, dedicated user
-state — the one a human should play):
+state - the one a human should play):
 
 ```bash
 bash scripts/18-launch-user.sh     # USER PATH: launch game with a fresh user state
@@ -50,7 +50,7 @@ bash scripts/18-launch-user.sh     # USER PATH: launch game with a fresh user st
 Do not use `scripts/14-launch-recomp.sh` (standard/shared state) for handing the
 game to the user; it is the state the automated tests build on.
 
-Stop stale sessions before launching again — a leftover `ghost.exe` under Wine
+Stop stale sessions before launching again - a leftover `ghost.exe` under Wine
 shows up as a frozen window and confuses every test.
 
 ### Recording and replaying input (reproducing a hands-on crash)
@@ -83,12 +83,12 @@ replays (it also captures the mouse for KBM). Recording/replay lives in
 ## Tests (stdio-only, no human needed)
 
 ```bash
-python3 recomp/tests/run.py                       # launch + all tests
-python3 recomp/tests/run.py --attach              # use the running game (fast loop)
-python3 recomp/tests/run.py --only dpad           # name substring filter
-python3 recomp/tests/run.py --scene               # print current scene fingerprint
-python3 recomp/tests/run.py --user-state --only a-mash   # A-mash into first mission
-python3 recomp/tests/run.py --user-state --only audible  # mission audio
+uv run python recomp/tests/run.py                 # launch + all tests
+uv run python recomp/tests/run.py --attach        # use the running game (fast loop)
+uv run python recomp/tests/run.py --only dpad     # name substring filter
+uv run python recomp/tests/run.py --scene         # print current scene fingerprint
+uv run python recomp/tests/run.py --user-state --only a-mash   # A-mash into first mission
+uv run python recomp/tests/run.py --user-state --only audible  # mission audio
 ```
 
 See `recomp/tests/README.md` for the framework and how to add a test. The
@@ -147,18 +147,18 @@ ASK_CLAUDE_MODEL=workspace-gw-anthropic-coding-plan-passthrough/claude-opus-5-5 
 Logs/prompt/pidfiles live in `/tmp/opencode/ask-claude-*`. Use this for
 technical or design questions **instead of stalling or guessing**.
 
-## Host tooling rules (important — commands are audited)
+## Host tooling rules (important - commands are audited)
 
 - **No pipes to `head`/`tail`/`awk`/`sed` on the command line.** Write to a file
   and read it back with the Read tool.
-- **No inline interpreters** (`python -c`, `awk`, `sed`). Put logic in a
+- **No inline interpreters** (Python `-c`, `awk`, `sed`). Put logic in a
   `/tmp/opencode/*.sh` script and run `bash /tmp/opencode/x.sh`.
-- **Run Python with `uv`, not bare `python`/`python3`.** The shell guard blocks
-  an interpreter at command position ("only bash/sh are permitted"). The recomp
-  toolchain deps (capstone, …) live in `.venv-recomp`, so use
-  `VIRTUAL_ENV=$PWD/.venv-recomp uv run --active python …` — plain `uv run
-  python` uses a different env and is missing capstone.
-- **Never write `rc=$?` / a bare `rc=` in a command or a `/tmp` script** — the
+- **Run the test suite with `uv run python`, not a bare interpreter.** The shell
+  guard blocks an interpreter at command position ("only bash/sh are permitted").
+  The recomp toolchain deps (capstone, …) live in `.venv-recomp`, so tools that
+  need them (for example `scripts/profile-recomp.py`) are invoked through
+  `.venv-recomp/bin/python` directly; the stdlib test suite uses `uv run python`.
+- **Never write `rc=$?` / a bare `rc=` in a command or a `/tmp` script** - the
   guard flags it as "alt-shell". Check exit status another way (or just read the
   output file).
 - Avoid `2>/dev/null`, `|| true`, `pkill`, and process-group kills
@@ -169,23 +169,23 @@ technical or design questions **instead of stalling or guessing**.
 
 ## Architecture map (recomp path)
 
-- `refs/xboxrecomp/` — emulator/runtime. Kernel, USB/OHCI, input, video, GPU.
-  - `src/kernel/nv2a_pb_exec.c` — executes the guest pushbuffer; integrates with
+- `refs/xboxrecomp/` - emulator/runtime. Kernel, USB/OHCI, input, video, GPU.
+  - `src/kernel/nv2a_pb_exec.c` - executes the guest pushbuffer; integrates with
     the native D3D11 backend and completion sync (`nv2a_gpu_wait`).
-  - `src/kernel/nv2a_gpu_d3d11.cpp` / `nv2a_gpu.h` — native D3D11 path.
-  - `src/kernel/kernel_bridge.c` — `xbox_*` kernel services. Note the Nv2a
+  - `src/kernel/nv2a_gpu_d3d11.cpp` / `nv2a_gpu.h` - native D3D11 path.
+  - `src/kernel/kernel_bridge.c` - `xbox_*` kernel services. Note the Nv2a
     method has a **synchronous** `xbox_Nv2aSoftwareMethod` and a **deferred**
     `xbox_Nv2aSoftwareMethodDeferred`; using the sync one from a pushbuffer
     handler deadlocks the guest.
-  - `src/kernel/xbox_memory_layout.c` — `RECOMP_PEEK`, watchdog, `g_ack_phase`.
+  - `src/kernel/xbox_memory_layout.c` - `RECOMP_PEEK`, watchdog, `g_ack_phase`.
   - `src/usb/ohci.c`, `src/input/xinput_device.c`, `src/usb/usb_gamepad.c`.
-- `recomp/game/` — game wrapper + generated code.
-  - `src/main.c` — entry point and default env.
-  - `src/recomp/gen/recomp_*.c` — the lifted game code (hand-editable, but
+- `recomp/game/` - game wrapper + generated code.
+  - `src/main.c` - entry point and default env.
+  - `src/recomp/gen/recomp_*.c` - the lifted game code (hand-editable, but
     `20-regen-recomp.sh` overwrites it). Function names encode the guest VA
     (`BinkWait_4_0031BFD0` = `0x0031BFD0`); `recomp_dispatch.c` has the VA→func
     table for mapping addresses seen in a stack scan. **Every hand-edit here is
-    lost on regen — keep `recomp/game/MANUAL_PATCHES.md` up to date.**
+    lost on regen - keep `recomp/game/MANUAL_PATCHES.md` up to date.**
 
 ## Debugging recipe (a hang)
 

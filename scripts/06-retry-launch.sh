@@ -12,7 +12,7 @@ XBE="${1:?usage: 06-retry-launch.sh <xbe> [max] [wait]}"
 MAX="${2:-6}"
 WAIT="${3:-45}"
 
-source "$PWD/scripts/config.env"
+source "$PWD/scripts/config.sh" || exit 1
 detect_ge_proton
 cd "$REPO_ROOT"
 

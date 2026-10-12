@@ -7,7 +7,7 @@ set -euo pipefail
 # Usage: 05-launch-xbox-wine7.sh /path/to/Game.xbe
 #   RENDERER=dxvk (default) | RENDERER=wine
 
-source "$PWD/scripts/config.env"
+source "$PWD/scripts/config.sh" || exit 1
 
 WT_GE="$HOME/.steam/root/compatibilitytools.d/GE-Proton7-55"
 PREFIX="$GAMES_DIR/scghost-wine7-prefix"

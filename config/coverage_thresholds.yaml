@@ -1,0 +1,19 @@
+# workspace-ci Test Coverage Thresholds
+
+unit:
+  path: tests/unit
+  min_coverage: 90
+  source_path: xbox-on-deb
+  runner: "uv run python -m pytest"
+
+# Integration tests use real git repos, subprocess spawns, and
+# end-to-end pipelines. Coverage is supplementary (5% floor);
+# coverage measurement is disabled here to avoid the overhead of
+# tracing slow I/O under PRoot. The make check-push target measures
+# coverage separately via --cov-fail-under=5.
+integration:
+  path: tests/integration
+  min_coverage: 5
+  source_path: xbox-on-deb
+  runner: "uv run python -m pytest"
+  coverage: "false"

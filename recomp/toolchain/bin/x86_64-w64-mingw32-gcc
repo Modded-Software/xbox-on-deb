@@ -2,6 +2,6 @@
 # MinGW-w64 x86_64 C compiler, backed by the ziglang PyPI package.
 # No system MinGW and no root needed; zig ships clang + lld + the mingw-w64
 # sysroot. See ../zig-windows-x64.cmake.
-exec /home/agent/WORKSPACE-VM/projects/xbox-on-deb/.venv-recomp/bin/python -m ziglang cc \
+exec "$HOME/WORKSPACE-VM/projects/xbox-on-deb/.venv-recomp/bin/python" -m ziglang cc \
     -target x86_64-windows-gnu \
-    -L/home/agent/WORKSPACE-VM/projects/xbox-on-deb/recomp/toolchain/lib "$@" -w
+    -L"$HOME/WORKSPACE-VM/projects/xbox-on-deb/recomp/toolchain/lib" "$@" -w

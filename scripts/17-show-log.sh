@@ -2,7 +2,7 @@
 # Show the tail of the latest recompiled runtime log.
 #   scripts/17-show-log.sh [lines] [path]
 set -u
-ROOT=/home/agent/WORKSPACE-VM/projects/xbox-on-deb
+ROOT="${REPO_ROOT:-$HOME/WORKSPACE-VM/projects/xbox-on-deb}"
 LINES="${1:-200}"
 LOG="${2:-}"
 if [ -z "$LOG" ] && [ -e "$ROOT/logs/latest-runtime.log" ]; then

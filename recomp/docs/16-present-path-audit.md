@@ -1,4 +1,4 @@
-# 16 — Present-path audit: what Cxbx and xemu do that we do not
+# 16 - Present-path audit: what Cxbx and xemu do that we do not
 
 This is a point-in-time audit of the frame's structural cost, prompted by the
 observation that Cxbx-Reloaded and xemu are generally faster. It records the
@@ -35,7 +35,7 @@ Per flip, our code does:
    a second buffer; `fb_thread` then `StretchDIBits` it through GDI
    (`fb_present.c:807`) → DXVK → display.
 
-Measured: `sync` 1.2–2.7 s per 10 s, of which `readback wait ~1.9 s` is
+Measured: `sync` 1.2-2.7 s per 10 s, of which `readback wait ~1.9 s` is
 *blocking on the GPU*; plus one or two full-frame CPU copies. The GPU is
 otherwise idle-waiting because of the bounded ordering run-ahead.
 
@@ -44,7 +44,7 @@ otherwise idle-waiting because of the bounded ordering run-ahead.
 ### Cxbx-Reloaded (HLE)
 
 Direct code execution plus HLE of D3D8 to D3D9, presenting through a D3D9
-swapchain — no guest-RAM round trip at all. Relevant techniques:
+swapchain - no guest-RAM round trip at all. Relevant techniques:
 
 - Dirty-flag tracking for fixed-function state; skip redundant computation and
   upload when the generation has not changed.
@@ -56,7 +56,7 @@ swapchain — no guest-RAM round trip at all. Relevant techniques:
 - **Render-target resources are special**: it skips CPU-hash-based re-creation
   because GPU content cannot be detected as "changed" by hashing guest memory.
 
-### xemu (LLE — the same model as us)
+### xemu (LLE - the same model as us)
 
 Its Vulkan backend (`hw/xbox/nv2a/pgraph/vk/`) is the closest reference:
 
@@ -82,13 +82,13 @@ consult).
 
 | # | Gap | Real for us? | Est. gain | Effort |
 |---|---|---|---|---|
-| 1 | **Present from the GPU (DXGI flip swapchain) + lazy on-demand downloads + drop ordering waits** | Yes — the core issue | +20–45% (19 → ~23–28) | Medium |
-| 2 | **Write-tracked texture invalidation** instead of full `memcmp` every bind | Yes — the 2–3 s texture bucket | +15–30% | Medium |
-| 3 | **GPU vertex fetch** — bind guest vertex memory, build the input layout from `SET_VERTEX_DATA_ARRAY_FORMAT`; move NaN-texcoord sanitising / NORMPACKED3 / w=0 into the vertex shader | Yes — the 1.3 s streams bucket, 404 B/vertex | +10–15% | High |
-| 4 | **Render-thread split** (xemu's SPSC queue) | Yes, but only *after* 1–3, else it inherits the same waits | up to 1.5–2× if the guest thread has slack | High |
-| 5 | Draw merging | Partly — `nv2a_pb_exec.c` already builds its own vertex/index lists, but we cannot merge across texture changes (no bindless on D3D11 FL11) | low single digits unless a counter shows ≥ ~30% of draws share a generation | Low–Med |
-| 6 | Bindless textures | **No** — D3D11 Feature Level 11 has no descriptor indexing (needs D3D12/Vulkan) | n/a | — |
-| 7 | Async shader compile / compute swizzle | Hitches only, not steady-state FPS | ~0 steady | — |
+| 1 | **Present from the GPU (DXGI flip swapchain) + deferred on-demand downloads + drop ordering waits** | Yes - the core issue | +20-45% (19 → ~23-28) | Medium |
+| 2 | **Write-tracked texture invalidation** instead of full `memcmp` every bind | Yes - the 2-3 s texture bucket | +15-30% | Medium |
+| 3 | **GPU vertex fetch** - bind guest vertex memory, build the input layout from `SET_VERTEX_DATA_ARRAY_FORMAT`; move NaN-texcoord sanitising / NORMPACKED3 / w=0 into the vertex shader | Yes - the 1.3 s streams bucket, 404 B/vertex | +10-15% | High |
+| 4 | **Render-thread split** (xemu's SPSC queue) | Yes, but only *after* 1-3, else it inherits the same waits | up to 1.5-2× if the guest thread has slack | High |
+| 5 | Draw merging | Partly - `nv2a_pb_exec.c` already builds its own vertex/index lists, but we cannot merge across texture changes (no bindless on D3D11 FL11) | low single digits unless a counter shows ≥ ~30% of draws share a generation | Low-Med |
+| 6 | Bindless textures | **No** - D3D11 Feature Level 11 has no descriptor indexing (needs D3D12/Vulkan) | n/a | - |
+| 7 | Async shader compile / compute swizzle | Hitches only, not steady-state FPS | ~0 steady | - |
 
 Why the references are faster, in one line each: Cxbx avoids the GPU-command-
 stream cost via HLE and a swapchain; xemu has the same LLE cost we do but
@@ -97,7 +97,7 @@ unless the guest asks.
 
 ## 4. Approved plan
 
-### Phase 0 — ceiling probe (throwaway)
+### Phase 0 - ceiling probe (throwaway)
 
 An env-gated build (`RECOMP_STALE_PRESENT=1`) that presents stale frames and
 skips both the flip publish and the ordering waits. The resulting FPS is the
@@ -105,16 +105,16 @@ ceiling Phase 1 can reach, and confirms the ack thread is waiting rather than
 CPU-bound (cross-check `[KICK]` walk% against `ack cpu%`; walk ~96% with low
 CPU% means waiting).
 
-### Phase 1 — GPU present + lazy downloads
+### Phase 1 - GPU present + deferred downloads
 
 1. `fb_present.c`: keep the window and its message pump; drop the GDI blit and
-   create a DXGI flip-model swapchain (2–3 buffers) on the window using the
+   create a DXGI flip-model swapchain (2-3 buffers) on the window using the
    **same device** as `nv2a_gpu_d3d11.cpp`. `Present` from the thread that owns
    the immediate context (D3D11 contexts are not thread-safe).
 2. New `nv2a_gpu_present(addr, pitch, w, h)`: find the `Surface` whose
    `memory == addr`, draw it to the back buffer with a fullscreen-triangle
    shader (this also handles scaling), then `Present`. If no surface matches
-   (Bink frames or the pvideo overlay written into RAM by the CPU), fall back to
+   (Bink frames or the pvideo overlay written into RAM by the CPU), use
    `UpdateSubresource` from guest RAM into a scratch texture.
 3. `NV097_FLIP_STALL`: call `nv2a_gpu_present` instead of
    `nv2a_pb_exec_flush`; bump `s_texture_validate_serial` without publishing.
@@ -135,14 +135,14 @@ CPU% means waiting).
    (`watch_veh`, `xbox_memory_layout.c:1719`) and log touches. Memory is a file
    mapping with mirror views, so all mirror views must be protected.
 
-Expected effect: the `sync` bucket (1.2–2.7 s / 10 s) drops toward zero, the
+Expected effect: the `sync` bucket (1.2-2.7 s / 10 s) drops toward zero, the
 per-frame surface memcmps go away, and CPU/GPU overlap returns.
 
 ### Later
 
 - Phase 2: write-tracked texture invalidation (protect texture pages read-only,
   set `possibly_dirty` from the VEH write fault, memcmp only then; an
-  N-frame re-validation is the cheaper fallback and risks up to N frames of
+  N-frame re-validation is the cheaper alternative and risks up to N frames of
   staleness).
 - Phase 3: GPU vertex fetch.
 - Phase 4: render-thread split; draw merging only if Phase 0 instrumentation

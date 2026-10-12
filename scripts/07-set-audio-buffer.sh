@@ -16,7 +16,7 @@ set -euo pipefail
 
 MS="${1:-250}"
 
-source "$PWD/scripts/config.env"
+source "$PWD/scripts/config.sh" || exit 1
 DLL="$REPO_ROOT/emulator/cxbxr-emu.dll"
 BACKUP="$DLL.orig"
 OFF=$((0x69fb18 + 4))   # streamAhead field; site = 0x69fb18

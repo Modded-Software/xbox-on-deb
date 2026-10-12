@@ -70,7 +70,7 @@ def create_device():
     for code in ABS.values():
         ioctl(UI_SET_ABSBIT, code)
 
-    # struct uinput_user_dev (legacy): name[80], id(4*u16), ff_effects_max(u32),
+    # struct uinput_user_dev (older kernel ABI): name[80], id(4*u16), ff_effects_max(u32),
     # absmax[64], absmin[64], absfuzz[64], absflat[64]
     name = b"Microsoft X-Box One pad\x00"
     name = name.ljust(80, b"\x00")

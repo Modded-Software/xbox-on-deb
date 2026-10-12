@@ -17,15 +17,15 @@ xbox_memory_layout.c:3334`) is a monotonic bump allocator; without
 `RECOMP_HEAP_RECLAIM` blocks are never freed (framebuffers), so the 64 MB
 window fills. On exhaustion it returns **0**, and a caller that ignores the
 failure writes to physical `0x338`, which aliases the XDK USB handle arena at
-`0x80000338` — corrupting the controller handle.
+`0x80000338` - corrupting the controller handle.
 
 Fix: default `RECOMP_HEAP_RECLAIM=1` in `recomp/game/src/main.c` (after the
 `RECOMP_VBLANK` default). The canonical check
-`python3 recomp/tests/run.py --user-state --only a-mash` now **PASSES**
+`uv run python recomp/tests/run.py --user-state --only a-mash` now **PASSES**
 (reaches the first mission). Durable fix, if reclaim ever proves unsafe for
 framebuffers: make callers of `xbox_ContiguousAlloc` check for 0.
 
-## `src/recomp/gen/recomp_0065.c` — `YUV_blit_0031EAE0` (active fix)
+## `src/recomp/gen/recomp_0065.c` - `YUV_blit_0031EAE0` (active fix)
 
 Bink FMV hang: the row loop spun forever because a skipped indirect call left
 `esp` 4 bytes low.
@@ -41,7 +41,7 @@ Bink FMV hang: the row loop spun forever because a skipped indirect call left
   and are 0 here. Fixing esp stops the hang; the blit itself is still skipped
   (frame won't render). Root cause of the null descriptor TBD.
 
-## `src/recomp/gen/recomp_0046.c` — `check_for_MMX_0022AA10` (MMX present)
+## `src/recomp/gen/recomp_0046.c` - `check_for_MMX_0022AA10` (MMX present)
 
 Root cause of the NULL Bink YUV blit: `setevenodd_0031E660` early-exits when
 `0x4C9BE8` (MMX-blitters flag) is 0, so `0x4C07C0`/`0x4C07E8` stay 0.
@@ -56,19 +56,19 @@ MMX is always present.
   `pushfd`/`popfd`. Other unlifted `cpuid` sites: `0x11A414` (`recomp_0024.c`),
   `0x2E246B` (`recomp_0061.c`).
 
-## `src/recomp/gen/recomp_0043.c` — `cVideoTexture_Update_00206030` (bounded decode)
+## `src/recomp/gen/recomp_0043.c` - `cVideoTexture_Update_00206030` (bounded decode)
 
 - `int _decode_iters = 0;` (~31086)
 - `if (CMP_EQ(_fa, _fb) && ++_decode_iters < 4) goto loc_00206050;` (~31158)
 - Caps the decode retry so a stuck video frame yields instead of spinning.
 
-## Diagnostics (temporary — remove once resolved)
+## Diagnostics (temporary - remove once resolved)
 
 - `refs/xboxrecomp/src/kernel/nv2a_gpu_d3d11.cpp` ~2505: prints `[TEXCOORD]`
   (stage/vertex/comp, the 4 texcoord floats, `state->texgen`, `texture_matrix_enable`)
   before the `nonfinite texture coordinate` reject. Remove when done.
 - `refs/xboxrecomp/src/kernel/nv2a_pb_exec.c` ~2876: the `unsupported batch`
-  path no longer calls `_Exit(EXIT_FAILURE)` — it logs once (≤32) and skips the
+  path no longer calls `_Exit(EXIT_FAILURE)` - it logs once (≤32) and skips the
   batch, so a rejected draw costs a frame instead of killing the run. Revert or
   gate when the backend handles the batches.
 - `refs/xboxrecomp/src/kernel/nv2a_pb_exec.c` ~3714: `[TEX1]` logs stage-1
@@ -86,7 +86,7 @@ MMX is always present.
 Root cause of the `index command rejected (prim 0)` and `nonfinite texture
 coordinate` rejects: `pb_walk` broke at the first top-level JUMP, but D3D8's
 top-level `0x...01` words are real JUMPs to **secondary command buffers that
-hold the batch** — verified: a jump at `0x80191F90` to `0x81133000` where the
+hold the batch** - verified: a jump at `0x80191F90` to `0x81133000` where the
 target is `000417FC` (BEGIN, prim 6), `41181800` (ARRAY_ELEMENT16) + indices,
 and the buffer jumps back to `0x80191F94` (ring jump + 4). Breaking there
 dropped every draw in the buffer, leaving stale vertex-array state so later
@@ -109,7 +109,7 @@ hardware-faithful walker `nv2a_pb_run(put)` in `nv2a_pb_scan.c`:
 
 Verified: `a-mash` reaches the first mission; `index command rejected (prim 0)`
 drops from the 32-cap to **0**. Frame rate is unchanged by the walker (menu
-35+ FPS, in-game 20–40 FPS) — the walker is not the slowdown.
+35+ FPS, in-game 20-40 FPS) - the walker is not the slowdown.
 
 ### Vertex arrays: `dma_resolve` promoted only the block head (FIXED)
 
@@ -120,11 +120,11 @@ block's **head** address. A game vertex array interleaves its attributes in one
 allocation (position `0x81085000`, normal `+0x0C`, diffuse `+0x18`, texcoord
 `+0x1C`); only the position (the head) promoted to the window, so normal /
 diffuse / texcoord were fetched from raw physical addresses holding unrelated
-bytes — garbage normals (dark unlit model), magenta diffuse, `0xFFC00000`
+bytes - garbage normals (dark unlit model), magenta diffuse, `0xFFC00000`
 (x87 "indefinite" NaN) UVs. `[TEXVTX]` confirmed the head read valid data while
 `[TEXNAN]` at the same nominal address read NaN.
 
-Fix: promote on ownership **by range** — `xbox_ContigOwnsOffset(offset)`
+Fix: promote on ownership **by range** - `xbox_ContigOwnsOffset(offset)`
 (`xbox_memory_layout.c:3525`, `contig_block_at`), which already existed but was
 unused. Behavior for surfaces (heads) is unchanged. Verified: title screen and
 mission briefing render correctly; all `rejected:` / `unsupported batch` counts
@@ -132,8 +132,8 @@ go to 0; menu/a-mash FPS rises (8.5 → 12.3).
 
 ### `nonfinite texture coordinate`: sanitize, don't reject
 
-`nv2a_gpu_d3d11.cpp:2504`: hardware does not reject a NaN/inf texcoord — it
-samples texel 0 — so dropping the whole batch deleted geometry. Now the bad
+`nv2a_gpu_d3d11.cpp:2504`: hardware does not reject a NaN/inf texcoord - it
+samples texel 0 - so dropping the whole batch deleted geometry. Now the bad
 component is folded to `0.0f` and the draw continues (`nv2a_gpu_draw`'s vertex
 parameter dropped `const`; the array is a mutable scratch buffer).
 
@@ -141,7 +141,7 @@ Removed temporary diagnostics: `[PB-JMP]`, `[PB-JTGT]`, `[PB-BEGINSEEN]`,
 `[PB-GAP]`/`[PB-DUMP]`, `g_last_begin_va`/`g_last_end_va`. Kept `[PBRING]` and
 `g_pb_current_va`.
 
-## `recomp/tests/framework.py` — focus the user-state window (a-mash flake)
+## `recomp/tests/framework.py` - focus the user-state window (a-mash flake)
 
 `_start_user_state` (and the non-user-state path already did) now calls
 `self.focus()` after the boot wait. Without it the a-mash test times out: the
@@ -153,10 +153,10 @@ reliably. (mutter reverts plain `XSetInputFocus`; `xinject focus` handles that.)
 
 Still-fatal `_Exit` sites to consider (per Claude): nv2a_pb_exec.c:958/980
 (vertex attr), 3769 (unsupported state program). Keep 515/3417/3422/3440
-(fence/RAMHT/checkpoint — skipping hangs the guest) and 2481/3316/3322
+(fence/RAMHT/checkpoint - skipping hangs the guest) and 2481/3316/3322
 (clock/OOM).
 
-## Not in gen/ (survive regen) — `refs/xboxrecomp`
+## Not in gen/ (survive regen) - `refs/xboxrecomp`
 
 Recorded for completeness; these live in the runtime repo, not regenerated:
 
@@ -168,7 +168,7 @@ Recorded for completeness; these live in the runtime repo, not regenerated:
 - `src/kernel/nv2a_gpu_d3d11.cpp:2504`: `nonfinite texture coordinate` now
   checks a component only when `state->texgen[stage][component] == 0`. When
   texgen generates s/t/r (e.g. `0x8512` normal map) the raw texcoord is unused
-  and `texcoord_attr()`'s "first float2" fallback can hold junk; the old check
+  and `texcoord_attr()`'s "first float2" alternative can hold junk; the old check
   rejected the whole batch on that junk. Texgen-off NaN components are now
   sanitized to 0 rather than rejecting the batch (see the section above).
 - `src/kernel/nv2a_pb_exec.c:129` `dma_resolve`: promote by range via
@@ -184,13 +184,13 @@ Recorded for completeness; these live in the runtime repo, not regenerated:
 - `src/apu/apu_core.c` `mcpx_apu_phys`: no 64 MB wrap for addresses inside the
   mapped RAM, since heap sample buffers now live above 64 MB.
 - `nv2a_pb_exec.c` `[DMA-AMBIG]`: counter now counts only ambiguous hits (it
-  used to count every promotion, so it went silent after 256).
+  used to count every promotion, so it stopped reporting after 256).
 - `src/apu/apu_core.c` `mcpx_apu_monitor_frame`: the XAudio2 path used to
   `memset(d->monitor.frame_buf)` and then render only `mixer_render` (the
   software DirectSound/Bink bridge), discarding the GP/EP mixdown that
   `ep_sink_samples`/`dsp_frame_stub` had just memcpy'd into that same buffer.
   Result: Bink FMV audio (software buffer) played while all VP/DSP game audio
-  was silent -- `run.py --user-state --only audible` recorded a zero stream.
+  produced no output: `run.py --user-state --only audible` recorded a zero stream.
   Now the path overdubs the test tone / software voices onto the existing
   buffer and submits one 256-frame window without wiping it. Verified:
   `--only audible` PASSes.

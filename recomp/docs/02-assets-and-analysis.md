@@ -1,4 +1,4 @@
-# 02 — Assets on hand and analysis output
+# 02 - Assets on hand and analysis output
 
 Everything under `extracted/StarCraft Ghost Xbox Finn Hillbilly/` (gitignored).
 This drop is far richer than the XBE alone.
@@ -39,7 +39,7 @@ Command log and the exact scripts are in [../README.md](../README.md). Results:
 | `disasm/functions.json` | per-function start/end/section/detection/calls/callers |
 | `func_id/summary.json` | 14,547 game-classified, 12,228 vtable methods, 11 CRT signatures, 8,891 unknown |
 | `abi/abi_functions.json` | 17,307 ABI entries, **4,393 detected `thiscall`** (C++ heavy) |
-| `rtti.json` | **no RTTI** (compiled out) — normal for this era |
+| `rtti.json` | **no RTTI** (compiled out) - normal for this era |
 | `debug_symbols.json` | 25 `__FILE__` source strings → 222 functions attributed (asserts mostly compiled out) |
 | `ghost_map_symbols.json` | 24,725 resolved symbols (via `tools/symbols/map_names.py resolve`) |
 | `pdb_sections.txt` | 51,078 section contributions (module ↔ address range) |
@@ -88,11 +88,11 @@ The reconstructed source-file attribution spans the whole game subsystem tree
 
 - **17,308 functions translated, 0 failed, 2,202,842 lines of C** across 70
   chunk files; grouped to 223 source-file units. ~87 MB each form.
-- **215 unresolved call targets** stubbed (`recomp_stubs_unresolved.c`) — called
+- **215 unresolved call targets** stubbed (`recomp_stubs_unresolved.c`) - called
   but not detected as functions; these are the first seeds for
   `--coalesce-functions` and for runtime ICALL feedback.
 - **238 unimplemented instructions** (36 mnemonics). 104 are hardware/privileged
-  — `in`/`out` port I/O and `cli`/`sti`/`int`/`int1` — and 94 of those sit in
+  - `in`/`out` port I/O and `cli`/`sti`/`int`/`int1` - and 94 of those sit in
   code sections. The rest are decode noise from data-heavy sections decoded as
   code (BINK tables). Full list: `symbols/ghost.unimplemented.txt`.
 
@@ -102,4 +102,4 @@ The reconstructed source-file attribution spans the whole game subsystem tree
 `--section-headers`. `--publics` and `--globals` **segfault** in this build
 (known LLVM bug); we do not need them because `Ghost.map` is the public-symbol
 source. `diadump`/`pretty` need DIA (MSVC) and are unavailable. `llvm-undname`
-batch-demangles symbols from stdin — used by `build_symbol_map.py`.
+batch-demangles symbols from stdin - used by `build_symbol_map.py`.

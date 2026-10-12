@@ -19,7 +19,7 @@ Where the difficulty sits, ranked by the cost of a wrong answer.
 
 | Driver | Why it is hard | Blast radius |
 |---|---|---|
-| Lifter correctness for x86, x87, SSE | A wrong flag or width is silent and only shows as a dead branch; the toolkit's own changelog is a catalogue of exactly this | Any gameplay path |
+| Lifter correctness for x86, x87, SSE | A wrong flag or width goes unreported and only shows as a dead branch; the toolkit's own changelog is a catalogue of exactly this | Any gameplay path |
 | Indirect calls and vtables | 12,228 vtable methods and 1,193 unnamed functions; a wrong target is a wild call | Crashes, hangs |
 | Statically linked D3D8 | The guest carries its own D3D; the HLE-versus-register-level boundary is an architectural fork | Entire renderer |
 | NV2A pushbuffer translation | Register-combiner and vertex microcode translation plus a readback-based present; 50 distinct unhandled methods observed | Frame time, visuals |
@@ -52,7 +52,7 @@ flowchart TB
 Legend: solid arrows are build or data writes; dashed arrows are configuration
 or read-only inputs.
 
-The load-bearing dependency is the fork. The runtime headers, the register
+The critical dependency is the fork. The runtime headers, the register
 model, the dispatch ABI, and the driver fixes all live there, so `ghost.exe`
 cannot be rebuilt from plain upstream. The game project is intentionally thin;
 almost all behavior is either generated from the XBE or supplied by the runtime.
@@ -109,9 +109,9 @@ Confirmed problems and debts, each with its evidence.
 
 ### Portability and operations
 
-- **Hardcoded absolute roots.** `build.sh`, `framework.py`, and several scripts
-  hardcode `/home/agent/WORKSPACE-VM/projects/xbox-on-deb`. Correct for this
-  machine, wrong for any other.
+- **Absolute roots.** `build.sh`, `framework.py`, and several scripts resolve
+  the checkout from `$HOME/WORKSPACE-VM/projects/xbox-on-deb` (override with
+  `REPO_ROOT`). Correct for this machine, wrong for any other.
 - **No CI for the recomp tests.** They launch a GPU game under Proton and drive
   X11, so they cannot run in a plain headless job; there is no lighter unit tier
   for the pure pipeline tools.

@@ -8,7 +8,7 @@
 #   ./10-patch-cxbx-clamp.sh restore  # restore from cxbx.exe.orig
 set -euo pipefail
 
-source "$PWD/scripts/config.env"
+source "$PWD/scripts/config.sh" || exit 1
 
 EXE="$REPO_ROOT/emulator/cxbx.exe"
 BACKUP="$EXE.orig"

@@ -1,0 +1,97 @@
+exceptions:
+  - rule: blazy-b
+    path: ^wiki/site/en/campaign/index\.html$
+    rationale: Native HTML image loading attribute (deferred), not a lazy-evaluation hack.
+    owner: workspace-agent
+    review_date: '2027-10-12'
+    removal: Remove when this file stops using the deferred image loading attribute.
+  - rule: blazy-b
+    path: ^wiki/site/en/development/index\.html$
+    rationale: Native HTML image loading attribute (deferred), not a lazy-evaluation hack.
+    owner: workspace-agent
+    review_date: '2027-10-12'
+    removal: Remove when this file stops using the deferred image loading attribute.
+  - rule: blazy-b
+    path: ^wiki/site/en/faq/index\.html$
+    rationale: Native HTML image loading attribute (deferred), not a lazy-evaluation hack.
+    owner: workspace-agent
+    review_date: '2027-10-12'
+    removal: Remove when this file stops using the deferred image loading attribute.
+  - rule: blazy-b
+    path: ^wiki/site/en/gap-analysis/index\.html$
+    rationale: Native HTML image loading attribute (deferred), not a lazy-evaluation hack.
+    owner: workspace-agent
+    review_date: '2027-10-12'
+    removal: Remove when this file stops using the deferred image loading attribute.
+  - rule: blazy-b
+    path: ^wiki/site/en/index\.html$
+    rationale: Native HTML image loading attribute (deferred), not a lazy-evaluation hack.
+    owner: workspace-agent
+    review_date: '2027-10-12'
+    removal: Remove when this file stops using the deferred image loading attribute.
+  - rule: blazy-b
+    path: ^wiki/site/en/media/index\.html$
+    rationale: Native HTML image loading attribute (deferred), not a lazy-evaluation hack.
+    owner: workspace-agent
+    review_date: '2027-10-12'
+    removal: Remove when this file stops using the deferred image loading attribute.
+  - rule: blazy-b
+    path: ^wiki/site/en/multiplayer/index\.html$
+    rationale: Native HTML image loading attribute (deferred), not a lazy-evaluation hack.
+    owner: workspace-agent
+    review_date: '2027-10-12'
+    removal: Remove when this file stops using the deferred image loading attribute.
+  - rule: blazy-b
+    path: ^wiki/site/en/people/index\.html$
+    rationale: Native HTML image loading attribute (deferred), not a lazy-evaluation hack.
+    owner: workspace-agent
+    review_date: '2027-10-12'
+    removal: Remove when this file stops using the deferred image loading attribute.
+  - rule: blazy-b
+    path: ^wiki/site/en/story/index\.html$
+    rationale: Native HTML image loading attribute (deferred), not a lazy-evaluation hack.
+    owner: workspace-agent
+    review_date: '2027-10-12'
+    removal: Remove when this file stops using the deferred image loading attribute.
+  - rule: blazy-b
+    path: ^wiki/site/en/systems/index\.html$
+    rationale: Native HTML image loading attribute (deferred), not a lazy-evaluation hack.
+    owner: workspace-agent
+    review_date: '2027-10-12'
+    removal: Remove when this file stops using the deferred image loading attribute.
+  - rule: blazy-b
+    path: ^wiki/site/en/the-leak/index\.html$
+    rationale: Native HTML image loading attribute (deferred), not a lazy-evaluation hack.
+    owner: workspace-agent
+    review_date: '2027-10-12'
+    removal: Remove when this file stops using the deferred image loading attribute.
+  - rule: blazy-b
+    path: ^wiki/site/en/timeline/index\.html$
+    rationale: Native HTML image loading attribute (deferred), not a lazy-evaluation hack.
+    owner: workspace-agent
+    review_date: '2027-10-12'
+    removal: Remove when this file stops using the deferred image loading attribute.
+  - rule: blazy-b
+    path: ^wiki/tools/test-documents\.mjs$
+    rationale: Native HTML image loading attribute (deferred), not a lazy-evaluation hack.
+    owner: workspace-agent
+    review_date: '2027-10-12'
+    removal: Remove when this file stops using the deferred image loading attribute.
+  - rule: bunpack-b
+    path: ^scripts/xwd2png\.py$
+    rationale: Stdlib struct.unpack call, not prose AI-slop.
+    owner: workspace-agent
+    review_date: '2027-10-12'
+    removal: Remove when this file stops calling struct.unpack.
+  - rule: bunpack-b
+    path: ^scripts/gamepad_proxy\.py$
+    rationale: Stdlib struct.unpack call, not prose AI-slop.
+    owner: workspace-agent
+    review_date: '2027-10-12'
+    removal: Remove when this file stops calling struct.unpack.
+  - rule: bunpack-b
+    path: ^scripts/portal_screenshot\.py$
+    rationale: Stdlib struct.unpack call, not prose AI-slop.
+    owner: workspace-agent
+    review_date: '2027-10-12'
+    removal: Remove when this file stops calling struct.unpack.

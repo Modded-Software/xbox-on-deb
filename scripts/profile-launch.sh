@@ -12,7 +12,7 @@
 # is nothing to kill / nothing found, and we must continue either way.
 
 DUR="${1:-180}"
-source "$PWD/scripts/config.env"
+source "$PWD/scripts/config.sh" || exit 1
 detect_ge_proton
 cd "$REPO_ROOT"
 

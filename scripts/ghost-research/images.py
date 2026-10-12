@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 import time
 import urllib.error
@@ -21,7 +22,10 @@ from urllib.parse import urlparse
 
 from PIL import Image, ImageOps
 
-REPO = Path(__file__).resolve().parents[2]
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from paths import ROOT_DIR
+
+REPO = ROOT_DIR
 SOURCES = REPO / "scripts" / "ghost-research" / "image-sources.json"
 CDX = REPO / "res" / "starcraft-ghost-archive" / "ghost-images-cdx.txt"
 RAW = REPO / "res" / "starcraft-ghost-archive" / "images"
@@ -130,7 +134,7 @@ def main() -> int:
         dest = MEDIA / entry["id"]
         try:
             w, h = optimize(raw, dest, ROLE_WIDTH[entry["role"]])
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             failures.append((entry["id"], f"optimize failed: {exc}"))
             print(f"FAIL {entry['id']}: optimize {exc}", file=sys.stderr)
             continue
@@ -156,13 +160,13 @@ def main() -> int:
         "through the Wayback Machine. No generated imagery. Downloaded files are",
         "gitignored; this metadata is tracked.",
         "",
-        "| id | category | caption | credit | source | archive |",
-        "| --- | --- | --- | --- | --- | --- |",
+        "| id | category | caption | credit | archive |",
+        "| --- | --- | --- | --- | --- |",
     ]
     for item in manifest:
         lines.append(
             f"| `{item['id']}` | {item['category']} | {item['caption']} |"
-            f" {item['credit']} | <{item['url']}> | <{item['archive']}> |"
+            f" {item['credit']} | <{item['archive']}> |"
         )
     lines.append("")
     if failures:

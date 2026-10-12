@@ -18,7 +18,7 @@ import sys
 import time
 import wave
 
-from framework import Game, test
+from framework import Game, test, log
 
 MONITOR_SECONDS = 60.0
 WINDOW = 0.5          # analysis window (seconds)
@@ -97,8 +97,8 @@ def audio_monitor(g: Game):
     host = "/tmp/opencode/monitor_host.wav"
     try:
         os.remove(host)
-    except FileNotFoundError:
-        pass
+    except FileNotFoundError as exc:
+        log.info("no previous monitor recording at %s: %s", host, exc)
     rec = g.start_app_recording(host)
 
     deadline = time.time() + MONITOR_SECONDS

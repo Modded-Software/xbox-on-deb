@@ -9,7 +9,7 @@ set -euo pipefail
 #   RENDERER=dxvk  (default, Vulkan via DXVK d3d8)  or  RENDERER=wine (OpenGL/wined3d)
 #   HUD=1          show DXVK HUD overlay
 
-source "$PWD/scripts/config.env"
+source "$PWD/scripts/config.sh" || exit 1
 detect_ge_proton
 
 EXE="${1:-Star_u.exe}"

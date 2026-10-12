@@ -1,8 +1,8 @@
-# 02 — Inventory
+# 02 - Inventory
 
 Source: `res/StarCraft Ghost Xbox Finn Hillbilly.7z`
 (486,276,583 bytes, LZMA2, solid). Extracted to
-`extracted/StarCraft Ghost Xbox Finn Hillbilly/` — 7560 files, 1,110,156,657 bytes.
+`extracted/StarCraft Ghost Xbox Finn Hillbilly/` - 7560 files, 1,110,156,657 bytes.
 
 ## Executables
 

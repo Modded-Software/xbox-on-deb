@@ -139,7 +139,7 @@ void recomp_icall_fail_log(uint32_t va)
 /* An indirect call whose target is not code: a null or wild function pointer.
  *
  * Skipping these is right -- calling a data address is worse -- but skipping
- * them *silently* is not. They almost always arrive inside a loop, so the
+ * them *without notice* is not. They almost always arrive inside a loop, so the
  * symptom is a hang with no output rather than a diagnosable null vtable call.
  *
  * Rate-limited per address: a spin can produce millions of these, and the
@@ -175,7 +175,7 @@ void recomp_icall_not_code_log(uint32_t va)
         if (n != 1)
             return;
     }
-    fprintf(stderr, "[ICALL] target 0x%08X is not code -- skipped %llu time(s) "
+    fprintf(stderr, "[ICALL] target 0x%08X is not code, skipped %llu time(s) "
                     "(null or wild function pointer, at call #%llu)\n",
             va, (unsigned long long)hits[i],
             (unsigned long long)g_icall_count);
@@ -186,7 +186,7 @@ void recomp_icall_not_code_log(uint32_t va)
  *
  * The lifter emits RECOMP_UNIMPL(text, va) at every instruction it has no
  * translation for, in place of the bare comment it used to leave. The
- * instruction is still a no-op; this only stops the omission being silent.
+ * instruction is still a no-op; this only stops the omission passing unnoticed.
  * RECOMP_UNIMPL_TRAP=1 aborts at the first hit, at the guest address of the
  * cause rather than wherever the damage surfaces. */
 #include <stdlib.h>
@@ -226,7 +226,7 @@ void recomp_unimpl(const char *text, uint32_t va)
  */
 void fixed_cCloakShader_RenderSetup_0021D7E0(void)
 {
-    int _flags = 0; /* fallback flag var */
+    int _flags = 0; /* shadow flag var */
     uint32_t _fa = 0, _fb = 0;
     int32_t _fas = 0, _fbs = 0;
     (void)_fa; (void)_fb; (void)_fas; (void)_fbs;

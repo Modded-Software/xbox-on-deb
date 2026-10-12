@@ -28,7 +28,7 @@ cb0e8a9 nv2a: normalise tile-padded guest pitches to the linear stride
 67608b8 nv2a-d3d11: log fixed-function skin_mode on reject (first 8)
 f91c573 nv2a: cache hot getenv lookups; hoist per-primitive attribute layout
 8913bfb nv2a: walker returns past the D3D8 fixup block (src+0x18)
-f94853c input: KBM -- Y on right mouse, stick clicks, scroll aliases the left stick
+f94853c input: KBM - Y on right mouse, stick clicks, scroll aliases the left stick
 33d1fe9 nv2a: return a reused push buffer to its caller (fix walk loop)
 5f1f766 video: parse recorded key codes as hex; trace replayed keys
 1308c40 nv2a: keep geometry on disabled textures; tolerate a bad SET_OBJECT; stop clobbering the fence
@@ -62,7 +62,7 @@ $ cd logs && for f in runtime-20261011-004623.log runtime-20261011-004145.log; d
 ✱ Grep "gpu_sampling_enabled\(\)\s*$|static bool gpu_sampling_enabled|RECOMP_GPU_SAMPL" in refs/xboxrecomp/src/kernel/nv2a_gpu_d3d11.cpp · 1 match
 → Read refs/xboxrecomp/src/kernel/nv2a_gpu_d3d11.cpp [offset=190, limit=10]
 
-$ grep -n "lazy_flip\|nv2a_gpu_flip\|LAZY_FLIP" -r refs/xboxrecomp/src recomp/game/src/main.c scripts/config.env > /tmp/opencode/lazy.txt; git -C refs/xboxrecomp log --oneline -S "lazy_flip" -- src/kernel/nv2a_pb_exec.c > /tmp/opencode/lazy_log.txt; cat /tmp/opencode/lazy.txt /tmp/opencode/lazy_log.txt
+$ grep -n "lazy_flip\|nv2a_gpu_flip\|LAZY_FLIP" -r refs/xboxrecomp/src recomp/game/src/main.c scripts/config.sh > /tmp/opencode/deferred.txt; git -C refs/xboxrecomp log --oneline -S "lazy_flip" src/kernel/nv2a_pb_exec.c > /tmp/opencode/lazy_log.txt; cat /tmp/opencode/deferred.txt /tmp/opencode/lazy_log.txt
 refs/xboxrecomp/src/kernel/nv2a_gpu.h:16:void nv2a_gpu_flip(const void *presented, size_t bytes);
 refs/xboxrecomp/src/kernel/nv2a_pb_exec.c:80: * dirty one. Set RECOMP_LAZY_FLIP=0 to restore the full publish per flip (A/B). */
 refs/xboxrecomp/src/kernel/nv2a_pb_exec.c:81:static int lazy_flip(void)
@@ -72,7 +72,7 @@ refs/xboxrecomp/src/kernel/nv2a_pb_exec.c:4213:         * Only that surface is p
 refs/xboxrecomp/src/kernel/nv2a_pb_exec.c:4222:                if (lazy_flip()) {
 refs/xboxrecomp/src/kernel/nv2a_pb_exec.c:4225:                    nv2a_gpu_flip(base, (size_t)s_gpu.pitch * (h ? h : 1u));
 refs/xboxrecomp/src/kernel/nv2a_gpu_d3d11.cpp:1449:extern "C" void nv2a_gpu_flip(const void *presented, size_t bytes)
-0d82682 nv2a: lazy flip publication + targeted alias publish
+0d82682 nv2a: deferred flip publication + targeted alias publish
 
 $ git -C refs/xboxrecomp show --stat 0d82682 > /tmp/opencode/lazy_show.txt; git -C refs/xboxrecomp log --oneline -25 >> /tmp/opencode/lazy_show.txt; grep -l "flip publication" logs/*.log recomp/game/*.log > /tmp/opencode/lazy_logs.txt
 (no output)
@@ -95,7 +95,7 @@ The only 1080p log available, `logs/runtime-20261011-004623.log`, is **menu only
 | `hash` (texture memcmp) | 2.4 ms, **111 MB** | possibly (see step 4) |
 | `xbox_FramebufferWindowPresent` memcpy | not timed | yes (8.3 MB) |
 
-**The docs are partly out of date.** `15-performance-hotspots.md` says lazy flip publication was reverted. Runtime commit `0d82682` made it the default instead (`lazy_flip()`, `nv2a_pb_exec.c:81`). The flip now publishes **only the presented surface**: `nv2a_gpu_flip`, `nv2a_gpu_d3d11.cpp:1449`.
+**The docs are partly out of date.** `15-performance-hotspots.md` says deferred flip publication was reverted. Runtime commit `0d82682` made it the default instead (`lazy_flip()`, `nv2a_pb_exec.c:81`). The flip now publishes **only the presented surface**: `nv2a_gpu_flip`, `nv2a_gpu_d3d11.cpp:1449`.
 
 So the per-frame cost that 1080p makes 2.25× bigger is that one presented surface. All of it runs on the bottlenecked ack thread:
 
@@ -105,18 +105,18 @@ So the per-frame cost that 1080p makes 2.25× bigger is that one presented surfa
 4. `refresh_surface` compares the whole 8.3 MB against the snapshot the next time that buffer is bound (`:929`).
 5. On the fb thread, `StretchDIBits` of 1920×1080 through Wine GDI (`fb_present.c:966`). This competes for the roughly 2 usable cores.
 
-This is the same kind of cost as the one lever that has worked before (GPU-sync wall time). Per-frame cuts at the flip have also paid off before (lazy flip gave +2 FPS, bulk unswizzle +14%); per-kick cuts were the ones the guest absorbed.
+This is the same kind of cost as the one lever that has worked before (GPU-sync wall time). Per-frame cuts at the flip have also paid off before (deferred flip gave +2 FPS, bulk unswizzle +14%); per-kick cuts were the ones the guest absorbed.
 
 ## Plan, in order
 
-### Step 0 — Get a gameplay baseline (this decides the branch)
-- Run `RECOMP_KICK_STATS=1 RECOMP_NV2A_GPU_TIMING=1 python3 recomp/tests/run.py --user-state --only performance` three times each with `RESOLUTION=1920x1080` and `1280x720`, on the same build. Take the median, and compute per-flip deltas of `sync`, `readback: wait`, `publication`, `hash`/`hashed GiB`, `ack cpu` and `walk avg`.
+### Step 0 - Get a gameplay baseline (this decides the branch)
+- Run `RECOMP_KICK_STATS=1 RECOMP_NV2A_GPU_TIMING=1 uv run python recomp/tests/run.py --user-state --only performance` three times each with `RESOLUTION=1920x1080` and `1280x720`, on the same build. Take the median, and compute per-flip deltas of `sync`, `readback: wait`, `publication`, `hash`/`hashed GiB`, `ack cpu` and `walk avg`.
 - Add one per-frame GPU timestamp pair (Begin/End around flip N to flip N+1, read back a couple of frames late) next to `collect_gpu_sample` (`nv2a_gpu_d3d11.cpp:210`). Report it as something like `[GPU-D3D11] gpu frame: X ms`. The existing sampler only times 1 draw in 128, so it can't tell you whether the GPU itself is the limit.
 - **Decision:** if GPU frame time is 20 ms or more at 1080p, the GPU is the limit and you go straight to step 5. Otherwise continue with steps 1 to 4. The difference between 720p and 1080p is the size of the prize for steps 1 to 3.
 
-### Step 1 — Pipelined (async) readback of the presented surface — highest leverage
+### Step 1 - Pipelined (async) readback of the presented surface - highest impact
 - In `nv2a_gpu_flip`, stop calling `gpu_sync_impl(true, presented)`. Instead, copy the texture into a 2-slot staging ring (a new `Surface::pending[2]`, holding the staging texture, a copy of `written_region`, and a draw serial), `End()` an event query, and return without mapping.
-- At the next flip, map the previous slot. Its event is already signalled, so there's no wait. Then do the publish half of `gpu_sync_impl` (`:1291–1342`), then `present_pvideo_overlay`, then `xbox_FramebufferWindowPresent`, all for **that** buffer. Those calls currently sit at `nv2a_pb_exec.c:4229–4231`, and the order matters: PVIDEO writes the YUV overlay straight into guest RAM (`:1874`), so a late publish would otherwise overwrite it.
+- At the next flip, map the previous slot. Its event is already signalled, so there's no wait. Then do the publish half of `gpu_sync_impl` (`:1291-1342`), then `present_pvideo_overlay`, then `xbox_FramebufferWindowPresent`, all for **that** buffer. Those calls currently sit at `nv2a_pb_exec.c:4229-4231`, and the order matters: PVIDEO writes the YUV overlay straight into guest RAM (`:1874`), so a late publish would otherwise overwrite it.
 - **Correctness rules:**
   - The surface stays `dirty` until its pending publish lands. That keeps the guard at `refresh_surface:925` working, which is what prevents the "stale RAM uploaded over the GPU image" corruption.
   - Mark it clean only if nothing was drawn into it after the copy (compare draw serials).
@@ -125,13 +125,13 @@ This is the same kind of cost as the one lever that has worked before (GPU-sync 
 - Put it behind an A/B switch (for example `RECOMP_ASYNC_FLIP=0` to turn it off).
 - **Proof:** `readback: wait` per flip goes to about 0. Median FPS of 3 runs at 1080p in gameplay improves. `a-mash` still reaches the mission. The `blit`/loading-screen CopyRects and FMV look correct, which the user has to confirm. Diary error counts stay at 0.
 - **Risks:**
-  - One extra frame of display latency (about 25–40 ms of input lag).
+  - One extra frame of display latency (about 25-40 ms of input lag).
   - If the guest CPU reads the front buffer between flips (screenshots or save thumbnails through `LockRect`), it sees frame N-2. That can't be detected without memory tracking.
   - F12 / framebuffer-hash tests see a frame one step older. That's harmless, but expect the hashes to shift.
 
-### Step 2 — Present straight from the GPU
+### Step 2 - Present straight from the GPU
 - Create a DXGI flip-model swapchain on the fb window's HWND, using the existing device. On the ack thread at flip time, `CopyResource(surface.texture → backbuffer)` and then `Present(0,0)`.
-- Keep the GDI path whenever the PVIDEO overlay is active, for Bink (`video_pump.c`), and as an env fallback.
+- Keep the GDI path whenever the PVIDEO overlay is active, for Bink (`video_pump.c`), and as an env alternative.
 - This removes the `fb_present` memcpy and the `StretchDIBits` work, and gives back the frame of latency step 1 added. Guest-RAM publication stays async from step 1, only so the guest and the tests can read it.
 - **Proof:** `perf` via `scripts/21-profile-recomp.sh` shows the `fb_present.c`/`StretchDIBits` share dropping (it was 5.4% at 720p and should be larger at 1080p), and FPS is up.
 - **Risks:**
@@ -139,24 +139,24 @@ This is the same kind of cost as the one lever that has worked before (GPU-sync 
   - Resize and fullscreen handling.
   - The user has to verify every screen visually.
 
-### Step 3 — Remove the leftover full-frame passes over the presented surface
+### Step 3 - Remove the leftover full-frame passes over the presented surface
 - For a surface whose first operation each frame is a full clear (`clear_value_valid` / `get_surface(preserve=false)`), skip the `source_snapshot` copy (`prepare_surface_snapshot`) and the `refresh_surface` compare. Once the CPU no longer reads the surface back, that's one or two 8.3 MB passes saved per frame.
 - **Proof:** `publication: color` per flip roughly halves, and `color_refresh_*` counters show no new refreshes.
 - **Risk:** if the guest really does write into the front buffer with the CPU, the write is missed. Check `color_refreshed` before and after to see whether that ever happens.
 
-### Step 4 — Texture `hash` traffic (111 MB per flip at the menu)
+### Step 4 - Texture `hash` traffic (111 MB per flip at the menu)
 - Log the top sources by bytes hashed. If they are render-target aliases (for example the 1920×1080 `0x1E` linear framebuffer-as-texture seen in R4), validate them by surface serial or dirty state instead of `memcmp`: that's the `RECOMP_TEX_VALIDATE_ONCE` path in `get_texture`.
 - **Proof:** `hashed GiB` per flip drops and `hash` time drops, with no visual change.
 - **Risk:** missing a CPU-side change to the texture, which shows up as stale textures.
 
-### Step 5 — Only if step 0 says the GPU is the limit
+### Step 5 - Only if step 0 says the GPU is the limit
 - The geometry shader (`gs_main`, `nv2a_gpu_shader.h:239`) runs on almost every draw (`d3d11.cpp:2866`). The GPU is an Arc A770, where geometry shaders are expensive. It's only needed for `depthSlope` (polygon offset) and for rejecting triangles with non-finite vertices. Bind `nullptr` when `depthOffset` is off and handle the non-finite case in the vertex shader.
 - Note that geometry-shader cost scales with triangle count, not resolution. The per-pixel lever is the ubershader branching (fog and lighting modes), which would need specialised pixel-shader variants.
 - **Proof:** the per-frame GPU timestamp and the `GPU sample ... GS=` invocation count both fall.
 - **Risk:** z-fighting or decals breaking, and stray triangles from non-finite vertices.
 
-### Step 6 — Render-thread split (the existing 35 FPS estimate)
-Do this only after steps 1–3, because otherwise the split would mostly move the same 1080p readback work onto another thread.
+### Step 6 - Render-thread split (the existing 35 FPS estimate)
+Do this only after steps 1-3, because otherwise the split would mostly move the same 1080p readback work onto another thread.
 
 ## Realistic expectation
-At the menu, steps 1–3 remove about 5–8 ms from a 27.5 ms frame, which could plausibly reach about 45 FPS there. Gameplay at 20–30 FPS is a 33–50 ms frame, so 45 FPS needs a cut of about 11–28 ms. I don't think the readback work alone covers that; the render-thread split will probably also be needed. Step 0's gameplay numbers between 720p and 1080p will show how much of the gap is the 1080p cost itself. All of this is runtime-only (`refs/xboxrecomp`); nothing in `recomp/game/src/recomp/gen/*` needs to change.
+At the menu, steps 1-3 remove about 5-8 ms from a 27.5 ms frame, which could plausibly reach about 45 FPS there. Gameplay at 20-30 FPS is a 33-50 ms frame, so 45 FPS needs a cut of about 11-28 ms. I don't think the readback work alone covers that; the render-thread split will probably also be needed. Step 0's gameplay numbers between 720p and 1080p will show how much of the gap is the 1080p cost itself. All of this is runtime-only (`refs/xboxrecomp`); nothing in `recomp/game/src/recomp/gen/*` needs to change.

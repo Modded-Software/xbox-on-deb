@@ -1,0 +1,2 @@
+safe_exceptions:
+  - .markdown_docs_exceptions.yaml

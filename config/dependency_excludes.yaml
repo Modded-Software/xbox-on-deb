@@ -1,0 +1,13 @@
+excludes:
+  - tqdm
+  - setuptools
+
+npm_excludes:
+  - isomorphic-dompurify
+  - js-yaml
+  - marked
+  - eslint
+  - typescript
+  - '@types/node'
+  - '@types/dompurify'
+schema_version: 1

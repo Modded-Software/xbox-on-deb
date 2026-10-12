@@ -1,4 +1,4 @@
-# StarCraft: Ghost (Xbox) — Static Recompilation
+# StarCraft: Ghost (Xbox) - Static Recompilation
 
 Turn the leaked `Ghost.xbe` dev build into native code instead of running it
 under Cxbx-Reloaded, whose HLE makes the boot sequence take ~5 minutes and whose
@@ -31,10 +31,10 @@ because the work is uncommitted.
 
 The generated C is named, annotated and grouped by original source file:
 
-1. `tools/apply_symbol_map.py` — real names onto the function database.
-2. `tools/annotate_gen.py` — per-function banner with source file + signature
+1. `tools/apply_symbol_map.py` - real names onto the function database.
+2. `tools/annotate_gen.py` - per-function banner with source file + signature
    + hand notes from `config/annotations.csv`.
-3. `tools/group_by_source.py` — one `.c` per original `.cpp`.
+3. `tools/group_by_source.py` - one `.c` per original `.cpp`.
 
 See [docs/07-decomp-workflow.md](docs/07-decomp-workflow.md),
 [docs/10-architecture.md](docs/10-architecture.md) for the whole system, and
@@ -45,7 +45,7 @@ See [docs/07-decomp-workflow.md](docs/07-decomp-workflow.md),
 The dropped build shipped **next to its linker MAP and its PDB**:
 
 - `Ghost.map` resolves (by section:offset) to exactly the `Ghost.xbe` entry point
-  `0x001B3FBB` — it describes *this* XBE, not the PC build beside it.
+  `0x001B3FBB` - it describes *this* XBE, not the PC build beside it.
 - It carries **24,725 real symbols**, game code included (not just the XDK).
 - The PDB maps the defining object of each symbol to its **original source file**.
 

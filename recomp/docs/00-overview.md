@@ -1,4 +1,4 @@
-# 00 — Overview and decision
+# 00 - Overview and decision
 
 ## The decision
 
@@ -28,10 +28,10 @@ reproduces the Xbox kernel, memory map, D3D8, DirectSound and NV2A *as host
 code*. There is no CPU emulator at runtime. The generated C is:
 
 - mechanical and 1:1 with the guest binary (not pretty), and
-- **debuggable and modifiable** — this is the property that makes it worth doing
+- **debuggable and modifiable** - this is the property that makes it worth doing
   over an emulator.
 
-Microsoft shipped exactly this for Xbox backwards compatibility ("Ficl/Fission");
+Microsoft shipped exactly this for Xbox older-version support ("Ficl/Fission");
 see `refs/xboxrecomp/docs/technical/ms-fusion-recompiler.md` for a reverse
 engineering of their design, and [docs/05-strategy.md](05-strategy.md) for what
 we adopt from it.
@@ -56,33 +56,33 @@ we adopt from it.
 ## The single biggest asset
 
 The release folder includes `Ghost.map` (linker MAP) and `Ghost.pdb` (full debug
-symbols) for **this XBE**. That converts the hardest part of a recompilation —
-naming and locating functions — from weeks of Ghidra work into a data join. See
+symbols) for **this XBE**. That converts the hardest part of a recompilation -
+naming and locating functions - from weeks of Ghidra work into a data join. See
 [docs/04-source-map.md](04-source-map.md).
 
 ## Where the content is
 
-- [01-reference-study.md](01-reference-study.md) — what `aknavj/scghost-recomp`
+- [01-reference-study.md](01-reference-study.md) - what `aknavj/scghost-recomp`
   and `aknavj/xboxrecomp` are, what they solved, what they got stuck on.
-- [02-assets-and-analysis.md](02-assets-and-analysis.md) — every file we have and
+- [02-assets-and-analysis.md](02-assets-and-analysis.md) - every file we have and
   the pipeline output we generated.
-- [03-library-and-symbol-catalogue.md](03-library-and-symbol-catalogue.md) —
+- [03-library-and-symbol-catalogue.md](03-library-and-symbol-catalogue.md) -
   kernel and library mapping gaps.
-- [04-source-map.md](04-source-map.md) — our symbol/source mapping file and how
+- [04-source-map.md](04-source-map.md) - our symbol/source mapping file and how
   to iterate it.
-- [05-strategy.md](05-strategy.md) — the plan, phased, with the readability and
+- [05-strategy.md](05-strategy.md) - the plan, phased, with the readability and
   source-map mechanics.
-- [06-open-questions.md](06-open-questions.md) — unknowns and risks.
-- [07-decomp-workflow.md](07-decomp-workflow.md) — the readability pipeline
+- [06-open-questions.md](06-open-questions.md) - unknowns and risks.
+- [07-decomp-workflow.md](07-decomp-workflow.md) - the readability pipeline
   (names → banners → per-source-file grouping), the annotations file, and the
   matching-decomp path.
-- [08-input.md](08-input.md) — controller support and the optional `--kbm`
+- [08-input.md](08-input.md) - controller support and the optional `--kbm`
   keyboard+mouse mode: the full input chain, current state, gaps, and design.
-- [09-performance.md](09-performance.md) — measured frame-time budget, the
+- [09-performance.md](09-performance.md) - measured frame-time budget, the
   draw/present pipeline, the two guest threads, and ranked quick wins and
   parallelisation opportunities.
-- [10-architecture.md](10-architecture.md) — the whole system in one place:
+- [10-architecture.md](10-architecture.md) - the whole system in one place:
   context, build pipeline, runtime, frame and input paths, concurrency,
   verification, and the debugging loop.
-- [11-audit.md](11-audit.md) — complexity, coupling, open defects, technical
+- [11-audit.md](11-audit.md) - complexity, coupling, open defects, technical
   debt, and ranked recommendations.

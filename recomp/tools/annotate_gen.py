@@ -35,8 +35,11 @@ Usage:
 import argparse
 import csv
 import json
+import logging
 import os
 import re
+
+log = logging.getLogger("recomp.tools.annotate_gen")
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -68,7 +71,8 @@ def load_annotations(path):
                 continue
             try:
                 notes[int(addr, 16)] = note
-            except ValueError:
+            except ValueError as exc:
+                log.warning("skipping annotation with non-hex address %r: %s", addr, exc)
                 continue
     return notes
 

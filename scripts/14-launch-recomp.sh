@@ -9,7 +9,7 @@ set -euo pipefail
 # The recompiled exe is plain Windows x64; it loads game\Ghost.xbe by relative
 # path, so the working directory must be recomp/game (where game/ resolves).
 
-source "$PWD/scripts/config.env"
+source "$PWD/scripts/config.sh" || exit 1
 detect_ge_proton
 
 # GHOST_GAME_DIR lets a second, parallel game tree (e.g. recomp/game-backup,

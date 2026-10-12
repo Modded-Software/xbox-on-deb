@@ -1,4 +1,4 @@
-# 05 — Strategy and plan
+# 05 - Strategy and plan
 
 ## Goals
 
@@ -14,7 +14,7 @@
 - The POSIX OpenGL D3D8 backend. We target **Windows x64** and run under
   **Proton/Steam** (D3D11 → DXVK → Vulkan).
 - A Vulkan backend. That is following work.
-- Multiplayer / Xbox Live. Leave the network stubs as they are.
+- Multiplayer / Xbox Live. Leave the network no-ops as they are.
 
 ## Toolchain decision
 
@@ -44,12 +44,12 @@ The reference port's hooks into the D3D section
 
 ## Phased plan
 
-### Phase 0 — Project skeleton (this session)
+### Phase 0 - Project outline (this session)
 - `refs/` cloned and gitignored; docs written; source map built.
 - **Done-ish.** Remaining: create the game project (CMake) from
   `templates/new-game`, with `XBOXRECCOMP_DIR=refs/xboxrecomp`.
 
-### Phase 1 — Generate and link (smoke)
+### Phase 1 - Generate and link (basic)
 1. Merge `symbols/ghost.names.txt` into `disasm/functions.json`
    (see [04-source-map.md](04-source-map.md)).
 2. Run `tools.recomp` **all sections**, `--split 250`, `--gen-dir src/game/recomp/gen`,
@@ -58,7 +58,7 @@ The reference port's hooks into the D3D section
 4. Run under GE-Proton with output to a log. **Expect a crash**; that is the
    start, not a failure.
 
-### Phase 2 — Boot to first pixels
+### Phase 2 - Boot to first pixels
 Iterate on the crash loop (toolkit `docs/pipeline/06-debugging.md`):
 memory layout → kernel init → path translation → bridge → input → APU → NV2A
 hooks → `g_esp` → `recomp_dispatch_init()` → guest entry `0x001B3FBB`.
@@ -67,12 +67,12 @@ our own `src/manual/`.
 Track fixes in `config/fixups.toml` and overrides in `config/overrides.toml`
 (VA → C symbol selected via `recomp_lookup_manual`), i.e. **data, not C**.
 
-### Phase 3 — Menus, then gameplay
+### Phase 3 - Menus, then gameplay
 Order the bring-up exactly as the reference status table implies: video→menu→
 loading→gameplay→audio. For each crash: identify the guest function (our symbol
 map names it), decide recompile-vs-override, record it.
 
-### Phase 4 — Fidelity and performance
+### Phase 4 - Fidelity and performance
 - Rendering: texture formats, shaders, blend states (the runtime is strong here).
 - Audio: XACT engine → APU; DSP effects remain stubbed.
 - Bink FMV: decode `.bik` via ffmpeg (or skip cutscenes for first play).
@@ -80,8 +80,8 @@ map names it), decide recompile-vs-override, record it.
   (flat dispatch, per-basic-block entries, real guest return address, TLS-cache
   registers). Adopt in that order, measured.
 
-### Phase 5 — Correctness
-- Run the toolkit's **conformance oracle** (`tools/conformance/xbe_run.py`) —
+### Phase 5 - Correctness
+- Run the toolkit's **conformance oracle** (`tools/conformance/xbe_run.py`) -
   Xbox code is 32-bit x86 and executable on the host, so the shipped machine code
   is a behavioural reference for the lifted C. This is a rare, cheap correctness
   check; wire our `functions.json` into it.
@@ -89,12 +89,12 @@ map names it), decide recompile-vs-override, record it.
 
 ## Readability mechanics (the explicit ask)
 
-1. **Function names from the MAP** (93.1% already) — via `merge_names --apply`.
+1. **Function names from the MAP** (93.1% already) - via `merge_names --apply`.
 2. **A per-function banner** injected into generated C by a post-processor
-   (`recomp/tools/annotate_gen.py`, to be written): `// <demangled> — <source_file> (0xVA, N bytes)`.
+   (`recomp/tools/annotate_gen.py`, to be written): `// <demangled> - <source_file> (0xVA, N bytes)`.
    Re-runnable after regeneration; never a patch.
-3. **Chunk by original source file** where the map knows it — one generated `.c`
-   per `.cpp` — instead of opaque 250-function buckets.
+3. **Chunk by original source file** where the map knows it - one generated `.c`
+   per `.cpp` - instead of opaque 250-function buckets.
 4. **A side file the debugger/IDE uses:** `ghost.symbols.json` already maps every
    address, so a crash at host RIP → guest VA → name + source is one lookup.
 5. **Manual layer** in `config/annotations.toml` for the functions we actually

@@ -11,7 +11,7 @@
 # compiler wrappers put toolchain/lib on the link search path. Run after
 # changing ziglang versions.
 set -e
-ROOT=/home/agent/WORKSPACE-VM/projects/xbox-on-deb
+ROOT="${REPO_ROOT:-$HOME/WORKSPACE-VM/projects/xbox-on-deb}"
 ZIGLIB="$ROOT/.venv-recomp/lib/python3.13/site-packages/ziglang/lib/libc/mingw/lib-common"
 OUT="$ROOT/recomp/toolchain/lib"
 mkdir -p "$OUT"

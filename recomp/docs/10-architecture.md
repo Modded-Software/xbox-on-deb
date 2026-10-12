@@ -104,7 +104,7 @@ flowchart TB
 | Classify | `tools.func_id` | `build/func_id/*` | 14,547 game, 12,228 vtable methods, 8,891 unknown |
 | ABI | `tools.abi_analysis` | `build/abi/*` | 4,393 `thiscall`, C++ heavy |
 | Source map | `recomp/tools/build_symbol_map.py` | `recomp/symbols/*` | 16,114 names (93.1%), 9,067 sourced (52.4%), 222 files |
-| Names | `recomp/tools/apply_symbol_map.py` | `functions.json` in place | overwrites `sub_*` placeholders |
+| Names | `recomp/tools/apply_symbol_map.py` | `functions.json` in place | overwrites `sub_*` empty slots |
 | Lift | `tools.recomp --all --split 250` | `build/gen/recomp_NNNN.c` | 17,308 functions, 2.20 M lines, 0 failed |
 | Readability | `annotate_gen.py` + `group_by_source.py` | `build/gen_by_source/*.c` | 223 source-file units |
 | Cross-compile | `cmake` + zig `x86_64-w64-mingw32` | `ghost.exe` | Windows x64 |
@@ -268,7 +268,7 @@ Five observation channels make a test able to say what happened rather than only
 that nothing crashed: injected input, the `[INPUT]` synthesized-state sample,
 the `[KEY]` window edge log, the window caption frame and FPS counters, the F12
 framebuffer hash for scene comparison, and the `[GPU-D3D11]` summary for shader,
-texture and CPU-fallback health. `xinject.py` is a general X11 injector; all
+texture and CPU-side health. `xinject.py` is a general X11 injector; all
 game knowledge stays in `test_*.py`.
 
 ## The debugging loop
@@ -281,7 +281,7 @@ flowchart TB
     Crash["Host crash or hang"]
     Addr{"Fault resolves to a guest VA?"}
     Named{"Source map names the function?"}
-    Override["Fix or stub the function<br/>config + recomp_manual.c"]
+    Override["Fix or no-op the function<br/>config + recomp_manual.c"]
     Unimpl["Check RECOMP_UNIMPL and ICALL trace"]
     Kernel["Check kernel ordinal coverage"]
     Record["Record the cause, regenerate"]

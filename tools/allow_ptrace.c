@@ -1,5 +1,5 @@
 /*
- * allow_ptrace.so — LD_PRELOAD helper (freestanding, no libc).
+ * allow_ptrace.so - LD_PRELOAD helper (freestanding, no libc).
  *
  * Yama ptrace_scope=1 lets a process be traced only by its ancestors, which
  * blocks `gdb -p` on the Cxbx loader (reparented under init). Calling

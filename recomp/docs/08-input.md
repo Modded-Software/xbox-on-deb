@@ -1,4 +1,4 @@
-# 08 — Controller, Keyboard and Mouse Input
+# 08 - Controller, Keyboard and Mouse Input
 
 Research and design for (a) full Xbox-controller support and (b) an optional
 keyboard+mouse mode gated behind a `--kbm` executable flag. No code is changed
@@ -7,12 +7,12 @@ plan.
 
 ## Goal
 
-1. **Full Xbox-controller support** — a physical XInput pad drives the game
+1. **Full Xbox-controller support** - a physical XInput pad drives the game
    through the same path the console's XAPI uses, including all four ports
    where the toolkit allows, force feedback, and live connect/disconnect.
 2. **Keyboard + mouse**, off by default, enabled with `--kbm` on `ghost.exe`.
    Keyboard drives movement/actions; mouse drives the camera/aim stick. The
-   existing `RECOMP_KEYBOARD` overlay is not this — see gaps.
+   existing `RECOMP_KEYBOARD` overlay is not this - see gaps.
 
 ## The input chain, end to end
 
@@ -33,7 +33,7 @@ Guest symbols (from `recomp/symbols/ghost.names.txt`):
 
 | VA | Symbol |
 |---|---|
-| `0x001B99C0` | `XReadGamepad` — the entry the game calls to sample the pad |
+| `0x001B99C0` | `XReadGamepad` - the entry the game calls to sample the pad |
 | `0x001B9670` | `stdInput_SetCurrentGamepad` |
 | `0x0001C7B0` | `stdInput_GetAnalogJoyStick` |
 | `0x0006B320` | `cControl_GetPlayerRelativeJoystick` |
@@ -41,7 +41,7 @@ Guest symbols (from `recomp/symbols/ghost.names.txt`):
 | `0x00359F12` | `USBHUB_Init_4` |
 | `0x00359E1C` / `0x00359E95` | `USBD_Init_8` / `USBD_NewHostController_8` |
 | `0x0035B8D0`+ | `USBD_AllocateMemory`, `IUsbDevice_*`, `USBD_DeviceEnum*` |
-| `0x00020060` / `0x00021B90` | `CmdRumble` / `CmdDoRumble` — force feedback |
+| `0x00020060` / `0x00021B90` | `CmdRumble` / `CmdDoRumble` - force feedback |
 
 Those XPP addresses are why four of our seed functions
 (`recomp/config/seed_functions.json`) were needed: `disasm` did not detect them,
@@ -49,25 +49,25 @@ so before seeding the USB/XID init never ran and the pad was never enumerated.
 
 ### Runtime side (`refs/xboxrecomp`)
 
-- **Host mapping** — `src/input/xinput_device.c`.
+- **Host mapping** - `src/input/xinput_device.c`.
   `xbox_InputGetState` reads a host `XINPUT_STATE` and rewrites it into the
   Xbox `XBOX_INPUT_STATE` layout: digital flags (`wButtons`), the six analog
   face buttons plus two triggers (`bAnalogButtons[8]`), and four stick axes.
   Legacy mapping (README):
   A/B/X/Y→A/B/X/Y, Black→LB, White→RB, LT/RT→triggers, Start→Menu,
   Back→View, d-pad→d-pad, stick clicks→L3/R3.
-- **Configuration** — env, parsed once by `xbox_InputInit`:
+- **Configuration** - env, parsed once by `xbox_InputInit`:
   `RECOMP_XINPUT_SLOT`, `RECOMP_INPUT_MAP`, `RECOMP_INPUT_THRESHOLD`,
   `RECOMP_INPUT_DEADZONE_LEFT/RIGHT`, `RECOMP_INPUT_AXES`, `RECOMP_KEYBOARD`.
-- **USB gamepad** — `src/usb/usb_gamepad.c` presents a Controller S
+- **USB gamepad** - `src/usb/usb_gamepad.c` presents a Controller S
   (VID 0x045E, PID 0x0289, interface class 0x58/0x42) with a 20-byte XID input
   report built from `xbox_InputGetState(0)`; it answers XID descriptor and
   capability requests. `usb_gamepad_report()` is the layout canonical
   reference (`usb_gamepad.c:280`).
-- **OHCI** — `src/usb/ohci.c` traps `0xFED00000`/`0xFED08000`, runs the ED/TD
+- **OHCI** - `src/usb/ohci.c` traps `0xFED00000`/`0xFED08000`, runs the ED/TD
   lists, and calls `usb_gamepad_report()` for the interrupt IN endpoint.
   Keyboard/APU/OHCI register faults are routed through the VEH in `main.c`.
-- **Window** — `src/video/fb_present.c` is the visible display window
+- **Window** - `src/video/fb_present.c` is the visible display window
   (`XboxRecompFramebuffer`, `fb_wndproc`). It tracks `s_key_down[256]` and
   exposes `xbox_FramebufferKeyDown(vk)` (`fb_present.c:117`). The NV2A executor
   opens it on the first clear (`nv2a_pb_exec.c:914`). This is the window that
@@ -95,7 +95,7 @@ the guest ISR consumes the interrupts. The physical-pad path is live.
 | Capability | State | Evidence |
 |---|---|---|
 | Physical XInput pad, port 0 | Works | OHCI enumeration + ISR in boot log |
-| Direct API (ports 0–3) | Implemented | `xinput_device.c:273` `poll_host` |
+| Direct API (ports 0-3) | Implemented | `xinput_device.c:273` `poll_host` |
 | Analog buttons / triggers / sticks | Implemented | `xinput_device.c:292` |
 | Remap / deadzone / threshold / axes | Implemented | `xinput_device.c:56` |
 | Rumble (host ← guest) | Implemented (layout unconfirmed) | `usb_gamepad_output`, `ohci.c` OUT |
@@ -122,7 +122,7 @@ the guest ISR consumes the interrupts. The physical-pad path is live.
    feedback loop (`tools/recomp/icall_feedback.py`) is the mechanism to close
    this.
 
-## Design — full controller support
+## Design - full controller support
 
 Small, surgical; most of it exists.
 
@@ -130,7 +130,7 @@ Small, surgical; most of it exists.
    `xbox_OhciInit`, `RECOMP_USB=1`, `RECOMP_USB_NDP=2`).
 2. **Rumble**: in `ohci.c`, when an OUT transfer targets the pad's interrupt
    endpoint, decode the XID output report (2-byte left/right actuator, scaled
-   to 0–65535) and call `xbox_InputSetState(0, ...)` instead of discarding.
+   to 0-65535) and call `xbox_InputSetState(0, ...)` instead of discarding.
    This now lives in `refs/xboxrecomp` as a commit on `Modded-Software/xboxrecomp`
    main (see `scripts/19-setup-toolkit.sh`), not as a patch.
 3. **Reachability**: after a live pad session, harvest unresolved ICALL targets
@@ -140,7 +140,7 @@ Small, surgical; most of it exists.
 4. **Four ports**: document the one-pad limit; the direct path already supports
    four if a title ever uses it.
 
-## Design — `--kbm`
+## Design - `--kbm`
 
 ### Flag → seam
 
@@ -170,7 +170,7 @@ Default mapping (modern desktop, third-person action):
 | `R` / `F` | Y / Black |
 | `Q` | White |
 | `Tab` / `Esc` (or `BackSpace`) | Start / Back |
-| `1`–`4`, arrows | d-pad |
+| `1`-`4`, arrows | d-pad |
 | mouse wheel | d-pad up/down |
 
 Any face/back binding can be remapped without a rebuild with
@@ -208,34 +208,34 @@ game-side duplicate is a link error and a game-side wrapper would be bypassed.
 
 ## Plan
 
-1. **Docs** — this file; index it in `00-overview.md`. *(done with this doc)*
-2. **Controller completeness** — rumble over OHCI; record toolkit patch;
+1. **Docs** - this file; index it in `00-overview.md`. *(done with this doc)*
+2. **Controller completeness** - rumble over OHCI; record toolkit patch;
    verify a live pad during a session; harvest ICALL targets and reseed.
-3. **Mouse plumbing** — add mouse tracking/getters to `fb_present.c`; toolkit
+3. **Mouse plumbing** - add mouse tracking/getters to `fb_present.c`; toolkit
    patch.
-4. **KBM backend** — add the `RECOMP_KBM` synthesizer to `xinput_device.c`;
+4. **KBM backend** - add the `RECOMP_KBM` synthesizer to `xinput_device.c`;
    toolkit patch.
-5. **Flag** — parse `--kbm` in `main.c`, set the seam, update the launcher and
+5. **Flag** - parse `--kbm` in `main.c`, set the seam, update the launcher and
    `docs`.
-6. **Verify** — physical pad reaches the menu; `--kbm` reaches the menu with no
+6. **Verify** - physical pad reaches the menu; `--kbm` reaches the menu with no
    pad; rumble observed on the pad; boot log shows the KBM profile line.
 
 ## Host-side issue: X11 keyboard backlog (found during testing)
 
 Symptom, seen with `--kbm` at the ~12 FPS menu scene: holding an arrow key
 registers repeated presses, each arriving seconds late, and the release is
-delayed in proportion to how long the key was held (5–10 s).
+delayed in proportion to how long the key was held (5-10 s).
 
 This is not the recompiled input path. It is the well-known Wine/Proton + X11
 input-method bug: when Wine talks to the X input method (IBus/XIM), IBus replays
 auto-repeat press events through the IM one at a time. When the frame/event rate
 is below the key-repeat rate (e.g. 12 FPS vs 30 Hz repeat), the replayed events
 and the final release back up in time. Reported for Wine/Proton in
-`ValveSoftware/Proton#5294` and `ibus#2480`; the phrasing "pushing buttons 5–8
+`ValveSoftware/Proton#5294` and `ibus#2480`; the phrasing "pushing buttons 5-8
 seconds ahead" appears verbatim in the WineHQ forum.
 
 Proton disabled XIM historically, then re-enabled it in Proton 9.0 (so also in
-GE-Proton 11, which we use) — which is why it surfaced now.
+GE-Proton 11, which we use) - which is why it surfaced now.
 
 Fixes, in order of preference:
 
@@ -243,7 +243,7 @@ Fixes, in order of preference:
    Set in `scripts/14-launch-recomp.sh`, so it applies to every run.
 2. `IBUS_ENABLE_SYNC_MODE=2` (ibus hybrid-async) if a system still routes
    through IBus.
-3. Disable GNOME "Repeat keys" / `xset r off` — the blunt fallback; confirms the
+3. Disable GNOME "Repeat keys" / `xset r off` - the blunt alternative; confirms the
    diagnosis because it removes the repeats entirely.
 
 The app's own message pump already drains the whole queue each frame

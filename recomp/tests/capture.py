@@ -6,8 +6,8 @@ Always runs the user entry point (scripts/18-launch-user.sh, 1920x1080 KBM), the
 same configuration a human plays, so captures are representative.
 
 Usage:
-  python recomp/tests/capture.py --tag NAME [--frames 8] [--interval 6]
-  python recomp/tests/capture.py --diff TAG_A TAG_B   # compare two capture sets
+  uv run python recomp/tests/capture.py --tag NAME [--frames 8] [--interval 6]
+  uv run python recomp/tests/capture.py --diff TAG_A TAG_B   # compare two capture sets
 
 Captures land in recomp/tests/baselines/captures/<tag>/NNN.bmp with an
 equivalent .png (see fbtool.py). The diff reports mean absolute pixel error and

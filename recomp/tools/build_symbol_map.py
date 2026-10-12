@@ -130,6 +130,9 @@ def batch_demangle(names):
         return {}
     proc = subprocess.run(["llvm-undname"], input="\n".join(need) + "\n",
                           capture_output=True, text=True)
+    if proc.returncode != 0:
+        raise RuntimeError(
+            f"llvm-undname failed (rc={proc.returncode}): {proc.stderr.strip()}")
     lines = proc.stdout.split("\n")
     out, i = {}, 0
     while i < len(lines):

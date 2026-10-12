@@ -37,7 +37,7 @@ The tail of `logs/runtime-20261007-145412.log`:
 xbox_HeapAlloc: out of memory (requested 1841168, used 50765696/50855936)
   [HEAP] 1 live blocks of 8388608 bytes (8192 KB)
   [HEAP] ... (large live blocks totalling ~47 MB)
-[ICALL] target 0x00000000 is not code -- skipped
+[ICALL] target 0x00000000 is not code, skipped
 [CRASH] Access violation at RIP=0x6FFFFCF517C0, fault addr=0x17746FF6C (read)
         in CreateFileA_28_001B2939+0x6E0
 ```
@@ -56,7 +56,7 @@ fault VA `0x17746FF6C` truncates to Xbox VA `0xFFFFFF6C`, a null-relative read.
 - The XBE is a **Debug build** (`recomp/build/xbe_parser.txt`: `Type Debug`,
   title "Starcraft: Ghost (Release)", debug path
   `c:\Star\CODE\GAME\xbox_Release\Ghost.exe`). Debug/beta XBEs ship for the
-  **128 MB devkit** and size their allocations accordingly — the header comment at
+  **128 MB devkit** and size their allocations accordingly - the header comment at
   `xbox_memory_layout.h:43-48` records exactly this for Halo's cachebeta.
 - `xbox_SetTotalRam()` and `XBOX_DEVKIT_RAM` (128 MB) exist
   (`xbox_memory_layout.h:48`, `:105`) but **nothing calls `xbox_SetTotalRam`**.
@@ -91,10 +91,10 @@ object only becomes reusable again when that small object is freed.
 
 Two independent causes, either of which can produce the OOM:
 
-- **A — the RAM model.** A devkit-targeted debug build is run against a retail
+- **A - the RAM model.** A devkit-targeted debug build is run against a retail
   64 MB model. If the title's own accounting uses `MmQueryStatistics`, it believes
   it has 64 MB and the 48 MB heap is simply too small for the mission's assets.
-- **B — allocator fragmentation.** First-fit without splitting can strand large
+- **B - allocator fragmentation.** First-fit without splitting can strand large
   freed blocks on tiny live objects, exhausting the heap at a much lower true
   occupancy than reported.
 
@@ -105,7 +105,7 @@ cheaper of the two to eliminate with confidence.
 
 ### Evidence
 
-The runtime is **not** silent internally. `logs/runtime-20261006-172122.log`
+The runtime is **not** quiet internally. `logs/runtime-20261006-172122.log`
 records a working voice pipeline:
 
 ```
@@ -122,11 +122,11 @@ sound" is not "the VP produced nothing" in that run.
 
 ### Mechanism
 
-- The APU's GP/EP DSP is a **passthrough stub** (`apu_dsp.c`); the DSP handshake
+- The APU's GP/EP DSP is a **passthrough no-op** (`apu_dsp.c`); the DSP handshake
   is faked with `RECOMP_APU_DSP_ACK=gp:0x810`, set by default in
   `recomp/game/src/main.c:236-237`. The real DSP programs (`nsidsp.bin`,
   `dsstdfx.bin`, both present in the game directory) are never executed.
-- `xbox_DirectSoundCreate` (`audio/dsound_device.c:379`) is dead code — never
+- `xbox_DirectSoundCreate` (`audio/dsound_device.c:379`) is dead code - never
   called. The guest statically links DSOUND/XACTENG and drives APU MMIO directly.
 - The runtime reports retail hardware (`XboxHardwareInfo` flags=0), which some
   titles use to select an audio tier.
@@ -138,11 +138,11 @@ sound" is not "the VP produced nothing" in that run.
 
 Two candidate mechanisms, distinguishable by one diagnostic run:
 
-- **C — the null mixdown/host route.** Voices are produced in-game but never
+- **C - the null mixdown/host route.** Voices are produced in-game but never
   reach the host sink (mixdown default, 3D/positional routing, or XAudio2
   endpoint). Fix is in the APU's output path.
-- **D — the DSP program path.** The title relies on GP/EP DSP effects; the
-  passthrough stubs drop them, and/or the fake `RECOMP_APU_DSP_ACK` handshake lets
+- **D - the DSP program path.** The title relies on GP/EP DSP effects; the
+  passthrough no-ops drop them, and/or the fake `RECOMP_APU_DSP_ACK` handshake lets
   the title think DSP is ready when it is not. Fix requires running (or more
   faithfully faking) the DSP.
 
@@ -156,10 +156,10 @@ disasm":
   `in al,dx`/`out dx,al` (`0x002C972D`/`0x002CA640`, D3D PCI), and `wbinvd`
   (`0x002C7F44`, `0x00233188`). None sit on the mission-load or audio path
   observed so far.
-- **Unresolved call stubs.** `recomp/build/gen_fresh/recomp_stubs_unresolved.c`
+- **Unresolved call no-ops.** `recomp/build/gen_fresh/recomp_stubs_unresolved.c`
   declares **182** addresses called by translated code but not detected as
   functions. Each is an empty body that only consumes the pushed return address.
-  A stub on a live path silently drops real work, which surfaces elsewhere as
+  A no-op on a live path drops real work without notice, which surfaces elsewhere as
   corrupted state. None are yet proven to be on the mission/audio path, but they
   are the highest-risk unknown in the translated surface.
 - **The override layer is unbuilt** (already noted in [11-audit.md](11-audit.md)):
@@ -168,7 +168,7 @@ disasm":
 
 ## Plan
 
-### Phase 0 — diagnostics (read-only runs)
+### Phase 0 - diagnostics (read-only runs)
 
 1. Re-run with `RECOMP_APU_DIAG=1`, play through a mission, and record whether
    `[APU-OUT] nonzero` / `voices` stay non-zero in-game. This separates C from D.
@@ -177,7 +177,7 @@ disasm":
    can be attributed to call sites. This separates genuine need from fragmentation
    beyond what the split fix removes.
 
-### Phase 1 — allocator (cause B, land first)
+### Phase 1 - allocator (cause B, land first)
 
 Make `xbox_HeapAlloc`'s reuse path **best-fit** and **split** the reused block so
 only the requested bytes are consumed and the remainder stays free. This is
@@ -185,16 +185,16 @@ correct independent of the RAM question and is a small, contained diff. It
 directly invalidates the inflated live-block histogram. Add a runnable self-check
 that fails if a small request consumes a large freed block.
 
-### Phase 2 — RAM model (cause A, behind a switch)
+### Phase 2 - RAM model (cause A, behind a switch)
 
 Expose RAM size as a runtime knob read before `xbox_MemoryLayoutInit`
-(environment override, default unchanged at 64 MB), and — if and only if the
-title proves to read it — make `xbox_MmQueryStatistics` derive its page count from
+(environment override, default unchanged at 64 MB), and - if and only if the
+title proves to read it - make `xbox_MmQueryStatistics` derive its page count from
 `g_xbox_total_ram` so the title's two signals agree. Boot at 128 MB and see
 whether `1_2_1` loads. Default behaviour is unchanged, so a retail title is not
 disturbed.
 
-### Phase 3 — audio (C or D)
+### Phase 3 - audio (C or D)
 
 Whatever Phase 0 shows:
 
@@ -203,9 +203,9 @@ Whatever Phase 0 shows:
 - If D: escalate to the DSP program path, and re-evaluate whether the fake
   `RECOMP_APU_DSP_ACK` handshake should instead be a real (if minimal) GP.
 
-### Phase 4 — translated surface (only if Phases 1–3 implicate it)
+### Phase 4 - translated surface (only if Phases 1-3 implicate it)
 
-Sweep the 182 unresolved stubs against the mission and audio call graphs, seed
+Sweep the 182 unresolved no-ops against the mission and audio call graphs, seed
 the real ones in `config/` and regenerate. Confirm the reached `[UNIMPL]` sites
 stay benign.
 
@@ -213,7 +213,7 @@ stay benign.
 
 ### 128 MB default and boot (done)
 
-- `g_xbox_total_ram` now defaults to `XBOX_DEVKIT_RAM` (128 MB), with the
+- `g_xbox_total_ram` now uses `XBOX_DEVKIT_RAM` by default (128 MB), with the
   `RECOMP_TOTAL_RAM_MB` environment override retained to go back to 64 MB.
   `xbox_MmQueryStatistics` reports pages from `g_xbox_total_ram` so the title's
   two memory signals agree.
@@ -225,7 +225,7 @@ stay benign.
 - Fix: base selection now tries candidate host bases and keeps the first whose
   tiled alias is actually mappable (`xbox_TiledAliasMappable`), skipping the
   known-bad 4 GB address. If the mirror span cannot be reserved at a candidate,
-  the base is mapped alone and the mirrors are best-effort. At 128 MB this
+  the base is mapped alone and the mirrors are not mapped. At 128 MB this
   lands the base at `0x18000000`, the tiled aperture maps (`Tiled aperture alias
   verified`), and the title boots and renders.
 - Baseline at 64 MB for contrast: the OS placed the mapping at offset
@@ -255,7 +255,7 @@ stay benign.
   `xbox_HeapFree`), `xbox_memory_layout.h` (RAM constants),
   `refs/xboxrecomp/src/kernel/kernel_memory.c` (`MmQueryStatistics`),
   `refs/xboxrecomp/src/kernel/kernel_bridge.c` (`XboxHardwareInfo`),
-  `refs/xboxrecomp/src/apu/apu_dsp.c` (DSP stubs),
+  `refs/xboxrecomp/src/apu/apu_dsp.c` (DSP no-ops),
   `recomp/game/src/main.c` (boot configuration).
 
 ## Known issues / current status (tracking)
@@ -272,18 +272,18 @@ and issue tracking lives with the audit record.
   `[CONTIG] arena exhausted` and `RECOMP_WATCH=0x80000338`.
 - **Frame rate** (measured 2026-10-09, `goto_gameplay`, 25 s median n=24):
   **real gameplay ~24.9 FPS** (was 21.9 before the swizzle fix; the older ~8 FPS
-  note predates correct lazy publication). Menu 3D background ~38 FPS. Only
+  note predates correct deferred publication). Menu 3D background ~38 FPS. Only
   trust numbers taken after `Game.goto_gameplay()`; the level `.nhc` alone is
   just the start of the load, followed by the loading screen and briefing.
-  `RECOMP_KICK_STATS=1` prints `[KICK]`; ~400–450 kicks/s and ~96% walk time
+  `RECOMP_KICK_STATS=1` prints `[KICK]`; ~400-450 kicks/s and ~96% walk time
   in *every* phase.
 - **Swizzled-texture decode (FIXED 2026-10-09)**: format `0x06` (swizzled
   A8R8G8B8) was 78% of all texture upload bytes and went through a per-texel
   indirect decode callback. `get_texture` (`nv2a_gpu_d3d11.cpp`) now
   bulk-unswizzles `0x06`/`0x07` with `xbox_unswizzle_rect` (`d3d8_swizzle.h`).
   Gameplay +14% (21.9 → 24.9 FPS), texture phase halved. Confirms the general
-  rule: measure the phase first — GPU vertex pulling was tried and rejected
-  (3–4% **slower**; prep is only ~18% of the interval and pull covers only the
+  rule: measure the phase first - GPU vertex pulling was tried and rejected
+  (3-4% **slower**; prep is only ~18% of the interval and pull covers only the
   16% of draws on the vertex-program path). See `docs/17-executor-roadmap.md`.
 - **GPU pushes**: the pushbuffer walker now walks GET→PUT the way the hardware
   does (`nv2a_pb_run` in `nv2a_pb_scan.c`, called from `xbox_memory_layout.c`),
@@ -296,7 +296,7 @@ and issue tracking lives with the audit record.
   When the walk desynced from PUT (misparsed packet, unbalanced CALL/RETURN, or
   a wrapped ring) it marched into non-pushbuffer guest RAM; a stray word that
   decoded as a JUMP sent `va` past the 64 MB `XBOX_CONTIG_SIZE` window and the
-  next read faulted — `[CRASH] Access violation ... in nv2a_pb_run+0x73`, all-zero
+  next read faulted - `[CRASH] Access violation ... in nv2a_pb_run+0x73`, all-zero
   Xbox regs (host-side fault, not a guest one). Now every read and jump/call
   target is validated against `[XBOX_CONTIG_BASE, +XBOX_CONTIG_SIZE)`; the first
   violation logs `[PB] desync ... resync to PUT` and drops that one kick instead
@@ -310,7 +310,7 @@ and issue tracking lives with the audit record.
 - **Render corruption (FIXED)**: root cause was `dma_resolve`
   (`nv2a_pb_exec.c:129`) promoting only a contiguous block's **head**; vertex
   arrays interleave attributes in one allocation, so normal/diffuse/texcoord
-  (+0xC/+0x18/+0x1C) were fetched from raw physical addresses — garbage normals,
+  (+0xC/+0x18/+0x1C) were fetched from raw physical addresses - garbage normals,
   magenta diffuse, x87-indefinite (`0xFFC00000`) NaN UVs. Now promotes by range
   via `xbox_ContigOwnsOffset`. `nonfinite texture coordinate` is sanitized to 0
   instead of rejecting the batch. Title screen + mission briefing render
@@ -326,7 +326,7 @@ and issue tracking lives with the audit record.
   `RECOMP_TOTAL_RAM_MB`, don't lower the base.
 - **Audio in-game (FIXED)**: `mcpx_apu_monitor_frame` (`apu_core.c`) memset the
   EP/DSP mixdown in `monitor.frame_buf` before submitting, so only the software
-  (Bink/DirectSound) bridge was audible; VP/DSP game audio was silent. It now
+  (Bink/DirectSound) bridge was audible; VP/DSP game audio produced no output. It now
   overdubs voices onto the existing buffer and submits one 256-frame window.
   `--only audible` PASSes. See MANUAL_PATCHES.md.
 - **Bink FMV stall**: during a video the main thread spins inside the guest
@@ -340,11 +340,11 @@ and issue tracking lives with the audit record.
     `ep_frame_div` + `monitor_frame` WITHOUT running the GP, so the EP reader
     overtook the GP writer and every 256-sample window carried a cursor seam.
     Fix (`apu_core.c`): run the full `se_frame` whenever `XCNTMODE != OFF`
-    (transient FECTL TRAPPED/HALTED is fine — the GP just does a no-op frame);
+    (transient FECTL TRAPPED/HALTED is fine - the GP just does a no-op frame);
     when truly OFF, advance the clock alone (no DSP runs).
   - **No resampling**: `voice_resample` (`apu_vp.c`) dropped `rate`. Now uses
     the vendored **libsamplerate** (`src/apu/third_party/samplerate/`, wired in
-    `src/apu/CMakeLists.txt`; `apu_shim.h` stubs replaced by the real header)
+    `src/apu/CMakeLists.txt`; `apu_shim.h` no-ops replaced by the real header)
     with a `src_callback_read` callback that pulls via `voice_get_samples`,
     matching xemu. Rejected earlier linear/nearest resampling.
   - **Cut-off / "reload" gaps**: XAudio2 stopped the source on an empty queue and
@@ -352,7 +352,7 @@ and issue tracking lives with the audit record.
     (`apu_xaudio2.c`); an empty queue just emits silence. `XA2_NUM_BUFS` 8→16
     (~85 ms headroom). `empty_queue_events` counts residual drains.
   - **Cut-off peaks/clicks**: an abruptly cut sound makes the mix step full
-    scale to 0 (captured: constant `-10497` for ~3 s then a `+10497` step — the
+    scale to 0 (captured: constant `-10497` for ~3 s then a `+10497` step - the
     "horrible peak"). `apu_declick` (`apu_core.c`) ramps any `|Δsample|>8000`
     discontinuity over 32 samples across window boundaries.
   - `monitor.frame_buf` is now explicitly zeroed on inactive windows, so a stale

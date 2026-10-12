@@ -16,7 +16,7 @@
 # ffmpeg ends on its own and `stop` still muxes what was captured. ffmpeg
 # lives in ~/.local/bin (static build, no sudo).
 set -u
-ROOT=/home/agent/WORKSPACE-VM/projects/xbox-on-deb
+ROOT="${REPO_ROOT:-$HOME/WORKSPACE-VM/projects/xbox-on-deb}"
 cd "$ROOT"
 export PATH="$HOME/.local/bin:$PATH"
 STATE=/tmp/opencode/record-video

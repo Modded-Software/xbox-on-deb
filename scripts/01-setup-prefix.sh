@@ -3,7 +3,7 @@ set -euo pipefail
 
 echo "=== [01] Creating StarCraft: Ghost GE-Proton prefix ==="
 
-source "$PWD/scripts/config.env"
+source "$PWD/scripts/config.sh" || exit 1
 detect_ge_proton
 
 if [ ! -d "$GAME_DATA_DIR" ]; then

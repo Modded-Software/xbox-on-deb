@@ -11,7 +11,7 @@ Voice Processor (`apu_vp.c`) and the host output path (`apu_core.c`).
 
 Context: rendering corruption was root-caused to the two-arena physical-address
 collision and fixed (heap at 64 MB + `xbox_DmaPhysicalPointer` >=64 MB ordinary
-RAM). FMV audio already plays; hardware voice audio (menu/mission) is silent.
+RAM). FMV audio already plays; hardware voice audio (menu/mission) produces no output.
 
 ## Confirmed gaps (report)
 
@@ -60,7 +60,7 @@ vendored dir to the include path.
 
 ### 3. Shim
 
-`apu_shim.h`: delete the libsamplerate stub block; `#include "samplerate.h"`.
+`apu_shim.h`: delete the libsamplerate no-op block; `#include "samplerate.h"`.
 The real `SRC_STATE`, `SRC_SINC_FASTEST`, `src_*` API now resolve at link time.
 
 ### 4. `apu_vp.c`
@@ -81,7 +81,7 @@ Port from xemu `vp.c`, adapting only the memory accessor
 
 ### 5. HRTF
 
-`g_config.audio.hrtf` defaults to true, overridable via `RECOMP_APU_HRTF=0`.
+`g_config.audio.hrtf` is true by default, overridable via `RECOMP_APU_HRTF=0`.
 
 ### 6. Output pacing
 
@@ -101,7 +101,7 @@ full, so the watermark is derived from XAudio2's queued buffer count.
   the resamplers.
 - The `voice_work_schedule` asserts encode Xbox-software assumptions
   (MP bin constant, MP voice clears its bin, MP sources consecutive). Release
-  builds with `NDEBUG` drop them, but keep `RECOMP_DSP_ASSERTS` off for VP for now
+  builds with `NDEBUG` drop them, but keep `RECOMP_DSP_ASSERTS` off for VP at present
   and watch for assert storms if enabled.
 - `mixer_render` remains; it may mix on top of the VP output. If FMV needs it,
   leave it; otherwise gate it.

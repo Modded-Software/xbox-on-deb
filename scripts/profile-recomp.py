@@ -17,10 +17,13 @@ Importable (call ``symbolize``) or run directly on an existing perf.data:
 """
 import collections
 import json
+import logging
 import os
 import re
 import subprocess
 import sys
+
+log = logging.getLogger("profile-recomp")
 
 PE_IMAGE_BASE = 0x140000000
 _LEAF_RE = re.compile(r"^\s+([0-9a-f]+)\b")
@@ -38,7 +41,8 @@ def find_ghost_pids():
         try:
             with open(f"/proc/{entry}/cmdline", "rb") as handle:
                 cmd = handle.read().replace(b"\x00", b" ").decode("utf-8", "replace")
-        except OSError:
+        except OSError as exc:
+            log.info("read /proc/%s/cmdline failed: %s", entry, exc)
             continue
         if "ghost.exe" in cmd and "pw-record" not in cmd:
             pids.append(int(entry))
@@ -49,6 +53,9 @@ def stack_samples(perf_data):
     """[(tid, [IP, ...leaf first])] for every sample."""
     result = subprocess.run(["perf", "script", "-i", perf_data],
                             capture_output=True, text=True)
+    if result.returncode != 0:
+        raise RuntimeError(
+            f"perf script failed (rc={result.returncode}): {result.stderr.strip()}")
     samples = []
     for line in result.stdout.splitlines():
         hdr = _HDR_RE.match(line)
@@ -65,6 +72,9 @@ def anon_exec_regions(perf_data):
     """[(start, end)] for anonymous executable mappings in the perf stream."""
     result = subprocess.run(["perf", "script", "-D", "-i", perf_data],
                             capture_output=True, text=True)
+    if result.returncode != 0:
+        raise RuntimeError(
+            f"perf script -D failed (rc={result.returncode}): {result.stderr.strip()}")
     regions = []
     for line in result.stdout.splitlines():
         match = _MAP2_RE.search(line)
@@ -96,13 +106,19 @@ def section_base(exe, region_size):
     the mapping start for ImageBase shifted every symbol by 0x1000, which made
     init code (xbox_MemoryLayoutInit, xbox_AllocThreadTib) look hot and hid the
     real offender. Anchor on the exec section whose page-rounded size matches
-    the mapping, falling back to ImageBase when nothing matches.
+    the mapping, using ImageBase when nothing matches.
     """
     try:
-        out = subprocess.run(["llvm-objdump", "-h", exe],
-                             capture_output=True, text=True).stdout
-    except OSError:
+        proc = subprocess.run(["llvm-objdump", "-h", exe],
+                              capture_output=True, text=True)
+    except OSError as exc:
+        log.warning("llvm-objdump -h %s failed: %s", exe, exc)
         return PE_IMAGE_BASE
+    if proc.returncode != 0:
+        log.warning("llvm-objdump -h %s failed (rc=%d): %s",
+                    exe, proc.returncode, proc.stderr.strip())
+        return PE_IMAGE_BASE
+    out = proc.stdout
     for line in out.splitlines():
         match = re.match(r"\s*\d+\s+(\S+)\s+([0-9a-f]+)\s+([0-9a-f]+)\s+(\S+)", line)
         if not match or match.group(4) != "TEXT":
@@ -132,6 +148,9 @@ def symbolize(perf_data, exe, report_path=None, top=50):
     inp = "".join("0x%x\n" % (anchor + (ip - base)) for ip in sorted(every))
     proc = subprocess.run(["llvm-symbolizer", "--output-style=JSON", "--obj=" + exe],
                           input=inp, capture_output=True, text=True)
+    if proc.returncode != 0:
+        raise RuntimeError(
+            f"llvm-symbolizer failed (rc={proc.returncode}): {proc.stderr.strip()}")
     names = {}  # ip -> (function, file)
     for line in proc.stdout.splitlines():
         line = line.strip()
@@ -151,7 +170,7 @@ def symbolize(perf_data, exe, report_path=None, top=50):
 
     # Per-thread split, and who calls the bulk copy/compare routines. The PE is
     # built without frame pointers, so the "caller" is the first in-PE frame of
-    # whatever chain perf recovered -- best effort, unattributed shown as "?".
+    # whatever chain perf recovered; unattributed shown as "?".
     hot = ("memcpy", "copyBlocks", "memcmp", "memset", "memmove")
     tids = collections.Counter()
     tid_top = collections.defaultdict(collections.Counter)
@@ -183,7 +202,7 @@ def symbolize(perf_data, exe, report_path=None, top=50):
         tops = ", ".join(f"{f} {c}" for f, c in tid_top[tid].most_common(3))
         lines.append(f"  {tid:8d} {n:6d}  {100.0 * n / total:5.1f}%  {tops}")
     lines.append("")
-    lines.append("=== bulk copy/compare callers (best effort, no frame pointers) ===")
+    lines.append("=== bulk copy/compare callers (no frame pointers) ===")
     for name, n in callers.most_common(25):
         lines.append(f"  {n:6d}  {100.0 * n / total:5.1f}%  {name}")
     report = "\n".join(lines) + "\n"
@@ -194,7 +213,10 @@ def symbolize(perf_data, exe, report_path=None, top=50):
     return base, funcs, report
 
 
-ROOT = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from paths import ROOT_DIR
+
+ROOT = str(ROOT_DIR)
 
 
 def record(perf_data, secs=30.0, settle=5.0, user_state=True):
@@ -203,7 +225,7 @@ def record(perf_data, secs=30.0, settle=5.0, user_state=True):
     Returns True if a non-empty perf.data was written.
     """
     sys.path.insert(0, os.path.join(ROOT, "recomp", "tests"))
-    import framework  # noqa: E402
+    import framework
     game = framework.Game(user_state=user_state)
     print("launching game...", flush=True)
     game.start()

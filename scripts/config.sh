@@ -1,5 +1,5 @@
 #!/bin/bash
-# Shared configuration — source this from scripts: source "$(dirname "$0")/config.env"
+# Shared configuration - source this from scripts: source "$(dirname "$0")/config.sh"
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 GAMES_DIR="$HOME/Games"

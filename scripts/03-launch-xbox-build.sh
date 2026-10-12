@@ -10,7 +10,7 @@ set -euo pipefail
 # Environment:
 #   RENDERER=dxvk (default, D3D9->DXVK/Vulkan) | RENDERER=wine (OpenGL/wined3d)
 
-source "$PWD/scripts/config.env"
+source "$PWD/scripts/config.sh" || exit 1
 detect_ge_proton
 
 CXBX_DIR="$REPO_ROOT/emulator"

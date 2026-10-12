@@ -16,7 +16,7 @@ import os
 import time
 import wave
 
-from framework import Game, test
+from framework import Game, test, log
 
 ENTER_SECONDS = 20.0    # briefing / loading screens: keep pressing A to advance
 PLAY_SECONDS = 10.0     # interactive gameplay
@@ -52,8 +52,8 @@ def mission_is_audible(g: Game):
     host = "/tmp/opencode/mission_host.wav"
     try:
         os.remove(host)
-    except FileNotFoundError:
-        pass
+    except FileNotFoundError as exc:
+        log.info("no previous mission recording at %s: %s", host, exc)
     # The map name in the log means the scene is streaming in; capture from
     # there so the whole approach into gameplay is covered.
     rec = g.start_app_recording(host)

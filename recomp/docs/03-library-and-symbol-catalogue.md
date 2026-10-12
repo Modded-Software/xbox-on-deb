@@ -1,4 +1,4 @@
-# 03 — Library and symbol catalogue
+# 03 - Library and symbol catalogue
 
 A mechanical catalogue of what the binary needs from the runtime and what is
 already covered. Generated data lives in `recomp/symbols/`:
@@ -13,7 +13,7 @@ Cross-checked against `refs/xboxrecomp/src/kernel/kernel_thunks.c`
 
 | Ordinal | Name | Status |
 |---:|---|---|
-| 37 | `FscSetCacheSize` | **MISSING** — file-system cache size. Trivial stub (return success). |
+| 37 | `FscSetCacheSize` | **MISSING** - file-system cache size. Trivial no-op (return success). |
 
 Full list: `symbols/ghost.kernel_imports.txt`.
 
@@ -35,7 +35,7 @@ Data exports among these (`XboxHardwareInfo`, `XboxKrnlVersion`, `KeTickCount`,
 `LaunchDataPage`, keys, `HalDisk*`) are handled by `kernel_data_va_for_ordinal`
 in `kernel_bridge.c`.
 
-**Action:** add one stub for ordinal 37, then the kernel gap list is empty.
+**Action:** add one no-op for ordinal 37, then the kernel gap list is empty.
 
 ## 2. Statically linked XDK libraries
 
@@ -46,10 +46,10 @@ code sections. These are not kernel imports; they are recompiled guest code.
 |---|---|---:|---:|---|
 | `.text` | `0x0012000` | 2.81 MB | 14,882 | game + CRT (`LIBCMT`/`LIBC`) + XAPI |
 | `D3D` | `0x02C04A0` | 81 KB | 297 | `xbox_d3d8` (D3D8→D3D11/GL) and `xbox_nv2a` |
-| `D3DX` | `0x02D4960` | 115 KB | 441 | (D3DX helpers; no runtime equivalent — recompiled) |
+| `D3DX` | `0x02D4960` | 115 KB | 441 | (D3DX helpers; no runtime equivalent - recompiled) |
 | `DSOUND` | `0x02F16A0` | 121 KB | 480 | `xbox_dsound` + `xbox_apu` |
 | `XACTENG` | `0x030FCA0` | 43 KB | 337 | `xbox_dsound`/`xbox_apu` at the engine boundary |
-| `BINK` + BINK* variants | `0x031AB00`… | ~90 KB | ~140 | **none** — RAD Game Tools FMV; needs a decoder |
+| `BINK` + BINK* variants | `0x031AB00`… | ~90 KB | ~140 | **none** - RAD Game Tools FMV; needs a decoder |
 | `XGRPH` | `0x032FFC0` | 8.6 KB | 36 | (XG* graphics helpers) |
 | `WMADEC` | `0x03322E0` | 100 KB | 146 | **missing in xboxrecomp** (`gap-analysis.md`) |
 | `XNET` | `0x034B360` | 56 KB | 305 | stubbed (Xbox Live: "no link") |
@@ -65,7 +65,7 @@ Xbox's D3D8 is **statically linked into the game**. Two ways to run it:
 
 1. **Recompile it verbatim** (Microsoft's approach in Ficl/Fission): the guest
    D3D8 executes and talks to a hardware-accurate NV2A at the register/pushbuffer
-   level. The reference port leans this way — that is why `main.c` hooks
+   level. The reference port leans this way - that is why `main.c` hooks
    addresses inside the game's own `D3D` section (`0x002C99B0` method handler,
    `0x002D3D78`, `0x002D2148` fence).
 2. **HLE at the D3D8 API boundary**: `recomp_lookup_manual` redirects each
@@ -75,7 +75,7 @@ Xbox's D3D8 is **statically linked into the game**. Two ways to run it:
 The reference port appears to do a hybrid. Decision (see
 [05-strategy.md](05-strategy.md)): **use (2), the D3D8→D3D11 HLE backend, build
 for Windows (x64), and run it under Proton/Steam.** The POSIX OpenGL backend is
-**out of scope** — it is the incomplete path and we do not want to maintain it.
+**out of scope** - it is the incomplete path and we do not want to maintain it.
 A Vulkan backend is follow-on work and not part of this effort. D3D11 under
 Proton is served by DXVK→Vulkan at runtime, which is a supported, well-tested
 stack (we already run GE-Proton for the emulator).
@@ -109,7 +109,7 @@ found 12,228 vtable methods; many unnamed entries are the thunks between them.
 - `xbox_nv2a` provides NV2A registers, pushbuffer parsing (`nv2a_pb_exec.c`),
   and a D3D11 backend (`nv2a_gpu_d3d11.cpp`, 144 KB).
 - The game's D3D section will probe NV2A MMIO; the runtime traps those (VEH on
-  Windows; the POSIX path differs — verify on Linux).
+  Windows; the POSIX path differs - verify on Linux).
 - `gap-analysis.md` says register-combiner (pixel) and vertex-microcode
   translation are complete, texture unswizzle complete, palettized/signed formats
   done. Cube/volume/YUV partial. This is the strongest part of the runtime.
@@ -118,9 +118,9 @@ found 12,228 vtable methods; many unnamed entries are the thunks between them.
 
 | Missing thing | Impact | Plan |
 |---|---|---|
-| `FscSetCacheSize` | none | stub |
+| `FscSetCacheSize` | none | no-op |
 | BINK FMV | intro/cutscene video | decode `.bik` with ffmpeg/libbink; or skip cutscenes for first boot |
 | WMADEC | some audio (WMA) | decoder; most Ghost audio is XACT `.xwb`/ADPCM, so lower priority |
 | XNET/Xbox Live | multiplayer only | leave stubbed; single-player unaffected |
-| APU DSP effects | audio fidelity | accept for now (xboxrecomp stub) |
+| APU DSP effects | audio fidelity | accept at present (xboxrecomp no-op) |
 | Linux OpenGL D3D8 path | **not used** | target Windows/D3D11 and run under Proton; Vulkan backend is follow-on work |

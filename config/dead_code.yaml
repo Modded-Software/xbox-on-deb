@@ -1,0 +1,35 @@
+# Dead Code Detection Configuration
+# Used by lib/checks_dead_code.sh (the ci_check_dead_code shell function),
+# which wraps the `dangle` Rust binary (https://crates.io/crates/dangle)
+# and post-filters its output against the keys below.
+# dangle scans git-tracked files for unreferenced functions, classes,
+# variables, and modules across 13 languages (Python, Lua, Bash/Shell,
+# JavaScript, TypeScript incl. TSX, Rust, Go, and more); the keys below
+# narrow which candidates are reported.
+
+scan_paths: [ci]
+
+ignore_paths:
+  - ci/__pycache__
+
+# Names never reported as dead regardless of reference count. Module-level
+# constants referenced only from test files (which dangle intentionally
+# skips) belong here.
+ignored_names:
+  - 'main'
+  - 'cli'
+  - 'WORKSPACE_MARKERS'
+
+# Regex patterns for names to ignore (matched against fn/var/class names)
+ignored_name_patterns:
+  - '^__.*__$'
+  - '^test_'
+  - '^Test'
+  - '^fixture_'
+  - '^conftest$'
+
+# Files excluded from REPORTING dead code but still scanned for references.
+# Tests and conftest modules are never "dead" but their imports matter.
+reference_only_paths:
+  - tests/
+  - conftest.py

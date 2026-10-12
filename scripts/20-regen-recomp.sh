@@ -15,7 +15,7 @@ set -euo pipefail
 
 # Hardcoded: this sandbox resolves a script's own $0 through /proc, so
 # dirname/readlink-based discovery lands in the wrong place (see 18-launch-user.sh).
-ROOT=/home/agent/WORKSPACE-VM/projects/xbox-on-deb
+ROOT="${REPO_ROOT:-$HOME/WORKSPACE-VM/projects/xbox-on-deb}"
 PY="$ROOT/.venv-recomp/bin/python"
 XR="$ROOT/refs/xboxrecomp"
 XBE="$ROOT/extracted/StarCraft Ghost Xbox Finn Hillbilly/Ghost.xbe"

@@ -1,0 +1,20 @@
+# Default config for ci.check_markdown_docs.
+# Per-repo overrides: copy to <repo>/.markdown_docs_exceptions.yaml and merge.
+
+# Remote HTTP(S) checks are off by default (slow, network-dependent).
+# Enable via CLI `--check-remote` or set to true here for a CI-only config.
+check_remote: true
+timeout: 5.0
+
+ignore:
+  - "**/node_modules/**"
+  - "**/.venv/**"
+  - "**/.next/**"
+  - "**/build/**"
+  - "**/dist/**"
+  - "CHANGELOG.md"
+
+# Known-broken references that should NOT fail CI. Each entry is a dict with
+# an optional `file` (endswith match) and `line` (exact) + a `reason` for
+# context. Empty by default.
+exceptions: []

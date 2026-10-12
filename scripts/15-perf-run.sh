@@ -10,7 +10,7 @@
 # consecutive reports, not the absolute numbers.
 set -uo pipefail
 
-ROOT=/home/agent/WORKSPACE-VM/projects/xbox-on-deb
+ROOT="${REPO_ROOT:-$HOME/WORKSPACE-VM/projects/xbox-on-deb}"
 SECS=${SECS:-60}
 LOG="$ROOT/recomp/game/recomp_boot.log"
 OUT="${OUT:-/tmp/opencode/perf-run.out}"

@@ -1,4 +1,4 @@
-# 06 — Open questions, risks, and the next actions
+# 06 - Open questions, risks, and the next actions
 
 ## Open questions (need an answer before or during Phase 1)
 
@@ -39,10 +39,10 @@
 
 | Risk | Likelihood | Mitigation |
 |---|---|---|
-| MinGW build friction | medium | fallback to MSVC in a Windows container; analysis stays on Linux |
+| MinGW build friction | medium | alternative to MSVC in a Windows container; analysis stays on Linux |
 | D3D HLE fork wrong for this beta | medium | instrument D3D-section reachability; toolkit has register-level NV2A path |
 | 1,193 unnamed functions hide the crash | medium | runtime ICALL feedback (Microsoft's feedback-loop idea) + `func_id` vtable groups; resolve iteratively |
-| POSIX path silently taken | low | build target is explicitly `x86_64-w64-mingw32`; OpenGL backend not used |
+| POSIX path taken without notice | low | build target is explicitly `x86_64-w64-mingw32`; OpenGL backend not used |
 | Generated code volume (millions of lines) | certain | `--split 250`, per-source-file chunks, `-O0`/`-O1` first, `/bigobj` or `-Wa,-mbig-obj` |
 | Source map drifts from regeneration | low | `merge --apply` is a pipeline step; `.bak` kept; names come from data |
 
@@ -50,11 +50,11 @@
 
 1. **Rename pass.** Run `merge_names --names-json symbols/ghost.names.json --apply`
    on `functions.json`; confirm the recompiler emits `Class__method__VA` names.
-2. **Project skeleton.** Copy `refs/xboxrecomp/templates/new-game` into
+2. **Project outline.** Copy `refs/xboxrecomp/templates/new-game` into
    `recomp/`; set `XBOXRECOCOMP_DIR` to `refs/xboxrecomp`; set entry
    `0x001B3FBB`; wire `config/fixups.toml`.
 3. **First generation.** `tools.recomp --all --split 250` with
-   `--exclude-manual`; record the unresolved-stub count as the Phase-1 baseline.
+   `--exclude-manual`; record the unresolved-no-op count as the Phase-1 baseline.
 4. **First cross-build.** MinGW x64 → `Ghost.exe`; fix numeric-literal/section
    issues; produce a library-only build proof first.
 5. **First Proton run.** Launch under GE-Proton with the `scghost` prefix; capture
@@ -70,4 +70,4 @@
   `demangled` field. Replace with a real demangler only if the noise matters.
 - Source **line** numbers are not recovered (PDB has no line records). If needed,
   fingerprint-match `Star_d.pdb`. Not blocking.
-- The kernel gap is one stub (`FscSetCacheSize`); no custom bridge work needed.
+- The kernel gap is one no-op (`FscSetCacheSize`); no custom bridge work needed.

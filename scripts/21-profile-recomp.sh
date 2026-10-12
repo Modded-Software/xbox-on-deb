@@ -15,11 +15,11 @@
 # sibling .report.txt grouped by lifted function and source file.
 set -uo pipefail
 
-ROOT=/home/agent/WORKSPACE-VM/projects/xbox-on-deb
+ROOT="${REPO_ROOT:-$HOME/WORKSPACE-VM/projects/xbox-on-deb}"
 cd "$ROOT"
 
 # The stock /usr/bin/perf wrapper insists on an exact kernel match; the
 # linux-tools binary for the running kernel is symlinked here.
 export PATH="$HOME/.local/bin:$PATH"
 
-exec python3 scripts/profile-recomp.py "$@"
+exec "$ROOT/.venv-recomp/bin/python" scripts/profile-recomp.py "$@"

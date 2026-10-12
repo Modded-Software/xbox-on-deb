@@ -86,7 +86,7 @@ if __name__ == "__main__":
     sys.exit(1 if problems else 0)
 
 
-from framework import CAPTURE as FB_BMP, Game, test  # noqa: E402
+from framework import CAPTURE as FB_BMP, Game, test
 
 
 def _grab(g, dest):

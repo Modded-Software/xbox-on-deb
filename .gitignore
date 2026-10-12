@@ -1,8 +1,8 @@
-# Game data — copyrighted and very large; obtain the leak yourself.
+# Game data - copyrighted and very large; obtain the leak yourself.
 res/
 extracted/
 
-# Third-party emulator binaries (Cxbx-Reloaded) — fetch separately, see README.
+# Third-party emulator binaries (Cxbx-Reloaded) - fetch separately, see README.
 emulator/
 
 # Runtime output: Cxbx/Wine logs, emulated console state, Proton logs.
@@ -46,3 +46,11 @@ recomp/diary/
 
 # Game framebuffer captures (copyrighted imagery).
 recomp/tests/baselines/captures/
+
+# scaffold-ci Makefile backup (local artifact, not source).
+Makefile.scaffold-bak.*
+
+# Compiled objects/shared libraries: build from source (e.g. tools/allow_ptrace.c
+# is compiled on demand by scripts/11-launch-ptraceable.sh).
+*.o
+*.so

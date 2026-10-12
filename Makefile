@@ -8,6 +8,10 @@
 SHELL := /bin/bash
 .DEFAULT_GOAL := launch
 
+# Python entrypoints run through uv: the CI forbids bare interpreters and
+# executable .py files.
+RECOMP_PY := uv run python
+
 # ── default: the thing you do most ──────────────────────────────────────
 .PHONY: launch
 launch: ## Launch the game for manual testing (keyboard+mouse, repeat watchdog).
@@ -30,12 +34,12 @@ SESSION ?=
 
 .PHONY: record-session
 record-session: ## Record a hands-on session: make record-session SESSION=<id>
-	@test -n "$(SESSION)" || { echo "usage: make record-session SESSION=<id>"; exit 2; }
+	test -n "$(SESSION)" || { echo "usage: make record-session SESSION=<id>"; exit 2; }
 	SESSION=$(SESSION) bash scripts/18-launch-user.sh
 
 .PHONY: replay-session
 replay-session: ## Replay a recording: make replay-session SESSION=<id>
-	@test -n "$(SESSION)" || { echo "usage: make replay-session SESSION=<id>"; exit 2; }
+	test -n "$(SESSION)" || { echo "usage: make replay-session SESSION=<id>"; exit 2; }
 	REPLAY=1 SESSION=$(SESSION) bash scripts/18-launch-user.sh
 
 .PHONY: record-video
@@ -48,7 +52,7 @@ stop-video: ## Finalise the window recording -> logs/video-<NAME>.mp4
 
 .PHONY: sessions
 sessions: ## List recorded input sessions (prefix pfx/drive_c/recomp-record-*.txt).
-	@set -- $(HOME)/Games/scghost-prefix/pfx/drive_c/recomp-record-*.txt; \
+	set -- $(HOME)/Games/scghost-prefix/pfx/drive_c/recomp-record-*.txt; \
 	if [ -e "$$1" ]; then printf '%s\n' "$$@"; else echo "no recordings yet"; fi
 
 # ── recomp code generation ──────────────────────────────────────────────
@@ -84,32 +88,32 @@ build: ## Build ghost.exe from the recompiled sources.
 
 .PHONY: test
 test: ## Run the full automated test suite (launches the game).
-	recomp/tests/run.py
+	$(RECOMP_PY) recomp/tests/run.py
 
 .PHONY: test-input
 test-input: ## Run only the input tests.
-	recomp/tests/run.py --only input
+	$(RECOMP_PY) recomp/tests/run.py --only input
 
 .PHONY: test-mouse
 test-mouse: ## Run only the mouse tests.
-	recomp/tests/run.py --only mouse
+	$(RECOMP_PY) recomp/tests/run.py --only mouse
 
 .PHONY: test-gameplay
 test-gameplay: ## Run only the mission/gameplay tests.
-	recomp/tests/run.py --only mission
+	$(RECOMP_PY) recomp/tests/run.py --only mission
 
 .PHONY: test-one
 test-one: ## Run one test by name substring: make test-one T=dpad
-	recomp/tests/run.py --only "$(T)"
+	$(RECOMP_PY) recomp/tests/run.py --only "$(T)"
 
 .PHONY: test-cloak
 test-cloak: ## Cloak screenshot regression (HUD + character while cloaked).
-	recomp/tests/run.py --user-state --only cloak
+	$(RECOMP_PY) recomp/tests/run.py --user-state --only cloak
 
 .PHONY: test-replay-audio
-test-replay-audio: ## Replay a session minimized; fail if APU goes silent: make test-replay-audio SESSION=<id>
-	@test -n "$(SESSION)" || { echo "usage: make test-replay-audio SESSION=<id>"; exit 2; }
-	REPLAY=1 SESSION=$(SESSION) recomp/tests/run.py --user-state --only replay-audio
+test-replay-audio: ## Replay a session minimized; fail if the APU produces no audio: make test-replay-audio SESSION=<id>
+	test -n "$(SESSION)" || { echo "usage: make test-replay-audio SESSION=<id>"; exit 2; }
+	REPLAY=1 SESSION=$(SESSION) $(RECOMP_PY) recomp/tests/run.py --user-state --only replay-audio
 
 .PHONY: ab-perf
 ab-perf: ## Paired FPS A/B vs control: make ab-perf V=RECOMP_ASYNC_FLIP=0 [PAIRS=2]
@@ -117,7 +121,7 @@ ab-perf: ## Paired FPS A/B vs control: make ab-perf V=RECOMP_ASYNC_FLIP=0 [PAIRS
 
 .PHONY: scene
 scene: ## Print and record the current scene fingerprint.
-	recomp/tests/run.py --scene --record
+	$(RECOMP_PY) recomp/tests/run.py --scene --record
 
 # ── inspect & maintain ──────────────────────────────────────────────────
 .PHONY: stop
@@ -141,28 +145,39 @@ clean: ## Remove build output (keeps generated sources).
 
 .PHONY: help
 help: ## List the targets.
-	@echo "targets:"
-	@echo "  launch         launch the game for manual testing (default)"
-	@echo "  regen          regenerate recompiled C into OUT (reuses analysis)"
-	@echo "  regen-full     regenerate incl. disassembly (seeded)"
-	@echo "  gen-diff       regenerate into OUT + diff vs in-tree gen (find hand edits)"
-	@echo "  gen-sync       replace in-tree gen with freshly generated OUT"
-	@echo "  build          build ghost.exe"
-	@echo "  test           run the full test suite"
-	@echo "  test-input     input tests only"
-	@echo "  test-mouse     mouse tests only"
-	@echo "  test-gameplay  mission/gameplay tests only"
-	@echo "  test-one       one test: make test-one T=<substring>"
-	@echo "  scene          print + record the current scene fingerprint"
-	@echo "  stop           stop the game and its wineserver (alias: kill)"
-	@echo "  relaunch       stop then launch a fresh game"
-	@echo "  record-session record input: make record-session SESSION=<id>"
-	@echo "  replay-session replay input: make replay-session SESSION=<id>"
-	@echo "  sessions       list recorded input sessions"
-	@echo "  log            tail the latest runtime log (LINES=200)"
-	@echo "  toolkit        clone/update the toolkit fork (refs/xboxrecomp)"
-	@echo "  clean          remove build output"
-	@echo "  help           this list"
+	echo "targets:"
+	echo "  launch         launch the game for manual testing (default)"
+	echo "  regen          regenerate recompiled C into OUT (reuses analysis)"
+	echo "  regen-full     regenerate incl. disassembly (seeded)"
+	echo "  gen-diff       regenerate into OUT + diff vs in-tree gen (find hand edits)"
+	echo "  gen-sync       replace in-tree gen with freshly generated OUT"
+	echo "  build          build ghost.exe"
+	echo "  test           run the full test suite"
+	echo "  test-input     input tests only"
+	echo "  test-mouse     mouse tests only"
+	echo "  test-gameplay  mission/gameplay tests only"
+	echo "  test-one       one test: make test-one T=<substring>"
+	echo "  scene          print + record the current scene fingerprint"
+	echo "  stop           stop the game and its wineserver (alias: kill)"
+	echo "  relaunch       stop then launch a fresh game"
+	echo "  record-session record input: make record-session SESSION=<id>"
+	echo "  replay-session replay input: make replay-session SESSION=<id>"
+	echo "  sessions       list recorded input sessions"
+	echo "  log            tail the latest runtime log (LINES=200)"
+	echo "  toolkit        clone/update the toolkit fork (refs/xboxrecomp)"
+	echo "  clean          remove build output"
+	echo "  help           this list"
+
+# CI variables for the scaffold-ci block below. --append-makefile added the rules
+# but not the template preamble that defines these, so they are defined here.
+# CI_DIR is absolute (/opt/workspace-ci), so the template's REPO_ROOT and
+# relative-path branch are not needed.
+ifeq ($(shell id -u),0)
+SCRIPT_BASH := /bin/bash.real
+else
+SCRIPT_BASH := bash
+endif
+CI_DIR := /opt/workspace-ci
 
 # Appended by scaffold-ci --append-makefile [2026-10-11T20:44:20Z]
 

@@ -1,4 +1,4 @@
-# 04 — Cxbx-Reloaded under Wine: init crash and workaround
+# 04 - Cxbx-Reloaded under Wine: init crash and mitigation
 
 This documents the black-screen / crash-dialog problem when running the Xbox
 release build (`Ghost.xbe`) under Cxbx-Reloaded on Wine, and the two changes
@@ -37,7 +37,7 @@ rewrites `settings.ini` on exit, so set it immediately before launching).
   (which should bypass the affinity code) did not help.
 
 The Windows-10 affinity policy path calls `GetSystemCpuSetInformation`, which
-is a weak/incorrect stub in Wine; Cxbx then walks bogus pointers and writes to
+is a weak/incorrect no-op in Wine; Cxbx then walks bogus pointers and writes to
 a garbage address.
 
 A side lead: installing `vcrun2019` via winetricks (which the Cxbx docs
@@ -63,12 +63,12 @@ runtimes here.
    bash scripts/06-retry-launch.sh "extracted/StarCraft Ghost Xbox Finn Hillbilly/Ghost.xbe"
    ```
    Success is detected by `D3D9DeviceEx::ResetSwapChain` appearing in the run
-   log — the moment the 640x480 render window is created. Observed success
+   log - the moment the 640x480 render window is created. Observed success
    rate: 1 in 3 attempts (attempt 3 above).
 
 When it succeeds, `xwininfo -root -tree` shows the emulator render window
 `640x480+0+0` (owned by the Wineserver, no name) and `cxbxr-ldr.exe` stays
-alive. The build then plays the intro/splash, then sits on a black frame —
+alive. The build then plays the intro/splash, then sits on a black frame -
 the same state as the first ever successful boot.
 
 ## Notes

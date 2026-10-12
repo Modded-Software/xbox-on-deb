@@ -1,4 +1,4 @@
-# 01 — Research
+# 01 - Research
 
 ## What the leak is
 
@@ -24,7 +24,7 @@ GameRevolution coverage, consolescenenews.
 - Known playable missions: Scattered Forces, Zergling Rush, Canyon Advance,
   The Fujita Pinnacle, Pinnacle Hangar, plus Borgo Refinery (commented out in
   `Misc/ghostsp.nsc`, can be re-enabled).
-- Create a profile named **`Nova`** to unlock all missions.
+- Create a profile named **`Nova`** to enable all missions.
 - `Ghost.xbe` = RELEASE, `GhostR.xbe` = RETAIL-ish, `GhostU.xbe` = unknown
   variant; `_d` source-looking PDB paths inside; not a full debug build.
 - Command-line switches found in the binaries: `/devmode`, `/console`, `/window`,
@@ -41,10 +41,10 @@ GameRevolution coverage, consolescenenews.
 
 | Emulator | Needs BIOS? | Linux | Verdict |
 |----------|-------------|-------|---------|
-| Cxbx-Reloaded | No (HLE) | Windows-only app | **chosen** — known to run this title; run under GE-Proton |
-| xemu | Yes (MCPX + BIOS) | Native Linux | blocked — no BIOS; also poor at raw XBE |
+| Cxbx-Reloaded | No (HLE) | Windows-only app | **chosen** - known to run this title; run under GE-Proton |
+| xemu | Yes (MCPX + BIOS) | Native Linux | blocked - no BIOS; also poor at raw XBE |
 | dxbx | Yes | Windows-only, ancient | rejected |
-| Xenia | n/a (Xbox 360) | — | irrelevant |
+| Xenia | n/a (Xbox 360) | - | irrelevant |
 
 ### Trade-off
 

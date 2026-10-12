@@ -15,7 +15,7 @@ StarCraft: Ghost (the leaked May 2004 Xbox build) is the first game shipped this
 - `cmake`, `git`, and `uv`. The cross-compiler is zig from the `ziglang` PyPI package, configured by `recomp/toolchain/zig-windows-x64.cmake`.
 - Your own copy of the game, extracted under `extracted/` (StarCraft: Ghost: `extracted/StarCraft Ghost Xbox Finn Hillbilly/`).
 
-`scripts/18-launch-user.sh` and `recomp/game/build.sh` currently pin the checkout path to `/home/agent/WORKSPACE-VM/projects/xbox-on-deb`.
+`scripts/18-launch-user.sh` and `recomp/game/build.sh` resolve the checkout path from `$HOME/WORKSPACE-VM/projects/xbox-on-deb` (override with `REPO_ROOT`).
 
 ### Quick start
 
@@ -72,7 +72,7 @@ make ab-perf V=RECOMP_ASYNC_FLIP=0
 
 Framework: [`recomp/tests/README.md`](recomp/tests/README.md). Performance notes: [`recomp/docs/20-optimisation-plan-1080p.md`](recomp/docs/20-optimisation-plan-1080p.md).
 
-### Cxbx-Reloaded path (legacy)
+### Cxbx-Reloaded path (older)
 
 The first approach ran `Ghost.xbe` in Cxbx-Reloaded under GE-Proton, and the Win32 TGS demo (`Star*.exe`) directly under GE-Proton. Its scripts (`scripts/01` to `08`) still work, but boot takes about 5 minutes and the build is glitchy, which is why the project moved to recompilation. Notes: [`docs/00-overview.md`](docs/00-overview.md), [`docs/04-cxbx-wine-crash.md`](docs/04-cxbx-wine-crash.md), [`recomp/docs/00-overview.md`](recomp/docs/00-overview.md).
 
@@ -95,7 +95,7 @@ The StarCraft: Ghost reference [wiki](wiki/README.md) covers the game, its devel
 | `recomp/docs/`, `recomp/diary/` | Recompilation design, audits, and per-task run diaries |
 | `recomp/toolchain/` | zig MinGW toolchain file and import-lib generator |
 | `refs/` | Toolkit clone and reference ports (gitignored) |
-| `scripts/` | Launch, stop, regen, profiling, capture, and legacy Cxbx scripts |
+| `scripts/` | Launch, stop, regen, profiling, capture, and older Cxbx scripts |
 | `docs/` | Leak inventory, research archive, Cxbx-era notes |
 | `wiki/` | Static StarCraft: Ghost reference wiki |
 | `extracted/`, `emulator/`, `logs/` | Game data, Cxbx binaries, run logs (gitignored) |

@@ -138,10 +138,11 @@ generated.
 - **Articles:** contextual plates where the subject warrants (a mission, a
   weapon, a location, a studio). Not one stock image per page.
 - **Media page:** a gallery of screenshots, wallpapers, and concept art.
-- **Treatment:** each plate has intrinsic width and height, `loading="lazy"`
-  except the hero, a caption, alt text, and a credit linking the source.
+- **Treatment:** each plate has intrinsic width and height, deferred loading (the
+  `loading` attribute) except the hero, a caption, alt text, and a credit
+  linking the source.
 - **Absent images:** when the local (gitignored) image set is not present, the
-  plate renders as an intentional bordered placeholder with the caption and
+  plate renders as an intentional bordered empty slot with the caption and
   credit. No fake imagery, no CSS blobs.
 - **Copyright:** images are local only, under `res/` and
   `wiki/site/assets/img/`, both gitignored. The tracked

@@ -1,4 +1,4 @@
-# 09 — Performance: where the frame goes
+# 09 - Performance: where the frame goes
 
 The menu runs at ~12 FPS and the input feels seconds behind. This is the first
 attempt to say where the time actually goes, from the runtime's own counters
@@ -9,12 +9,12 @@ of things to try, not a set of fixes yet.
 
 Much of the runtime is already instrumented, so no new code was needed:
 
-- `[GPU-D3D11] time:` / `draw phases:` — phase timers in
+- `[GPU-D3D11] time:` / `draw phases:` - phase timers in
   `src/kernel/nv2a_gpu_d3d11.cpp` (`gpu_timing`, reported by `nv2a_gpu_report`).
-- `[GPU] presentation:` / `draw time:` / `[GPU] draws` — the executor's own
+- `[GPU] presentation:` / `draw time:` / `[GPU] draws` - the executor's own
   counters in `src/kernel/nv2a_pb_exec.c` (`nv2a_pb_exec_report`, once every
   10 s).
-- `[FETCH]` / `[READ]` / `[FILE]` / `[PATH]` — asset I/O from the kernel layer.
+- `[FETCH]` / `[READ]` / `[FILE]` / `[PATH]` - asset I/O from the kernel layer.
 - `[KERNEL] ordinal` counts and the `xbox_log` throttle.
 
 The numbers below are the report at the main menu (last 10 s interval of a ~60 s
@@ -26,7 +26,7 @@ Guest threads (from `[KERNEL] PsCreateSystemThreadEx` in the boot log):
 
 | # | Routine | Behaviour |
 |---|---|---|
-| 1 | `0x001B3E34` | first call, **run inline** on the host main thread — this *is* the game starting (`kernel_bridge.c:613`) |
+| 1 | `0x001B3E34` | first call, **run inline** on the host main thread - this *is* the game starting (`kernel_bridge.c:613`) |
 | 2 | `0x001B3E34` | real spawned worker (`kernel_bridge.c:544`), context `0x00147280` |
 
 So the "2 Xbox threads" are real and map to two host threads. Recompiled code
@@ -35,14 +35,14 @@ its own simulated stack and TIB (`xbox_AllocThreadTib`), so they genuinely run
 concurrently.
 
 They synchronise through one guest critical section at `0x0031A818`, taken at
-guest site `0x0030FCBA` (`[CS]` lines, 54 in a boot). Contention is *mild* —
+guest site `0x0030FCBA` (`[CS]` lines, 54 in a boot). Contention is *mild* -
 this is not the bottleneck.
 
 Host-side helper threads (all real Win32 threads):
 
 | Thread | Created in | Job |
 |---|---|---|
-| main | — | guest thread 1; also the D3D11 executor |
+| main | - | guest thread 1; also the D3D11 executor |
 | worker | `kernel_bridge.c:553` | guest thread 2 |
 | ohci | `ohci.c:1148` | OHCI controller, 4 ms tick |
 | kernel timer | `kernel_bridge.c:2637` | guest timers/DPCs |
@@ -99,8 +99,8 @@ From the last report (`recomp/game/recomp_boot.log:3869-3886`):
 | `draw phases: streams` | 1.85 s | vertex stream append maps |
 | `hash` (texture change detect) | **14.36 s, 61.95 GiB hashed** | the single biggest line |
 | `sync` (readback/publish) | 14.67 s | |
-| — `readback: wait` | **10.72 s** | blocking on the GPU |
-| — `publication` | 3.74 s | CPU copy back to guest RAM |
+| - `readback: wait` | **10.72 s** | blocking on the GPU |
+| - `publication` | 3.74 s | CPU copy back to guest RAM |
 | readbacks | **16,333 color + 11,923 depth** | |
 | texture uploads | 81 created, ~1,000 updated, 0.05 GiB | almost nothing |
 | vertex prep | 24.2 M attribute fetches, 61.7 M skipped | |
@@ -113,7 +113,7 @@ per-batch setup for a very large number of small draw calls.
 
 ## 4. Root causes, ranked
 
-### 4.1 Texture change detection by full `memcmp` on every bind — 14.4 s / 62 GiB
+### 4.1 Texture change detection by full `memcmp` on every bind - 14.4 s / 62 GiB
 
 `nv2a_gpu_d3d11.cpp:1591-1601`. To decide whether a bound texture needs
 re-uploading, the backend walks the texture cache and `std::memcmp`s the entire
@@ -121,7 +121,7 @@ source image in guest RAM against a stored snapshot. With hundreds of binds per
 frame and multi-hundred-KiB textures this is 62 GiB of comparison per minute,
 and only ~1,000 uploads actually result. Nearly all of it is waste.
 
-### 4.2 Full readback + publish on every flip — sync 14.7 s, wait 10.7 s
+### 4.2 Full readback + publish on every flip - sync 14.7 s, wait 10.7 s
 
 `NV097_FLIP_STALL` calls `nv2a_pb_exec_flush()` (`nv2a_pb_exec.c:3555`) →
 `nv2a_gpu_sync()` (`nv2a_gpu_d3d11.cpp:1071`), which read-backs **every dirty
@@ -130,7 +130,7 @@ has finished. 16k color + 12k depth readbacks over a minute, 10.7 s spent
 waiting. Only the displayed surface strictly needs to be in guest RAM to be
 blitted; the rest is speculative.
 
-### 4.3 Per-batch CPU setup and vertex preparation — 8.1 s
+### 4.3 Per-batch CPU setup and vertex preparation - 8.1 s
 
 ~300 k hardware batches, ~74 M indices. For each batch the executor fetches and
 transforms attributes (`fetch_attr`), zeroes buffers (9 GiB avoided by a skip
@@ -144,7 +144,7 @@ small batches.
 `push 0xA; call [0x3618F0]`, and `0x3618F0` is the **KeBugCheck kernel thunk**.
 Our `bridge_KeBugCheck` logs and returns (`kernel_bridge.c:1689`), so execution
 continues and the call repeats. On hardware this would halt, so our `fs:[0x24]`
-is wrong — a correctness bug, and 44 k log writes were a measurable cost before
+is wrong - a correctness bug, and 44 k log writes were a measurable cost before
 they were throttled. This may also mean CRT per-thread state is not what the
 title expects, which is worth understanding before trusting any libc-dependent
 timing.
@@ -152,7 +152,7 @@ timing.
 ### 4.5 50 distinct unhandled NV2A methods
 
 31 k method submissions fall through to the unhandled counter. Each may force a
-state fallback or a redundant path; the distinct list is in the report. Worth
+state alternative or a redundant path; the distinct list is in the report. Worth
 mining as its own catalogue.
 
 ## 5. Quick wins (low risk, keep behaviour)
@@ -181,12 +181,12 @@ embarrassingly parallel *within a frame*:
 
 - **Vertex attribute fetch/transform** (24 M/frame-min): split batches across a
   worker pool. Each worker needs only a stack + TIB
-  (`xbox_worker_stack_alloc`, `xbox_AllocThreadTib`) — cheap and already used.
+  (`xbox_worker_stack_alloc`, `xbox_AllocThreadTib`) - cheap and already used.
 - **Texture decode + hashing**: decode is per-row/per-texel; the hash could run
   speculatively on a worker while the main thread proceeds.
 - **Readback/publish memcpy**: row-range split across threads; the Map/wait
   itself cannot be parallelised, which is why (5.2) matters more.
-- **Keep the two guest threads as they are** — do not try to parallelise guest
+- **Keep the two guest threads as they are** - do not try to parallelise guest
   logic; the register model is per-thread but guest semantics assume exactly
   those two.
 
@@ -197,7 +197,7 @@ plain C++ and has no such constraint, so it is the safest place to start.
 ## 7. What not to do
 
 - Do not remove readback wholesale: titles read render targets from CPU.
-- Do not sample-hash textures without an escape hatch — a missed change is
+- Do not sample-hash textures without an escape hatch - a missed change is
   visual corruption. Gate behind an env var until proven.
 - Do not parallelise the guest threads' own logic.
 
@@ -213,7 +213,7 @@ plain C++ and has no such constraint, so it is the safest place to start.
 
 Ranked by submissions in the last interval (`[GPU]   0x....` lines). Most are
 benign render state the executor does not need to act on; none should force a
-fallback. Names from `src/nv2a/nv2a_regs.h`.
+alternative. Names from `src/nv2a/nv2a_regs.h`.
 
 | Method | Count | Name / note |
 |---|---|---|
@@ -239,7 +239,7 @@ Two changes committed to the toolkit, measured on the same menu scene:
 |---|---|
 | Texture validation once per frame (`nv2a_gpu_d3d11.cpp`, `RECOMP_TEX_VALIDATE_ONCE`) | texture `hash` 14.4 s → ~2.1 s cumulative; FPS 12 → 16 |
 | Guest ISRs entered at DISPATCH_LEVEL (`ohci.c`, mirror into `fs:[0x24]`) | KeBugCheck 44,026 → 25 per boot; FPS 16 → 18 |
-| Completion-only sync + dirty-surface texture sampling (`RECOMP_SYNC_LIGHT`, now default on) | menu FPS 18 → **~30–35**; `sync` dominates no longer |
+| Completion-only sync + dirty-surface texture sampling (`RECOMP_SYNC_LIGHT`, now default on) | menu FPS 18 → **~30-35**; `sync` dominates no longer |
 
 The ISR fix is the chapter-4.4 root cause: the OHCI driver's transfer-queue
 routine lowers IRQL back to the level it was entered at, but we entered its ISR
@@ -253,13 +253,13 @@ video→menu transition, because `refresh_surface` re-uploaded a dirty surface
 from guest RAM and overwrote the GPU's newer render with the previous publish.
 The fix is in the texture path: while a surface is dirty it is sampled from the
 GPU texture directly and `refresh_surface` is skipped. With that, ordering
-events need no readback, and the menu holds ~30–35 FPS (stable over 130 s, no
+events need no readback, and the menu holds ~30-35 FPS (stable over 130 s, no
 crashes). `RECOMP_SYNC_LIGHT=0` restores the old full-publication behaviour.
-The instrumentation that found this — `[GPU] flushes:` by reason — is kept.
+The instrumentation that found this - `[GPU] flushes:` by reason - is kept.
 
 ## Evidence
 
-- Boot log: `recomp/game/recomp_boot.log` — `[GPU]`, `[GPU-D3D11]`,
+- Boot log: `recomp/game/recomp_boot.log` - `[GPU]`, `[GPU-D3D11]`,
   `[KERNEL] PsCreateSystemThreadEx`, `[CS]`.
 - Executor: `src/kernel/nv2a_pb_exec.c` (`nv2a_pb_exec_report`, flip handling).
 - Backend: `src/kernel/nv2a_gpu_d3d11.cpp` (`nv2a_gpu_sync`, texture cache).

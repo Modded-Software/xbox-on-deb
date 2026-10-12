@@ -1,4 +1,4 @@
-# 19 — NV2A completion-ack audit: the root cause of the memory corruption
+# 19 - NV2A completion-ack audit: the root cause of the memory corruption
 
 Author: workspace agent, 2026-10-10. Consult: Claude Opus 5.5
 (`/tmp/opencode/ask-claude-20261010-142258.log`), plus an independent read of
@@ -11,8 +11,8 @@ acknowledgement**: `fence_mirrors_tick()` runs at the top of the NV2A tick
 (`xbox_memory_layout.c:1121`), **before** the pushbuffer walk has executed
 anything, and copies the device's *issued* fence value (`[dev+0x2C]`) into the
 fence the guest polls. D3D therefore believes every GPU command has retired and
-immediately reuses / refills / frees ring space and dynamic buffers — including
-font glyph quads and vertex buffers — while the ack thread is still walking and
+immediately reuses / refills / frees ring space and dynamic buffers - including
+font glyph quads and vertex buffers - while the ack thread is still walking and
 executing them. The walk then reads half-overwritten memory: a long run of
 zeroed words with a stale word left over that decodes as a JUMP, which the
 walker follows into non-command memory, executing garbage methods (the
@@ -47,7 +47,7 @@ commands. (envytools `docs/hw/fifo/dma-pusher.rst`.)
 ## Findings, ranked
 
 1. **False completion ack (root cause).** `fence_mirrors_tick()`
-   (`xbox_memory_layout.c:895`) is called at `:1121` — before the walk — and
+   (`xbox_memory_layout.c:895`) is called at `:1121` - before the walk - and
    again at `:1284`. The `:1121` call writes the issued fence into the polled
    fence before execution. `event_signals_tick()` (`:958`, called `:1285`)
    signals D3D's retire event (`dev+0x1DCC`) every tick unconditionally.
@@ -76,12 +76,12 @@ commands. (envytools `docs/hw/fifo/dma-pusher.rst`.)
 
 - A large kick `[0x8018C1D0, 0x80193678)` decodes as a **self-consistent** NV2A
   method stream for its first ~1671 words (inline vertex data: non-increasing
-  method `0x1818` with 28 params, method `0x17FC` with 1 param — addresses
+  method `0x1818` with 28 params, method `0x17FC` with 1 param - addresses
   line up exactly with the decoded counts), then ~1671 words of `0x00000000`
   (each a 0-count NOP), containing one stale word `0x01A93001` that decodes as
   JUMP to `0x81A93000`. Following it executes garbage -> RAMHT fault.
 - PUT advances monotonically in small steps (a lap in progress), so the zero
-  region is genuinely inside `[GET, PUT)` — i.e. the memory was **changed after
+  region is genuinely inside `[GET, PUT)` - i.e. the memory was **changed after
   it was written**, matching early reuse (finding 1), not a misparse.
 - The same binary renders a skinned character fully textured at 640x480 but
   black/untextured at 1280x720, and garbles a font-atlas UI glyph. Both are
@@ -96,12 +96,12 @@ The user reported the corruption when it appeared. Instead of auditing the
 completion path I added walker guards on top of the symptom:
 
 - `8dafb3a` window bounds check (prevents a host access violation, keeps the
-  desync) — necessary but only masks the crash.
+  desync) - necessary but only masks the crash.
 - `480f795` stop the method payload loop at PUT + packet dump.
-- (uncommitted) "reject a jump target past PUT" — too aggressive; it **drops
+- (uncommitted) "reject a jump target past PUT" - too aggressive; it **drops
   whole kicks**, which is why the guard build rendered the character black and
   the glyphs garbled.
-- (uncommitted) "stop at a run of 0x00000000 headers (unwritten ring tail)" —
+- (uncommitted) "stop at a run of 0x00000000 headers (unwritten ring tail)" -
   also a symptom patch; on its own it stops the crash but does not stop the
   guest reusing memory.
 
@@ -131,8 +131,8 @@ Report GPU completion only from executed work.
   (1280x720 KBM) and saves BMP+PNG frames under
   `recomp/tests/baselines/captures/<t>/`; `--diff <a> <b>` reports mean absolute
   pixel error and percent over tolerance (`recomp/tests/fbtool.py` does the
-  BMP->PNG + diff, stdlib only — no PIL/ImageMagick on this host).
-- `python3 recomp/tests/run.py --user-state --only a-mash` must PASS with
+  BMP->PNG + diff, stdlib only - no PIL/ImageMagick on this host).
+- `uv run python recomp/tests/run.py --user-state --only a-mash` must PASS with
   `[PB] desync` / `[PB-UNK]` = 0 and no `RAMHT object unavailable`.
 - The captured title-screen character must be textured (visually, and
   `pct_over_tol` vs a pre-regression capture near 0).

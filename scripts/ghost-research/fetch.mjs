@@ -95,7 +95,6 @@ const SOURCES = [
   ["kotaku-morhaime-2011", wbx("2011", "https://kotaku.com/the-head-of-blizzard-explains-the-death-of-starcraft-gh-30833489"), "history"],
   ["vg247-demo-reel", "https://www.vg247.com/nihilistic-software-demo-reel-shows-a-glimpse-of-starcraft-ghost", "history"],
   ["gamesindustry-qa-2005", "https://www.gamesindustry.biz/starcraft-ghost-questions-answers", "history"],
-  ["n-europe-e3-2004", wbx("2004", "https://n-europe.com/news/e3-2004-starcraft-press-release/"), "history"],
   ["vooks-delayed-2004", "https://www.vooks.net/starcraft-ghost-delayed/", "history"],
   ["blizzplanet-faq", "https://www.blizzplanet.com/blog/comments/starcraft_ghost_faq", "history"],
   ["blizzplanet-abilities", "https://www.blizzplanet.com/blog/comments/starcraft_ghost___abilities", "history"],

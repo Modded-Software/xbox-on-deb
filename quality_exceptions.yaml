@@ -1,0 +1,24 @@
+# quality_exceptions.yaml: per-project exception declarations.
+#
+# This file is mandatory at every project root. It lives
+# permanently in the repo root (sibling to Makefile) so every reviewer
+# sees it on every PR: that visibility is the social check, replacing
+# any time-based expiry.
+#
+# Schema (one entry per exception):
+#   hook      : id from required_hooks.yaml. Must point to a hook with
+#                mandatory: false. Mandatory hooks (lint, type-check,
+#                gitleaks, ...) cannot be exempted.
+#   reason    : minimum 20 characters. Explain WHY this scope is exempt.
+#   paths     : list of path prefixes (≥1 entry). Whole-hook skips
+#                (paths: null) are not allowed.
+#   added_by  : email of the person adding the exception.
+#   ticket    : optional issue/PR ref.
+#
+# Empty exceptions list (`exceptions: []`) is allowed: it means the
+# project is fully compliant with no opt-outs. The file must still
+# exist; missing file = compliance failure.
+
+version: 1
+project: xbox-on-deb
+exceptions: []

@@ -8,7 +8,7 @@ import urllib.parse
 import gi
 
 gi.require_version("Gio", "2.0")
-from gi.repository import GLib, Gio  # noqa: E402
+from gi.repository import GLib, Gio
 
 BUS_NAME = "org.freedesktop.portal.Desktop"
 OBJ_PATH = "/org/freedesktop/portal/desktop"
@@ -36,7 +36,7 @@ def main():
         bus.call_sync(BUS_NAME, OBJ_PATH, IFACE, "Screenshot", args, None,
                       Gio.DBusCallFlags.NONE, -1, None)
     except GLib.Error as err:
-        raise SystemExit(f"portal Screenshot call failed: {err.message}")
+        raise SystemExit(f"portal Screenshot call failed: {err.message}") from err
 
     GLib.timeout_add(20000, lambda: (loop.quit(), False)[1])
     loop.run()

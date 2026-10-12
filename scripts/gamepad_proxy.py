@@ -19,12 +19,15 @@ import argparse
 import ctypes
 import fcntl
 import glob
+import logging
 import os
 import select
 import struct
 import sys
 
 import uinput
+
+log = logging.getLogger("gamepad_proxy")
 
 BYID = "/dev/input/by-id/usb-Microsoft_Controller_*-event-joystick"
 EVIOCGRAB = 0x40044590
@@ -115,7 +118,7 @@ def main():
     try:
         fcntl.ioctl(fd, EVIOCGRAB, 1)
     except OSError as exc:
-        print(f"warning: could not grab source ({exc}); duplicate possible", file=sys.stderr)
+        log.warning("could not grab source (%s); duplicate possible", exc)
 
     try:
         while True:
@@ -124,7 +127,8 @@ def main():
                 continue
             try:
                 chunk = os.read(fd, INPUT_EVENT.size * 64)
-            except BlockingIOError:
+            except BlockingIOError as exc:
+                log.debug("non-blocking read returned no event: %s", exc)
                 continue
             for off in range(0, len(chunk) - INPUT_EVENT.size + 1, INPUT_EVENT.size):
                 _s, _us, etype, code, value = INPUT_EVENT.unpack_from(chunk, off)

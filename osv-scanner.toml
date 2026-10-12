@@ -1,0 +1,12 @@
+# OSV-Scanner configuration for this repository.
+#
+# Suppressions are socially audited via PR review (same model as
+# quality_exceptions.yaml). Every entry MUST have a non-empty reason.
+# Every entry MUST set ignoreUntil (expiry).
+#
+# Schema reference: OSV-Scanner config file (IgnoredVulns).
+#
+# [[IgnoredVulns]]
+# id = "GHSA-xxxx-yyyy-zzzz"
+# reason = "No fixed version; not exploitable in our usage (no middleware)."
+# ignoreUntil = 2026-10-01

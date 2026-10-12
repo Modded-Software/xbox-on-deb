@@ -1,19 +1,19 @@
-# 15 — Performance hotspots: the in-mission CPU profile
+# 15 - Performance hotspots: the in-mission CPU profile
 
 Audit of where host CPU actually goes while the recompiled build runs the first
 mission (`1_3_1b_Hive_StationOuter`). This supersedes the earlier
 menu-focused budget in [09-performance.md](09-performance.md) with a real
 host-sampled, symbolicated profile of in-mission gameplay.
 
-**Target: 45 FPS. Baseline: ~10–23 FPS in-mission.**
+**Target: 45 FPS. Baseline: ~10-23 FPS in-mission.**
 
 > **CORRECTION (2026-10-11).** The symbolisation in this document was off by
 > `0x1000`: `profile-recomp.py` treated the start of the anonymous executable
 > mapping as `ImageBase`, but Wine maps the PE's `.text` section anonymously and
 > that mapping begins at `ImageBase + SectionAlignment` (`0x140001000`), not at
 > `ImageBase`. Every function name below the first page was therefore wrong: the
-> `D3D_ComputeGap_002C5EA0` `32.7–34.8%` hotspot is really
-> **`D3D_CDevice_KickOff_002C62B0`** (`recomp_0059.c:16612`) — the guest's
+> `D3D_ComputeGap_002C5EA0` `32.7-34.8%` hotspot is really
+> **`D3D_CDevice_KickOff_002C62B0`** (`recomp_0059.c:16612`) - the guest's
 > push-buffer kick, spinning on the NV2A PFB write-combine-flush handshake at
 > register `0x100410`/bit `0x10000`. That is the true root cause (see
 > `recomp/diary/freeze-investigation.md`); the "ComputeGap/BlockOnTime fence
@@ -39,9 +39,9 @@ names appear. The tooling added here fixes that:
 
 `profile-recomp.py` symbolicates by locating the anonymous executable mapping
 that holds the sample IPs (the PE's ASLR-chosen load base), converting each IP
-to a PE VA (`IP − mapping_start + section VMA`) — the section VMA is derived from
+to a PE VA (`IP − mapping_start + section VMA`) - the section VMA is derived from
 `llvm-objdump -h` so the `.text` mapping's `ImageBase + 0x1000` offset is
-accounted for — and resolving it with `llvm-symbolizer` against
+accounted for - and resolving it with `llvm-symbolizer` against
 `recomp/game/build/ghost.exe` (which auto-loads `ghost.pdb`).
 
 Reproduce:
@@ -66,8 +66,8 @@ Representative run: 32,656 `cpu-clock` samples over 30 s of gameplay,
 | 3.1% | `recomp_fp_round24` | runtime: x87 rounding helper for recompiled FP |
 | 2.4% | `gpu_submit_chunk` (`nv2a_pb_exec.c`) | runtime: pushbuffer execution |
 | 2.1% | `D3DDevice_Clear_24_002C9090` | guest: D3D clear |
-| **~11–13% combined** | `dsp_cpu.c`, `dsp_emu.c.inc`, `dsp_dis.c.inc`, `dsp_mul56`, `dsp56k_read_memory`, `emu_*` | runtime: **DSP56300 interpreter** (see Step 2) |
-| 7.4% | `d3d/d3d8_resources.c` | runtime: D3D8 resource shim |
+| **~11-13% combined** | `dsp_cpu.c`, `dsp_emu.c.inc`, `dsp_dis.c.inc`, `dsp_mul56`, `dsp56k_read_memory`, `emu_*` | runtime: **DSP56300 interpreter** (see Step 2) |
+| 7.4% | `d3d/d3d8_resources.c` | runtime: D3D8 resource adapter |
 | 3.8% | `kernel/nv2a_pb_exec.c` | runtime: pushbuffer walker |
 
 Per-thread: the guest main Win32 thread spends ~93% of its own samples inside
@@ -75,7 +75,7 @@ Per-thread: the guest main Win32 thread spends ~93% of its own samples inside
 threads. So the frame loop is *waiting*, and the CPU is busy in a spin, not in
 useful work.
 
-## Step 1 — `D3D_ComputeGap_002C5EA0` = 34.8% (guest fence busy-wait)
+## Step 1 - `D3D_ComputeGap_002C5EA0` = 34.8% (guest fence busy-wait)
 
 It is *not* a heavy function. `D3D_ComputeGap` is a 21-instruction leaf
 (`recomp_0059.c:15738`, original `0x002C5EA0`, 47 bytes):
@@ -101,13 +101,13 @@ present/swap path (`recomp_0060.c:16215`, original `0x002CF150`). The guest
 generates commands (~815 draws/frame) as fast as it can and then **spins** (the
 caller re-enters the wait until the ring drains) until the emulated GPU has
 consumed enough of the ring. The runtime advances the GPU read pointer when
-`nv2a_pb_run` drains the pushbuffer and the D3D11 submissions complete — so how
+`nv2a_pb_run` drains the pushbuffer and the D3D11 submissions complete - so how
 long the guest spins is set by the runtime's completion/fence signalling.
 
 This is the same wall already visible from the runtime side
 ([09-performance.md](09-performance.md) §4.2): completion-event waits dominate
 the runtime interval (colour readback + depth publish every flip). The host
-profile shows the *other* end of that wait — the guest burning a core polling it.
+profile shows the *other* end of that wait - the guest burning a core polling it.
 
 **Ranked first because it is the largest single cost and it is pure stall.**
 Directions (to be measured, not assumed):
@@ -119,26 +119,26 @@ Directions (to be measured, not assumed):
 - Fewer `BlockOnTime` stalls per frame (less redundant state/buffer-wait churn).
 - Confirm the 0x2000 threshold and ring size are not forcing extra round trips.
 
-## Step 2 — DSP56300 interpreter ~11–13% (runtime APU)
+## Step 2 - DSP56300 interpreter ~11-13% (runtime APU)
 
 The GP and EP audio DSPs are emulated with a **per-instruction DSP56300
 interpreter** ported from xemu/Hatari:
 `src/apu/dsp/dsp_cpu.c` (`dsp56k_execute_instruction`), `dsp_emu.c.inc` (239 KB
 of opcode implementations), `dsp_dis.c.inc`, `dsp_dma.c`.
 
-It runs every APU frame in `apu_dsp.c:668–716` `dsp_frame_engine()`:
-- VP mixbins are written into GP X memory (`:657–663`),
-- `do { dsp_run(d->gp.dsp, 1000); } while (!is_idle && realtime);` (`:674–676`),
-- same for EP at `:705–707`.
+It runs every APU frame in `apu_dsp.c:668-716` `dsp_frame_engine()`:
+- VP mixbins are written into GP X memory (`:657-663`),
+- `do { dsp_run(d->gp.dsp, 1000); } while (!is_idle && realtime);` (`:674-676`),
+- same for EP at `:705-707`.
 
-**It is on by default.** `apu_dsp_engine_enabled()` (`apu_dsp.c:45–53`) returns
-true unless `RECOMP_APU_DSP=0`. Rationale (`apu_dsp.c:55–61`): DirectSound init
+**It is on by default.** `apu_dsp_engine_enabled()` (`apu_dsp.c:45-53`) returns
+true unless `RECOMP_APU_DSP=0`. Rationale (`apu_dsp.c:55-61`): DirectSound init
 spins until the GP DSP program writes a zero acknowledgement word back, so the
-passthrough stub needs `RECOMP_APU_DSP_ACK` to fake it or the title hangs.
+passthrough no-op needs `RECOMP_APU_DSP_ACK` to fake it or the title hangs.
 
-**Documentation drift:** `apu/README.md:6–7` and `:56–57`, and the file header at
-`apu_dsp.c:11` still describe GP/EP as "stubbed — passthrough". The interpreter
-is the default path (`apu_dsp.c:6–9,42–44`). This needs correcting.
+**Documentation drift:** `apu/README.md:6-7` and `:56-57`, and the file header at
+`apu_dsp.c:11` still describe GP/EP as "stubbed - passthrough". The interpreter
+is the default path (`apu_dsp.c:6-9,42-44`). This needs correcting.
 
 Directions:
 1. Measure whether the title needs the engine: `RECOMP_APU_DSP=0`
@@ -149,7 +149,7 @@ Directions:
    whose program was actually downloaded, shrink the per-frame cycle budget.
 3. Long term: AOT-lift the DSP program the way the game's x86 is lifted.
 
-## Busy-wait handling — the #1 emulator performance class
+## Busy-wait handling - the #1 emulator performance class
 
 Guest busy-waits are the single most common source of "why is this emulator
 slow": the guest polls a value that only the emulator's device model can change,
@@ -164,7 +164,7 @@ mature emulator has an explicit remedy:
 | VMware ESX / Denali / Xen | Binary translation / source instrumentation detects OS idle loops and deschedules the vCPU; hardware spin-detection patents drive VM exits. |
 | Intel VMX / KVM | PAUSE-loop exiting; `handle_pause()` yields to the lock-holder vCPU. QEMU `WFI`/`HLT` set `cpu->halted` so the vCPU thread sleeps instead of spinning. |
 
-The common shape: **classify the loop, then stop executing it** — advance the
+The common shape: **classify the loop, then stop executing it** - advance the
 emulated clock to the next event (or yield), and re-check the polled value only
 when that event fires. The correct shortcut is to keep DMA/device work and
 interrupts live; only the *empty spin* is elided.
@@ -188,7 +188,7 @@ recompiler the analogue is:
 
 Open question to settle before implementing: whether the current cost is the
 spin *itself* (pure waste, an easy skip) or contention with the emulator's
-device threads (the spin starving the GPU/present/APU threads — which the
+device threads (the spin starving the GPU/present/APU threads - which the
 runtime-side lock/threading would have to fix). The host profile shows the DSP
 and `fb_present`/`gpu_submit_chunk` work on worker threads while the guest main
 thread is ~93% in the `ComputeGap` wait, so both are plausible; measure with the
@@ -234,7 +234,7 @@ ack thread to advance `DMA_GET`. Each guest submission that forces a
 `BlockOnTime` wait costs at least one ack-thread scheduling round trip plus the
 `nv2a_pb_run` walk for the methods the guest just submitted. If the guest kicks
 PUT once per frame this is negligible; if it kicks per draw/batch (~hundreds per
-frame) the per-submission round trips dominate — which is the measurement to
+frame) the per-submission round trips dominate - which is the measurement to
 take next (count `DMA_PUT` advances per frame, and time one `nv2a_pb_run`).
 
 Candidate runtime-side fixes (no guest/generated code changes needed):
@@ -251,7 +251,7 @@ Candidate runtime-side fixes (no guest/generated code changes needed):
 Only if none of those are the cost does a recompiler-side idle-loop skip
 (Dolphin `CoreTiming::Idle` analogue) make sense.
 
-### Design consult (Claude) — 2026-10-09
+### Design consult (Claude) - 2026-10-09
 
 Claude read `nv2a_ack_thread` (`xbox_memory_layout.c:1006`), `nv2a_pb_run`
 (`nv2a_pb_scan.c:281`) and the software-method path (`kernel_bridge.c:2664`) and
@@ -261,7 +261,7 @@ gave this direction:
   executes everything GET→PUT and only then writes `GET = PUT` (`:1146`), so
   anything waiting on GET waits for the full `nv2a_pb_run`, including D3D11
   execution. `Sleep(0)` under Wine is a plain yield, so the ack thread busy-spins
-  too — likely two cores burned (guest + ack).
+  too - likely two cores burned (guest + ack).
 - **Measure first, one counter:** distinguish a **free-space wait** (reserve wants
   ~0x2000 bytes; stepped GET fixes it) from a **fully-drained wait** (GET==PUT,
   Present/fence; stepped GET does nothing, only faster execution helps). Log the
@@ -269,26 +269,26 @@ gave this direction:
   return address (watchdog stack scan → `recomp_dispatch.c`). Static read of
   `D3D::BlockOnTime` says the profiled hotspot is the `ComputeGap` gap branch =
   a **free-space/back-pressure wait**, which stepped GET should help.
-- **Root cause fix — publish GET during the walk.** Inside `nv2a_pb_run`, at safe
+- **Root cause fix - publish GET during the walk.** Inside `nv2a_pb_run`, at safe
   points store `GET = va & 0x0FFFFFFF` (same physical mask). Pitfalls: (1) publish
   only where nothing still references guest memory (after a draw's END, or at each
   JUMP) or a deferred vertex/index read becomes the lost-command race the `:1035`
-  comment describes; (2) only publish when GET points into the ring — during a
+  comment describes; (2) only publish when GET points into the ring - during a
   JUMP/CALL the hardware GET sits in the secondary buffer and D3D relies on the
-  `DMA_SUBROUTINE` fallback this runtime leaves zero (`:305-318`), or free space
+  `DMA_SUBROUTINE` alternative this runtime leaves zero (`:305-318`), or free space
   clamps to 0 and the guest spins forever; (3) software methods: `kernel_bridge.c:2664`
-  sets `GET = PUT` *before* the guest routine runs — publish current `va` instead;
+  sets `GET = PUT` *before* the guest routine runs - publish current `va` instead;
   the sync `xbox_Nv2aSoftwareMethod` from a handler still deadlocks; (4) use
   `InterlockedExchange`/volatile store after executor writes; (5) never move GET
-  backwards across the budget-exhausted resync (`:348`).
-- **Idle-skip, lazy version.** Don't rewrite the wait condition; patch the *body*
+  older-version across the budget-exhausted resync (`:348`).
+- **Idle-skip, deferred version.** Don't rewrite the wait condition; patch the *body*
   of the backoff call in the guest's wait loop (Ghost's equivalent of Halo's
-  `BusyLoop`, `:273`) to `SwitchToThread()` or a ~0.5–1 ms timed event-wait the
+  `BusyLoop`, `:273`) to `SwitchToThread()` or a ~0.5-1 ms timed event-wait the
   ack thread signals on each GET publish. The guest loop still re-checks GET, so
   semantics can't change and it can't hang. Pitfalls: regen wipes gen-code edits
   (record in `MANUAL_PATCHES.md`, or hook by VA in the dispatch table); check
   *every* caller of the backoff (video/audio timing loops break if it sleeps);
-  don't let the ack thread `Sleep(1)` (1–15 ms/kick) — spin a few hundred
+  don't let the ack thread `Sleep(1)` (1-15 ms/kick) - spin a few hundred
   iterations then `SwitchToThread`.
 - **Expected effect:** idle-skip alone returns CPU but barely moves FPS unless
   cores are oversubscribed; stepped GET is what improves frame time, and only for
@@ -298,7 +298,7 @@ gave this direction:
   PUT change (`:1165`); `fence_mirrors_tick()` is called twice per pass
   (`:1048`, `:1168`).
 
-## Update 2026-10-09 — corrected baseline: every earlier "in-game" number was a menu/loading screen
+## Update 2026-10-09 - corrected baseline: every earlier "in-game" number was a menu/loading screen
 
 The `ComputeGap` 34.8% and the ~12 FPS above were **not gameplay**. `goto_mission`
 matched the bare map name, whose first log occurrence is the asset manifest
@@ -321,25 +321,25 @@ Phase table (same build, `goto_gameplay` + window caption):
 | **Gameplay** (HUD + objective + radar) | world shaders loaded | **~8.2** (min 6, max 10 over 15 s) |
 
 Verified with `RECOMP_KICK_STATS=1 PERF_WINDOW=15 run.py --user-state --only performance`:
-`[GPU] presentation: 8.49 / 8.10 FPS`; `[KICK]` ~400–409 kicks/s, **96–98% of the
-ack thread's wall time inside `nv2a_pb_run`**, ~2.4 ms/kick — i.e. ~50 kicks per
+`[GPU] presentation: 8.49 / 8.10 FPS`; `[KICK]` ~400-409 kicks/s, **96-98% of the
+ack thread's wall time inside `nv2a_pb_run`**, ~2.4 ms/kick - i.e. ~50 kicks per
 frame at 8 FPS and ~0.96 s of executor time per second. Gameplay is therefore
 **executor-bound**: the guest's `ComputeGap`/`BlockOnTime` spin is back-pressure on
 `nv2a_pb_run`, not an idle loop worth skipping. Idle-skip would not raise FPS; the
 target is executor throughput (`nv2a_pb_exec.c` / the D3D11 backend).
 
-Next metric before optimizing: split "too many kicks" from "each kick is too slow" —
+Next metric before optimizing: split "too many kicks" from "each kick is too slow" -
 kicks/frame (~50) vs the per-kick 2.4 ms, and break that 2.4 ms into method
 execution vs `gpu_sync_impl` completion waits (`[GPU-D3D11] completion:` /
 `readback:` in the report).
 
 ## Secondary costs (not yet ranked)
 
-- `fb_exit_process` / `fb_present.c` 5.4% — the framebuffer present thread.
-- `bcmp` 4.3% — texture change detection by full `memcmp` on every bind
+- `fb_exit_process` / `fb_present.c` 5.4% - the framebuffer present thread.
+- `bcmp` 4.3% - texture change detection by full `memcmp` on every bind
   (already flagged in [09-performance.md](09-performance.md) §4.1).
-- `d3d/d3d8_resources.c` 7.4% — D3D8 resource shim (locks/unlocks, row pitch).
-- `gpu_submit_chunk` + `nv2a_pb_exec.c` 3.8% — pushbuffer walker.
+- `d3d/d3d8_resources.c` 7.4% - D3D8 resource adapter (lock/release, row pitch).
+- `gpu_submit_chunk` + `nv2a_pb_exec.c` 3.8% - pushbuffer walker.
 
 ## Next actions
 
@@ -351,7 +351,7 @@ Ordered by what the verified gameplay numbers say matters:
    the GPU (`gpu_sync_impl(false)`, `nv2a_gpu_d3d11.cpp:1119`) on every ordering
    event, ~50x/frame; that is the prime suspect for the per-kick cost.
 2. **Reduce executor work per frame:** the `[GPU-D3D11]` report's per-frame
-   contributors — draw stages (setup/textures/streams), 164k append maps,
+   contributors - draw stages (setup/textures/streams), 164k append maps,
    84k scissor-only window-clip draws, `color copied 1.4 GiB` / `published 1.8
    GiB` per flip. Measure with `goto_gameplay` (not the menu).
 3. **Busy-wait/idle-skip is NOT the lever here** (executor-bound, one core ~96%
@@ -378,23 +378,23 @@ Ordered by what the verified gameplay numbers say matters:
   `:16847` (`D3D_BlockOnTime`); `refs/xboxrecomp/src/apu/apu_dsp.c:45,668`;
   `refs/xboxrecomp/src/apu/dsp/dsp.c:146`.
 
-## Update 2026-10-09 — GPU1 unpinned *and* measurement variance; the per-event drain is load-bearing
+## Update 2026-10-09 - GPU1 unpinned *and* measurement variance; the per-event drain is critical
 
 Two corrections from the first autonomous optimisation pass.
 
-**GPU pinning changes the baseline.** `scripts/config.env` now pins `DRI_PRIME`
+**GPU pinning changes the baseline.** `scripts/config.sh` now pins `DRI_PRIME`
 to GPU1 (PCI 09:00.0/renderD129; GPU0 is shared with the host). On the now-free
-GPU the same build measured **~12–20 FPS in gameplay**, not the ~8 FPS above
+GPU the same build measured **~12-20 FPS in gameplay**, not the ~8 FPS above
 (which was taken while GPU0 was contended). The 45 FPS target is against this
 new baseline.
 
-**Run-to-run variance is ±30–40%**, larger than most single optimisations, so a
+**Run-to-run variance is ±30-40%**, larger than most single optimisations, so a
 single 10 s measurement proves nothing. Same build, same `goto_gameplay`,
 `--only performance`, back to back:
 
 | run | mean | window FPS | kicks/s | µs/kick |
 |---|---:|---:|---:|---:|
-| control | 14.1 | — | — | — |
+| control | 14.1 | - | - | - |
 | `RECOMP_ORDER_NO_WAIT=1` #1 | 16.5 | 16.79 | ~620 | ~1550 |
 | control #2 | 19.0 | 20.39 | ~510 | ~1900 |
 | `RECOMP_ORDER_NO_WAIT=1` #2 | 12.6 | 12.50 | ~670 | ~1450 |
@@ -404,9 +404,9 @@ The flag controls one thing: `gpu_sync_impl(false)` (the ordering path,
 retire; the experiment made it return without draining, leaving `pending_draws`
 set for the next real publish.
 
-**Result: the drain is load-bearing, and the experiment is a net loss.** Without
+**Result: the drain is critical, and the experiment is a net loss.** Without
 it the guest is not back-pressured per ordering event, so it races ahead
-(~670 kicks/s vs ~510), each kick is *cheaper* (~1.45 ms vs ~1.9 ms — the
+(~670 kicks/s vs ~510), each kick is *cheaper* (~1.45 ms vs ~1.9 ms - the
 completion waits collapse from 4.6 s to 0.15 s over the run), but the flip
 `nv2a_gpu_sync()` then has to drain the whole deepened backlog, so FPS *falls*
 (12.5 vs 20.4). Shallow, per-event draining keeps the CPU and GPU in lockstep;
@@ -414,29 +414,29 @@ deep queuing is worse. (The first flag-on run's 16.5 was variance.) The code is
 reverted; do not retry this direction. `/tmp/opencode/perf_{control,nowait}.log`.
 
 Implication: **kicks/s and µs/kick move in opposite directions under this knob,
-so neither is the metric — wall FPS is, and it is too noisy at n=1.** Before the
+so neither is the metric - wall FPS is, and it is too noisy at n=1.** Before the
 next optimisation, raise the confidence of the measurement (repeat and take the
 median/mean, longer window, or a deterministic scene) or the next "win" will be
 noise too.
 
 Still standing from the evidence above: per-flip executor work is dominated by
-`draw`/`texture`/`sync` (`[GPU-D3D11] time:` — ~28 ms draw/flip, ~19 ms
+`draw`/`texture`/`sync` (`[GPU-D3D11] time:` - ~28 ms draw/flip, ~19 ms
 sync/flip, ~15 ms texture/flip at the control's cadence), ~794 draws/flip, and
 `texture` alone is ~15 ms/flip while `hash` (the once-per-frame validation
 `memcmp`) is <1 s over the whole run.
 
-## Update 2026-10-09 (later) — executor is CPU-bound; per-kick wins are consumed
+## Update 2026-10-09 (later) - executor is CPU-bound; per-kick wins are consumed
 
 Two hard findings, both measured on GPU1.
 
 **The executor is CPU-bound, not GPU-wait-bound.** `[KICK]` now also reports the
 ack thread's own CPU time (`GetThreadTimes`) over the window: `ack cpu` is
-**86–90% of the window at ~1 core**, so `nv2a_pb_run` really is burning CPU (only
-~10–14% is `SwitchToThread` yielding while the GPU finishes). Combined with the
+**86-90% of the window at ~1 core**, so `nv2a_pb_run` really is burning CPU (only
+~10-14% is `SwitchToThread` yielding while the GPU finishes). Combined with the
 GPU sample math (**~21 ms GPU/frame at ~30% utilisation**, GS invoked on nearly
 every draw), the frame is limited by the ack thread's CPU, with ~2× GPU headroom.
 
-**Per-kick speedups do not raise FPS — the guest just kicks more.** Fixed an
+**Per-kick speedups do not raise FPS - the guest just kicks more.** Fixed an
 O(n) diagnostic in the hot path: `note()` (`nv2a_pb_scan.c:60`) ran once per
 pushbuffer method word and linearly scanned up to `PB_MAX_METHODS` (4096) seen
 entries. The title submits **~24k vertex-program words + ~13k constant words per
@@ -452,7 +452,7 @@ and vertex arrays re-sent every frame). So the lever is **total executor work pe
 frame**, not per-kick latency.
 
 Open measurement problem: the mission-start scene still varies run to run enough
-that FPS spans ~13–20 on identical binaries (`perf_control.log` 19.0 vs
+that FPS spans ~13-20 on identical binaries (`perf_control.log` 19.0 vs
 `perf_note.txt` 13.7). Per the note above this must be fixed (deterministic scene
 / longer window / flips-from-`[GPU] presentation`) before the next change can be
 judged; until then, judge changes by the *executor* metrics (`kick walk avg`,
@@ -468,15 +468,15 @@ Structural candidates for the 3× needed (runtime-only, high risk, unimplemented
 3. **Skip the geometry shader** on draws that do not need it (GPU has headroom
    but GS runs on ~every draw).
 
-## Update 2026-10-09 (later still) — GPU1 hard-locked; swizzled render-target aliases sampled directly
+## Update 2026-10-09 (later still) - GPU1 hard-locked; swizzled render-target aliases sampled directly
 
 **GPU1 is now enforced by UUID, not by enumeration order.** `DRI_PRIME` only
 reorders the Vulkan device list; DXVK still enumerates (and opens) every device,
-so both render nodes showed up. `scripts/config.env` now also exports
+so both render nodes showed up. `scripts/config.sh` now also exports
 `DXVK_FILTER_DEVICE_UUID` (default `8680a0560800000009000000000000` = bus 09; the
 bus-03 UUID when `DRI_PRIME` is pinned to GPU0). DXVK's log confirms the bus-03
 A770 and llvmpipe are skipped with `Skipping: UUID filter`. Every launch/test path
-sources `config.env` (`14`, `18`→`14`, `15`→`14`, `06`, `11`, `profile-launch`,
+sources `config.sh` (`14`, `18`→`14`, `15`→`14`, `06`, `11`, `profile-launch`,
 `measure_load`; `framework.py` shells out to `14`/`18`).
 
 **Biggest GPU sync eliminated (Claude finding #1, corrected).** The per-frame
@@ -486,7 +486,7 @@ colour surface at the same memory/pitch (`0x99753000`). `direct` was always null
 because the selector (`nv2a_gpu_d3d11.cpp:1671`) required `binding.linear` and
 `{0x12,0x1E}`. A colour surface is always created `DXGI_FORMAT_B8G8R8A8_UNORM`
 (`:971`) and `0x07` maps to the same format (`:1794`), so the surface view is
-byte-compatible and holds the resolved pixels — the guest swizzle is a storage
+byte-compatible and holds the resolved pixels - the guest swizzle is a storage
 detail. The selector now accepts `0x07` regardless of `binding.linear`
 (`surface_viewable`), so this bind samples the surface view directly instead of
 publishing every frame. (`0x07` with matching memory/width/height/pitch only;
@@ -497,7 +497,7 @@ Effect (median of 3, same test): **13.7 → 15.1 FPS**, `[KICK]` walk avg
 ~1500 → ~1330 µs, kicks/s ~600 → ~720; `ack cpu` ~89.5%. No decode/create
 failures, 0 `rejected`/`unsupported`, no `nonfinite`. Remaining `fmt=6` alias
 syncs are rare (a handful/run), not per-frame. Still CPU-bound and still far from
-45; this removes ~1–2 ms/frame of GPU sync, not the executor wall.
+45; this removes ~1-2 ms/frame of GPU sync, not the executor wall.
 
 ### Bulk texture decode and depth-publish gating
 
@@ -537,26 +537,26 @@ Median-of-3: **16.0 → 18.8 FPS**, `[KICK]` walk avg ~1170 → ~960 µs, kicks/
 ~830 → ~990, `ack cpu` ~91%. No decode/create/reject failures; `a-mash` still
 reaches the first mission.
 
-**Failed: lazy colour publication at flip (do not retry).** Publishing only the
+**Failed: deferred colour publication at flip (do not retry).** Publishing only the
 presented surface at `NV097_FLIP_STALL` (`nv2a_gpu_flip_publish`, keeping
-off-screen colour targets dirty) reached ~39 FPS but **corrupted rendering** —
+off-screen colour targets dirty) reached ~39 FPS but **corrupted rendering** -
 the scene was wrong (geometry/lighting gone, only a fragment of the character
 drawn). So the full per-flip publication of every dirty colour target is
-load-bearing for correctness here, not just cost; off-screen targets' guest
+critical for correctness here, not just cost; off-screen targets' guest
 copies ARE read by the title between frames. Reverted. The `memcmp`
 texture-validation remains the next CPU cost, but CPU cuts do not move FPS.
 
-### Deferred (later): guest-memory read tracking to unlock lazy publication
+### Deferred (later): guest-memory read tracking to open deferred publication
 
 The ~39 FPS glimpse above is the biggest prize left, and it is gated on one
 question: *which surfaces does the guest actually read?* If the runtime tracked
 guest-RAM reads/writes (page protection + VEH under Wine, or a shadow map), the
-flip could publish only the surfaces the guest truly consumes, making lazy
+flip could publish only the surfaces the guest truly consumes, making deferred
 publication safe. Rough size: a real memory-tracking subsystem; Claude's estimate
-is ~30 FPS. Deferred — not attempted. Do **not** re-try the naive
+is ~30 FPS. Deferred - not attempted. Do **not** re-try the naive
 only-presented-surface version (it corrupts).
 
-## Update 2026-10-09 (later) — ack-thread CPU cuts; outsourcing consult
+## Update 2026-10-09 (later) - ack-thread CPU cuts; outsourcing consult
 
 Landed two correctness-preserving ack-thread reductions (runtime commit
 `5f18610`, branch `origin/aknavj-rebased`):
@@ -567,11 +567,11 @@ Landed two correctness-preserving ack-thread reductions (runtime commit
   character captured intact).
 - **Texture cache indexed by source address.** Binds used to scan every cached
   texture comparing key fields; now an `unordered_map<source, index>` gives O(1)
-  lookup, falling back to the linear scan when key fields differ (cache rebuilds
+  lookup, using the linear scan when key fields differ (cache rebuilds
   on size change). The `hash` phase block dropped to ~0.14 s/10 s (was ~0.34).
 
-FPS stayed noise-bound (~19–20 real-gameplay; single-run range 17.9–21.9), so
-neither is a headline win — they shave ack CPU, which only matters once the
+FPS stayed noise-bound (~19-20 real-gameplay; single-run range 17.9-21.9), so
+neither is a headline win - they shave ack CPU, which only matters once the
 critical path is CPU, and it is only marginally so.
 
 **Outsourcing consult (Claude, 2026-10-09).** Asked what could move to spare host
@@ -584,6 +584,6 @@ The **only** change that shortens the critical path is a **render thread that
 owns the D3D11 immediate context** (ack builds vertices, render thread does
 texture validate/decode/upload + stream map + draws + submit, publishing a
 completion sequence the bounded run-ahead gates on). Estimated ceiling ~35 FPS,
-realistic ~25–28, using exactly one extra core. Also noted: `D3D_ComputeGap`
-35% is a guest busy-spin — turning it into a sleeping wait frees a core but adds
+realistic ~25-28, using exactly one extra core. Also noted: `D3D_ComputeGap`
+35% is a guest busy-spin - turning it into a sleeping wait frees a core but adds
 no FPS. Next major apple is the render-thread split; not yet attempted.

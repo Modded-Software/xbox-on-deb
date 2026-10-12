@@ -1,4 +1,4 @@
-# 01 — Reference study: `scghost-recomp` and `xboxrecomp`
+# 01 - Reference study: `scghost-recomp` and `xboxrecomp`
 
 Both are cloned under `refs/` (gitignored). This is everything worth keeping from
 them, and what to avoid.
@@ -27,7 +27,7 @@ Shape:
 
 Videos play (minor tearing), menu scene verified, controller verified, loading
 screen partial, gameplay runs but renderer failures exit, audio partial,
-rendering partial, **performance 10–15 FPS in the debug menu**.
+rendering partial, **performance 10-15 FPS in the debug menu**.
 
 ### What it got stuck on
 
@@ -49,7 +49,7 @@ rendering partial, **performance 10–15 FPS in the debug menu**.
   - `APU_TRAP_BASE 0xFE800000` … `0xFE830000`
   - `RECOMP_APU_DSP_ACK="gp:0x810"`, `RECOMP_USB_NDP=2`, `RECOMP_XINPUT_SLOT=auto`
   - `RECOMP_AC97_READY=1`, `RECOMP_NV2A_NATIVE_FENCES=1`, `RECOMP_VBLANK=1`
-  These are real, reusable findings for *this* title — but note they are in the
+  These are real, reusable findings for *this* title - but note they are in the
   D3D section **because the game's statically linked D3D8 is recompiled and
   driven**, not replaced. That is the architectural fork we must decide on
   (see [05-strategy.md](05-strategy.md)).
@@ -57,9 +57,9 @@ rendering partial, **performance 10–15 FPS in the debug menu**.
 ### What to copy from it
 
 - The pipeline order in `regen.sh`, and its warning: **disassemble *all* code
-  sections, never `--text-only`** — without the XDK sections there are no
+  sections, never `--text-only`** - without the XDK sections there are no
   function boundaries there and each function is glued to the next.
-- `main.c` as the bring-up skeleton (memory layout → kernel → paths → bridge →
+- `main.c` as the bring-up outline (memory layout → kernel → paths → bridge →
   input → APU → NV2A hooks → `g_esp` → dispatch → entry).
 - Its diagnostics: a VEH handler that names the guest function by host RIP
   (dbghelp), scans the guest stack for return addresses, and dumps the ICALL
@@ -70,8 +70,8 @@ rendering partial, **performance 10–15 FPS in the debug menu**.
 - LFS mega-patch as the repair mechanism.
 - MSVC/Windows coupling.
 - Hardcoded per-function overrides in C rather than data.
-- Silent "return success" stubs (`g_esp += 4`) instead of an honest interpreter
-  fallback — explicitly called out in the toolkit docs as the wrong move.
+- Silent "return success" no-ops (`g_esp += 4`) instead of an honest interpreter
+  alternative - explicitly called out in the toolkit docs as the wrong move.
 
 ## 2. `aknavj/xboxrecomp` (the toolkit)
 
@@ -83,9 +83,9 @@ rendering partial, **performance 10–15 FPS in the debug menu**.
 |---|---|
 | `xbe_parser` | XBE headers, 32 sections, entry, certificate, 137 kernel imports, XDK version |
 | `disasm` | function detection (linear sweep + recursive descent + xrefs), all sections |
-| `func_id` | classifies CRT / RenderWare / XDK / game / vtable / stub |
+| `func_id` | classifies CRT / RenderWare / XDK / game / vtable / no-op |
 | `abi_analysis` | calling convention (`cdecl`/`stdcall`/`thiscall`), param count, return hint, frame shape |
-| `recomp` | the lifter: x86 → C, dispatch table, stubs |
+| `recomp` | the lifter: x86 → C, dispatch table, no-ops |
 | `split` | per-function disassembly (byte-exact `db` + mnemonics) for hand decomp |
 | `symbols/map_names.py` | **MAP → {va:name}**, and name-porting between titles by byte signature |
 | `debug_symbols` | mine `__FILE__` strings from a debug build → function→source file |
@@ -94,13 +94,13 @@ rendering partial, **performance 10–15 FPS in the debug menu**.
 | `rtti`, `fusion`, `conformance`, `xmv`, `xiso` | extra analysis/verification tools |
 
 `tools/symbols/map_names.py` already names **StarCraft Ghost (XDK 5659)** as a
-donor in its own docs — the toolkit author has used this title's MAP before.
+donor in its own docs - the toolkit author has used this title's MAP before.
 
 ### Runtime (`src/`, 6 static libs)
 
-- `xbox_kernel` — memory layout, file I/O, threads, sync, crypto, HAL, object
+- `xbox_kernel` - memory layout, file I/O, threads, sync, crypto, HAL, object
   manager. The kernel thunk bridge is `kernel_bridge.c` (~378 KB).
-- `xbox_d3d8` — D3D8 compat layer → D3D11 (Windows) or OpenGL 3.3
+- `xbox_d3d8` - D3D8 compat layer → D3D11 (Windows) or OpenGL 3.3
   (`d3d8_gl.c`, Linux).
 - `xbox_dsound`, `xbox_apu` (MCPX APU from xemu), `xbox_nv2a` (NV2A register
   handlers + pushbuffer), `xbox_input`.
@@ -114,27 +114,27 @@ donor in its own docs — the toolkit author has used this title's MAP before.
 
 ### Design documents worth reading in full
 
-- `docs/technical/ms-fusion-recompiler.md` — reverse engineering of Microsoft's
+- `docs/technical/ms-fusion-recompiler.md` - reverse engineering of Microsoft's
   own Xbox static recompiler. The "what we should adopt" list is our roadmap:
   flat directly-indexed dispatch, entry per basic block, push the **real** guest
   return address, record indirect targets and feed them back, cache TLS registers
-  per function, a real interpreter fallback instead of silent stubs, per-title
+  per function, a real interpreter alternative instead of unreported no-ops, per-title
   config instead of hardcoded special cases.
-- `docs/technical/gap-analysis.md` — xboxrecomp vs xemu feature matrix (D3D8
+- `docs/technical/gap-analysis.md` - xboxrecomp vs xemu feature matrix (D3D8
   fixed-function, register combiners, vertex microcode, texture unswizzle, APU).
-- `docs/technical/lessons-learned.md` — 29 sessions of Burnout 3. Use
+- `docs/technical/lessons-learned.md` - 29 sessions of Burnout 3. Use
   `CreateFileMapping`+`MapViewOfFileEx` for true RAM mirrors (not `VirtualAlloc`),
   global register model, bump allocator, binary-search dispatch, and the "one
   crash at a time" method.
-- `docs/DECOMP.md` and `docs/pipeline/04-lifting.md` — the hand-decomp workflow
+- `docs/DECOMP.md` and `docs/pipeline/04-lifting.md` - the hand-decomp workflow
   (byte-exact split, why x86 must be `db` + comment, behavioural conformance
   oracle).
-- `docs/technical/indirect-calls.md` — the hardest 10%, and the ICALL diagnostics.
+- `docs/technical/indirect-calls.md` - the hardest 10%, and the ICALL diagnostics.
 
 ### Known gaps relevant to us (from `gap-analysis.md`)
 
-- WMA decoder missing (`WMADEC` section) — Ghost has one.
-- APU GP DSP effects and EP encode are stubs; 3D positional audio a no-op.
+- WMA decoder missing (`WMADEC` section) - Ghost has one.
+- APU GP DSP effects and EP encode are no-ops; 3D positional audio a no-op.
 - Xbox Live / network stubbed (`PhyGetLinkState` = no link).
 - YUV/cube/volume texture paths partial.
 

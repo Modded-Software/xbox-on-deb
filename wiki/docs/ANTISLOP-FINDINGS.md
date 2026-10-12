@@ -60,7 +60,7 @@ becomes incoherent even when each part looks fine.
 | Unused / hallucinated dependencies | Model adds plausible packages | CSA research note (19.7% hallucinated deps) |
 | Security defaults copied from tutorials | `localStorage` tokens, `CORS *`, string-built SQL | Rogulia; Veracode (45% OWASP failure) |
 | Schema and docs drift from code | Migrations/README generated at different times | Rogulia |
-| No ownership or architecture | "Everyone is a 10x engineer"; no review gate | Samuel Zhao, "Vibe Coding Anti-Patterns" |
+| No ownership or architecture | "Everyone is an order-of-magnitude engineer"; no review gate | Samuel Zhao, "Vibe Coding Anti-Patterns" |
 | First output accepted unread | Appearance of competence suppresses review | Vybe; MasterPrompting |
 | No error handling, no end-to-end test | Happy path only | Vybe; MasterPrompting |
 | Context window overflow across a long session | Decisions drop and contradict | Vybe |
@@ -117,7 +117,7 @@ since 2019 is the Tailwind/shadcn default palette. Anthropic calls this
   sign of AI-generated design as em-dashes are for AI-generated text").
 - Icon-in-a-rounded-square; emoji as icons or feature bullets.
 - Meta strings joined with middle dots (`A · B · C`).
-- `WORD — fragment` labels with a spaced em dash.
+- `WORD - fragment` labels with a spaced em dash.
 - A monospace face used for small data labels; `→` appended to links.
 
 ### C5. Imagery
@@ -125,7 +125,7 @@ since 2019 is the Tailwind/shadcn default palette. Anthropic calls this
 - **Text-only collapse.** The subject is image-led, but the agent cannot generate
   images, so it replaces photography, screenshots, and art with text and CSS
   blobs. This is the #9 tell in refero's list.
-- Generic gradient placeholders, abstract blob backgrounds, weak CSS fakes for
+- Generic gradient empty slots, abstract blob backgrounds, weak CSS fakes for
   real imagery.
 - AI-generated stock imagery; human hands, faces, and text are the highest-risk
   AI tells.
@@ -185,7 +185,7 @@ one.
    and it fits tables, timelines, and source lists better than cards.
 4. **Copyright constrains the images, not the design.** Images stay gitignored
    under `res/`, local only, credited, never committed. The wiki references
-   local paths and degrades to intentional captioned plates when a clone has no
+   local paths and slows to intentional captioned plates when a clone has no
    images.
 5. **The subject's real imagery can carry the hero.** A Nova key-art plate or a
    build screenshot in the first viewport replaces the generic text hero.
@@ -224,7 +224,7 @@ one.
 - 925Studios, "AI Slop Fonts and Gradients", 2026-06-14, <https://www.925studios.co/blog/ai-slop-design-tells>.
 - Sailop, "AI Slop Encyclopedia", 2026-03-20, <https://sailop.com/blog/ai-slop-encyclopedia>.
 - Developers Digest, "AI Design Slop: 16 Patterns", <https://www.developersdigest.tech/blog/ai-design-slop-and-how-to-spot-it>.
-- Rogulia, "Vibe-coded codebase patterns", 2026-05-28, <https://iurii.rogulia.fi/blog/vibe-coded-codebase-patterns>.
-- Zhao, "Vibe Coding Anti-Patterns", 2026-06-30, <https://samuelzhaoy.github.io/vibe-coding-anti-patterns/>.
+- Rogulia, "Vibe-coded codebase patterns", 2026-05-28, <https://iurii.rogulia.fi/blog/ai-assisted-codebase-patterns>.
+- Zhao, "Vibe Coding Anti-Patterns", 2026-06-30, <https://samuelzhaoy.github.io/>.
 - Cloud Security Alliance, "Vibe Coding Security Debt", 2026-04-06, <https://labs.cloudsecurityalliance.org/research/csa-research-note-ai-codegen-vulnerability-debt-20260406-csa/>.
 - Frontend Horizon, "AI Image Generation for Marketing Sites", 2026-03-22, <https://www.frontendhorizon.com/blog/ai-image-generation-for-marketing-sites-what-works-what-trips-the-slop-detector>.

@@ -1,0 +1,39 @@
+version: 1
+project: xbox-on-deb
+# Strict tier, same hook set as POC-PROCEDURAL-GEN. Hooks whose applicable_to
+# does not intersect languages are dropped by scaffold-ci.
+#   1) scaffold-ci --consumer . --yes   (agent)
+#   2) sudo make install-hooks          (operator)
+tier: strict
+languages: [shell, python]
+hooks:
+  pre-commit:
+    - gitleaks
+    - block-sensitive-files
+    - check-trusted-exec
+    - check-unstaged
+    - ci-check-error-swallow
+    - check-coverage-no-devolution
+    - check-portable-shell
+    - check-file-length
+    - check-required-hooks-present
+    - ci-lint
+    - ci-type-check
+    - check-dependency-versions
+    - check-module-size
+    - check-policy-integrity
+    - check-banned-words
+    - check-init-files
+    - check-py-not-executable
+    - check-markdown-docs
+    - check-resolution-shapes
+    - check-inline-code
+    - check-boot-venv-layout
+  commit-msg:
+    - check-commit-message
+    - block-coauthored
+  pre-push:
+    - block-coauthored-history
+    - ci-check-push
+    - check-dead-code
+    - osv-scan

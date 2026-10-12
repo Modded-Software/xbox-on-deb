@@ -1,4 +1,4 @@
-# 00 — Overview
+# 00 - Overview
 
 ## Goal
 
@@ -16,7 +16,7 @@ on this machine, with working rendering (Vulkan or OpenGL). Keep notes under
 | GPU | 2× Intel Arc A770 (DG2), `renderD128` + `renderD129` |
 | Vulkan | 1.4.318, Mesa ANV (Intel open-source) + llvmpipe |
 | Windows stack | Steam installed, **GE-Proton11-1** (Wine + DXVK 2.7.1 + VKD3D-Proton) |
-| Wine | system wine 9.0 (fallback) |
+| Wine | system wine 9.0 (alternative) |
 
 DXVK 2.7.1 ships `d3d8.dll`, so the Win32 Direct3D 8 demo can render through
 Vulkan on the Arc GPUs.

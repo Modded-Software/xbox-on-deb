@@ -1,4 +1,4 @@
-# 04 — The source map
+# 04 - The source map
 
 The source map is the file we own and iterate. It is what turns a synthetic
 `sub_XXXX` label into the function's real name and original translation unit,
@@ -21,7 +21,7 @@ Generated build artifacts, written by `recomp/tools/build_symbol_map.py` and
 |---|---|
 | `ghost.symbols.json` | the map: `{meta, coverage, functions: {va: entry}}` |
 | `ghost.names.txt` | `0xVA name` lines (human/diff-friendly) |
-| `ghost.names.json` | `{va: name}` — the exact shape `merge_names.py --names-json` eats |
+| `ghost.names.json` | `{va: name}` - the exact shape `merge_names.py --names-json` eats |
 | `ghost.sources.txt` | `0xVA /path/file.cpp` lines |
 | `ghost.source_files.txt` | function-count per source file |
 | `ghost.kernel_imports.txt` | ordinal + implemented/missing |
@@ -78,7 +78,7 @@ To make the recompiler emit our names, merge them into `functions.json` before
 ```
 
 `merge_names.py` sanitises and de-duplicates and only overwrites `sub_*`
-placeholders.
+empty slots.
 
 ### Readability beyond function names
 
@@ -95,7 +95,7 @@ Names alone make a 500k-line call graph legible, but we can do better cheaply:
   emit one `.c` per original `.cpp` where the map knows it. This is the biggest
   single readability win and maps naturally onto a decomp diff.
 
-These are *our* tools, outside the toolkit, regenerated from data — no LFS patch.
+These are *our* tools, outside the toolkit, regenerated from data - no LFS patch.
 
 ## Iterating (layers, in priority order)
 
@@ -109,7 +109,7 @@ These are *our* tools, outside the toolkit, regenerated from data — no LFS pat
 4. **Class/vtable layer.** Even without RTTI, the vtable scanner found 12,228
    vtable methods and `func_id` groups them. Where a vtable's class is known from
    the map (constructor `??0Class@@`), name the slots `Class::vfuncN`.
-5. **Manual layer.** `config/annotations.toml` — human notes keyed by VA, merged
+5. **Manual layer.** `config/annotations.toml` - human notes keyed by VA, merged
    last, never overwritten by regeneration. This is where we record "this is the
    physics broadphase" without touching C control flow.
 6. **Runtime feedback layer.** Record indirect-call targets at runtime and feed

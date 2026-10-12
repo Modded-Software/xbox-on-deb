@@ -59,11 +59,11 @@ copyrighted file is committed.
 Rebuild the image set (needs Pillow, installed in `.venv-wiki`):
 
 ```sh
-python3 -m venv .venv-wiki && .venv-wiki/bin/pip install Pillow
+uv run python -m venv .venv-wiki && .venv-wiki/bin/pip install Pillow
 .venv-wiki/bin/python scripts/ghost-research/images.py
 ```
 
-Without the media directory, pages render captioned placeholder plates instead of
+Without the media directory, pages render captioned empty slot plates instead of
 broken images. See [`docs/DESIGN-DIRECTION.md`](docs/DESIGN-DIRECTION.md) for the
 palette and layout contract.
 
@@ -78,7 +78,7 @@ PORT=18173 bash tools/serve.sh   # pick another port
 ```
 
 Any static file server also works, for example
-`python3 -m http.server 8080 --directory site`.
+`uv run python -m http.server 8080 --directory site`.
 
 ## Test
 

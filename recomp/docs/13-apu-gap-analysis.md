@@ -4,7 +4,7 @@ This is the complete register of audio functionality that is **not** implemented
 or wired in the runtime, with the evidence for each entry and a porting plan.
 It is the follow-on to [12-runtime-defects-audit.md](12-runtime-defects-audit.md)
 (symptom 2, causes C/D), and it exists because "missing in-game sound" is not one
-bug: it is a stub in the middle of the hardware pipeline.
+bug: it is a no-op in the middle of the hardware pipeline.
 
 Authoritative references are **xemu** (`hw/xbox/mcpx/apu/`) and **MAME**
 (`xbox_pci.cpp` + `dsp563xx`). Cxbx is deliberately excluded: its APU is not
@@ -27,8 +27,8 @@ The MCPX APU is three processors behind one 512 KB register window at
 | Block | What it is | Rate | Runtime state |
 |---|---|---|---|
 | **VP** (Voice Processor) | 256 hardware voices: Xbox-ADPCM/PCM decode, pitch, envelopes, per-voice IIR, HRTF, 32 mixbins | 32 samples/frame (48 kHz) | **implemented** |
-| **GP** (Global Processor) | DSP56362 (10 MHz) running the title-downloaded effects program (reverb, EQ, HRTF/submix) | 32 samples/frame | **stub** |
-| **EP** (Encode Processor) | DSP56362 (10 MHz) final mixdown/encode; on real HW also AC-3/DTS | 256 samples / 8 frames | **stub** |
+| **GP** (Global Processor) | DSP56362 (10 MHz) running the title-downloaded effects program (reverb, EQ, HRTF/submix) | 32 samples/frame | **no-op** |
+| **EP** (Encode Processor) | DSP56362 (10 MHz) final mixdown/encode; on real HW also AC-3/DTS | 256 samples / 8 frames | **no-op** |
 
 Signal flow: guest DirectSound voices → VP mixbins → **GP DSP** → **EP DSP** →
 EP output FIFO 0 → AC'97 DAC. The runtime short-circuits the middle and replaces
@@ -69,10 +69,10 @@ blindly or ignores, and the host output is a surrogate.
 | APU core, frame thread, MMIO, XAudio2/waveOut | `src/apu/apu_core.c` | implemented for main+VP registers |
 | Register defs (incl. GP/EP FIFOs, DSP mem windows) | `src/apu/apu_regs.h:79-127,322` | **defined but unused** |
 | DSP core state structs (`dsp_core_t`, `DSPState`, `DSPDMAState`) | `src/apu/apu_state.h:43-139` | **structs only, no engine** |
-| GP/EP "implementation" | `src/apu/apu_dsp.c` (257 LOC) | **passthrough stub** |
+| GP/EP "implementation" | `src/apu/apu_dsp.c` (257 LOC) | **passthrough no-op** |
 | MMIO trap | `src/kernel/xbox_memory_layout.c:2631` | traps only `0x0..0x30000` |
-| MMIO dispatch | `src/apu/apu_core.c:795-814` | `GP (0x30000) and EP (0x50000) regions ignored for now` |
-| DirectSound HLE | `src/audio/dsound_device.c` | stub, dead code for this title |
+| MMIO dispatch | `src/apu/apu_core.c:795-814` | `GP (0x30000) and EP (0x50000) regions ignored at present` |
+| DirectSound HLE | `src/audio/dsound_device.c` | no-op, dead code for this title |
 | WMA decoder | `src/audio/wma_decoder.c` | Windows only |
 | XAudio2 host backend | `src/apu/apu_xaudio2.c` | Windows only; Linux inert |
 
@@ -145,7 +145,7 @@ submix/headroom, and it is why effects and 3D positioning cannot be faithful.
 xemu still had holes (`extractu #CO,S2,D`, xemu issue #108) and added
 surround/AC-3 opcodes later (xemu PR #2865). Porting the interpreter alone is
 not sufficient if a title's program uses an unimplemented opcode - the engine
-must trap and report, not silently no-op.
+must trap and report, never a no-op without notice.
 
 **G10 - Interrupt scoring / IRQ delivery.** `MCPX_APU_ISTS` bits (GINTSTS,
 FETINTSTS, FENINTSTS, FEVINTSTS; `apu_regs.h:27-31`) and `update_irq`
@@ -164,15 +164,15 @@ modelled, so the cadence is free-running rather than guest-synchronised.
 
 ### P2 - host and portability
 
-**G13 - XAudio2 backend is Windows-only.** `apu_xaudio2.c:202-206` stubs every
+**G13 - XAudio2 backend is Windows-only.** `apu_xaudio2.c:202-206` no-ops every
 entry on non-Windows, so the primary path is inert off Windows; only the
-(also inert on Linux) waveOut fallback remains.
+(also inert on Linux) waveOut alternative remains.
 
-**G14 - waveOut fallback is Windows-only.** `apu_core.c:247-248` notes the Linux
-`win32_compat.h` waveOut stubs never produce audio.
+**G14 - waveOut alternative is Windows-only.** `apu_core.c:247-248` notes the Linux
+`win32_compat.h` waveOut no-ops never produce audio.
 
-**G15 - WMA decoder is Windows-only.** `wma_decoder.c:239` returns a stub on
-non-Windows, so any WMA-encoded wave is silent. Ties to `IXACTEngine` wave
+**G15 - WMA decoder is Windows-only.** `wma_decoder.c:239` returns a no-op on
+non-Windows, so any WMA-encoded wave produces no output. Ties to `IXACTEngine` wave
 banks if the title uses WMA (`fmt=A981E0E6` was seen for ADPCM).
 
 ### P3 - HLE surface and test
@@ -198,7 +198,7 @@ engine-on run (`logs/runtime-20261007-161806.log`), not by reading the plan.
 links a full Full-HRTF DirectSound and calls it unconditionally after the
 effects-image download: `DirectSoundUseFullHRTF_0_002F199B` is invoked at
 `recomp_0029.c:2798` (inside the game's audio-mixer startup routine), and the pipeline
-exists in guest code — `DirectSound_CHRTFSource_*`,
+exists in guest code - `DirectSound_CHRTFSource_*`,
 `DirectSound_CDirectSoundVoice_Set3DVoiceData_002F1D2D`
 (`recomp_0062.c:14098` → `DirectSound_CMcpxVoiceClient_Apply3dSettings_002F8FCB`
 → `LoadHRTFFilter_002F8481`). The runtime VP already implements the hardware side
@@ -207,12 +207,12 @@ faithfully (`apu_vp.c:1213` HRTF processing; `NV1BA0_PIO_SET_VOICE_TAR_HRTF` at
 `v < MCPX_HW_MAX_3D_VOICES` (64, `apu_regs.h:331`) and receive HRTF. **But the
 guest never starts one:** every `[APU-START]` in the run is `list=1` (the 2D
 list), `NV_PAPU_TVL3D`/`TVLMP` stay `FFFF`, and no `class=3D` `[APU-ROUTE]`
-appears. So this is *not yet* an APU-side defect — the guest's cue 3D flag or an
+appears. So this is *not yet* an APU-side defect - the guest's cue 3D flag or an
 init/notify result upstream is wrong. Next step is to prove whether the guest
 reaches `XACT_CSoundCueInstance_Set3DProperties_0031685E`
 (`recomp_0065.c:3264`, called from `recomp_0064.c:13300`) and
 `Set3DVoiceData`, or diverts earlier. Note: Cxbx cannot adjudicate this (its APU
-is a stub) and xemu's audio is reported broken, so neither validates the result.
+is a no-op) and xemu's audio is reported broken, so neither validates the result.
 
 **G19 - The doorbell ACK was still armed while the real engine ran (fixed).**
 G6's fake ACK was not retired when the engine was enabled: `main.c` forced
@@ -222,9 +222,9 @@ frame. It therefore cleared the guest's command word *before*
 `dsp_frame_engine` could run. Log proof, same engine-on run:
 `[APU] diagnostic DSP passthrough ack: 1 mailbox(es); DSP commands are NOT
 emulated` and `[APU] diagnostic DSP doorbell physical 0x01590810: command
-0x00000002/0x00000003 bypassed (passthrough)` — printed alongside `[APU] DSP
+0x00000002/0x00000003 bypassed (passthrough)` - printed alongside `[APU] DSP
 GP/EP initialized (DSP56300 engine)`. So `DownloadEffectsImage` (G5/G6) never
-actually ran the program. Fixed: the ACK default is now armed only in stub mode
+actually ran the program. Fixed: the ACK default is now armed only in no-op mode
 (`main.c`); an explicit `RECOMP_APU_DSP_ACK` still wins. Re-verify that command
 0x2/0x3 now reach the GP and that the effects image is processed.
 
@@ -235,7 +235,7 @@ actually ran the program. Fixed: the ACK default is now armed only in stub mode
 networking stack, not a missing audio function boundary. No audio impact; do not
 chase it.
 
-## 5. Wiring gaps (not code, but where the stubs are made permanent)
+## 5. Wiring gaps (not code, but where the no-ops are made permanent)
 
 - `main.c:234-237` force `RECOMP_AC97_READY=1` and `RECOMP_APU_DSP_ACK=gp:0x810`.
   These defaults turn the two diagnostic bypasses into the shipping
@@ -243,7 +243,7 @@ chase it.
   (`xbox_memory_layout.c:2619,2631`), so it gates the whole emulated APU.
 - `xbox_memory_layout.c:2631` traps only `XBOX_MCPX_APU_MMIO_SIZE` =
   `0x30000` (`xbox_memory_layout.h:50-52`). GP (`0x30000`) and EP are therefore
-  plain RAM: guest writes are silent, reads return zero. This must widen (and
+  plain RAM: guest writes are discarded, reads return zero. This must widen (and
   route) when G3 lands; the aperture is 8 MB, so the space exists.
 - `RECOMP_APU_MIXDOWN_ALL` defaults on (`apu_dsp.c:102-110`), so the surrogate
   mixdown is the default behaviour.
@@ -253,16 +253,16 @@ chase it.
 Status: **Phase 1 and Phase 2 are landed** (DSP56300 engine in `src/apu/dsp/`,
 GP/EP MMIO + DMA wired in `apu_dsp.c`, trap widened to `0x80000`,
 `RECOMP_APU_DSP` engine default-on; commits `refs/xboxrecomp` `ff9e6ea`,
-`bfae28d`). G6's ACK was *not* retired and actively broke the protocol — see G19,
+`bfae28d`). G6's ACK was *not* retired and actively broke the protocol - see G19,
 now patched. G7/G8 (VP→GP feed, EP output sink) are wired in `dsp_frame_engine`.
 What is now blocking audio is **G18** (guest never submits a 3D voice) and G9/G10.
 
 **Phase 1 - DSP engine, no new features (P0).** Port xemu's
 `dsp/dsp.c`, `dsp_c.c`, `dsp/dsp_dma.c`, `dsp/interp/*` into `src/apu/dsp/`,
-reusing the existing `apu_state.h` structs and the `apu_shim.h` Win32 shims.
+reusing the existing `apu_state.h` structs and the `apu_shim.h` Win32 adapters.
 Add a `dsp_core.c`-style engine with `dsp_init/reset/bootstrap/start_frame/run/
-halt`. Gate on a new `RECOMP_APU_DSP` (default off) so the stub remains the
-fallback until validated. Replace `mcpx_apu_dsp_frame` with xemu's: write VP
+halt`. Gate on a new `RECOMP_APU_DSP` (default off) so the no-op remains the
+alternative until validated. Replace `mcpx_apu_dsp_frame` with xemu's: write VP
 mixbins to GP mixbuf, run GP each frame, run EP every 8th, route EP FIFO 0 to
 `monitor.frame_buf`. Remove the even/odd mixdown from the DSP path.
 
@@ -279,7 +279,7 @@ title's actual program (G9), AC'97 readback (G11), and a portable host sink
 (G13-G15). Cxbx is not the reference; validate against xemu and MAME, and by
 ear.
 
-**Phase 5 - validation (P3).** Add a DSP smoke test (known microcode → known
+**Phase 5 - validation (P3).** Add a DSP basic test (known microcode → known
 output) and a mixdown test, so G17 stops being a counter.
 
 ## 7. Open questions
@@ -298,7 +298,7 @@ output) and a mixdown test, so G17 stops being a counter.
 ## 8. References
 
 Source (in tree):
-- `src/apu/apu_dsp.c` (stub), `src/apu/apu_state.h:43-139` (DSP structs),
+- `src/apu/apu_dsp.c` (no-op), `src/apu/apu_state.h:43-139` (DSP structs),
   `src/apu/apu_regs.h:79-127,322` (GP/EP registers),
   `src/apu/apu_core.c:110,215,359,560,630,795-814,837`,
   `src/apu/README.md:56-82`.

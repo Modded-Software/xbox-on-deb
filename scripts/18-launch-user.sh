@@ -11,9 +11,9 @@
 # setsid puts the game in its own session, so it survives the command that
 # started it.
 set -u
-ROOT=/home/agent/WORKSPACE-VM/projects/xbox-on-deb
+ROOT="${REPO_ROOT:-$HOME/WORKSPACE-VM/projects/xbox-on-deb}"
 cd "$ROOT"
-source "$ROOT/scripts/config.env"   # GPU pin (DRI_PRIME) etc. loaded here too
+source "$ROOT/scripts/config.sh" || exit 1   # GPU pin (DRI_PRIME) etc. loaded here too
 mkdir -p logs
 
 # stop any stale instance (wineserver -k covers the whole prefix)

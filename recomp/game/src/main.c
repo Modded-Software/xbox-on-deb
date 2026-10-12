@@ -129,7 +129,7 @@ extern MCPXAPUState *g_apu_state;
 extern bool apu_hook_handle_mmio(PCONTEXT ctx, uintptr_t fault_addr,
                                  uint32_t fault_xbox_va, int is_write);
 
-/* Match the modeled MMIO span in MemoryLayoutInit. The stub pages only
+/* Match the modeled MMIO span in MemoryLayoutInit. The reserved pages only
  * main+VP (to 0xFE830000); with RECOMP_APU_DSP the GP (0x30000) and EP
  * (0x50000) sub-regions are trapped too, so the VEH span must cover the whole
  * 0x80000 APU container or a GP/EP register write faults through to a crash. */

@@ -1,4 +1,4 @@
-# 07 — Decomp workflow and generated-code conventions
+# 07 - Decomp workflow and generated-code conventions
 
 This is the practical, repeatable pipeline that turns `Ghost.xbe` into readable,
 source-attributed C and keeps it that way. Everything here is a build artifact
@@ -9,14 +9,14 @@ plus data; nothing is hand-patched.
 Raw `tools.recomp` output is correct but anonymous and uniform. Three passes fix
 that, in order:
 
-1. **Names** — `tools/apply_symbol_map.py` writes our source map onto
+1. **Names** - `tools/apply_symbol_map.py` writes our source map onto
    `functions.json`, so the lifter emits
    `<class>_<method>_000DEAD0` instead of
    `sub_000DEAD0`. (N64Recomp does the same thing from its symbol file.)
-2. **Banners** — `tools/annotate_gen.py` enriches each function's header block
+2. **Banners** - `tools/annotate_gen.py` enriches each function's header block
    with the **original source file**, the **demangled signature**, and any
    **hand note** for that address.
-3. **Grouping** — `tools/group_by_source.py` reassembles the 250-function
+3. **Grouping** - `tools/group_by_source.py` reassembles the 250-function
    compiler chunks into **one C file per original `.cpp`**, so the tree mirrors
    the game's own source layout.
 
@@ -43,13 +43,13 @@ void <readable_name>_00012000(void) { ... }
 .venv-recomp/bin/python recomp/tools/build_symbol_map.py        # -> symbols/
 .venv-recomp/bin/python recomp/tools/apply_symbol_map.py        # names onto functions.json
 # generate (all sections), then readability passes
-refs/xboxrecomp -> python -m tools.recomp <xbe> --all --split 250 --functions ... --gen-dir build/gen
+refs/xboxrecomp -> uv run python -m tools.recomp <xbe> --all --split 250 --functions ... --gen-dir build/gen
 .venv-recomp/bin/python recomp/tools/annotate_gen.py --gen-dir build/gen --functions build/disasm/functions.json --in-place
 .venv-recomp/bin/python recomp/tools/group_by_source.py --gen-dir build/gen --functions build/disasm/functions.json --out-dir build/gen_by_source
 ```
 
 Compile **either** `gen/*.c` (chunked, for fast incremental builds) **or**
-`gen_by_source/*.c` (grouped, for reading). Never both — duplicate symbols.
+`gen_by_source/*.c` (grouped, for reading). Never both - duplicate symbols.
 
 ## The annotations file
 
@@ -83,12 +83,12 @@ as `db`, mnemonics as comments), and the behavioural oracle
 1. Pick a function from `ghost.symbols.json` (it already has name + source).
 2. Split it, write clean C, verify with the conformance harness.
 3. Register it as an override in `config/overrides.toml` (VA → our C), selected
-   by `recomp_lookup_manual` — data, not a patch.
+   by `recomp_lookup_manual` - data, not a patch.
 
 This is how a `Class::method` becomes a genuinely readable function, one at a
 time, without forking the lifter.
 
-## Class layouts / types — the current blocker
+## Class layouts / types - the current blocker
 
 The single biggest remaining readability gain would be struct types, turning
 `MEM32(ecx + 0x6DF0)` into `this->m_foo`. It needs the PDB's TPI type stream.
@@ -99,13 +99,13 @@ The single biggest remaining readability gain would be struct types, turning
 - The MODULE/FILES/SECTION-CONTRIBS streams we *do* read are enough for function
   names and source-file attribution, which is why the source map works anyway.
 - Ways to unblock types, in order of effort:
-  1. Run a Windows PDB reader (`cvdump`/`dia2dump`) under our GE-Proton Wine —
+  1. Run a Windows PDB reader (`cvdump`/`dia2dump`) under our GE-Proton Wine -
      these handle old TPI versions. Needs the tool binary.
   2. A minimal V70 TPI reader for our own use (the record layout is documented by
      LLVM; V70 vs V80 differs mainly in the header version and a few leaf
      encodings).
   3. Infer layouts from the map's constructor names (`??0Class@@`) plus the
-     constructor bodies — heavy, last resort.
+     constructor bodies - heavy, last resort.
 
 Until then, field offsets are documented per-function via `annotations.csv`.
 
@@ -113,7 +113,7 @@ Until then, field offsets are documented per-function via `annotations.csv`.
 
 | Project | Convention we borrow |
 |---|---|
-| N64Recomp | symbol metadata drives emitted names; config TOML for stubs/patches |
+| N64Recomp | symbol metadata drives emitted names; config TOML for no-ops/patches |
 | psxrecomp | generated C is a build artifact; address→note CSV injected as comments; `_full.c` + `_dispatch.c` split |
 | psprecomp | per-function banner with instruction/byte counts; per-instruction disassembly comments |
 | recomp projects generally | never hand-edit generated C; all knowledge in data/config |

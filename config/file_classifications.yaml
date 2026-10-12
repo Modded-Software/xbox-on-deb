@@ -1,0 +1,18 @@
+# Exact-file classifications (reviewed). Roots are structural facts
+# used only by ordinary rules' declared scope; non-exemptible rules
+# apply to every tracked text file regardless of classification.
+# Each entry under 'files' must name exactly one tracked file:
+# check-policy-integrity fails on a zero- or multiple-file match.
+test_roots:
+  - tests/
+doc_roots:
+  - docs/
+doc_files:
+  - README.md
+files:
+  config/banned_words_exceptions_v5.yaml:
+    class: policy-definition
+    owner: workspace-ci
+  config/file_classifications.yaml:
+    class: policy-definition
+    owner: workspace-ci

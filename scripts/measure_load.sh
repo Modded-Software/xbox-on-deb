@@ -11,8 +11,8 @@
 LABEL="${1:?usage: measure_load.sh <label> [timeout]}"
 TMO="${2:-480}"
 
-cd /home/agent/WORKSPACE-VM/projects/xbox-on-deb
-source "$PWD/scripts/config.env"
+cd "${REPO_ROOT:-$HOME/WORKSPACE-VM/projects/xbox-on-deb}"
+source "$PWD/scripts/config.sh" || exit 1
 detect_ge_proton
 GAMEDIR="extracted/StarCraft Ghost Xbox Finn Hillbilly"
 

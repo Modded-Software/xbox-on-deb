@@ -15,7 +15,7 @@ set -euo pipefail
 MODE="${1:-on}"
 SIZE="${2:-1920x1080}"
 
-source "$PWD/scripts/config.env"
+source "$PWD/scripts/config.sh" || exit 1
 detect_ge_proton
 
 export WINEPREFIX="$SCGHOST_PREFIX/pfx"
@@ -28,10 +28,12 @@ case "$MODE" in
         echo "Wine virtual desktop enabled at $SIZE"
         ;;
     off)
-        set +e
-        "$WINE" reg delete 'HKCU\Software\Wine\Explorer' /v Desktop /f
-        "$WINE" reg delete 'HKCU\Software\Wine\Explorer\Desktops' /v Default /f
-        set -e
+        if ! "$WINE" reg delete 'HKCU\Software\Wine\Explorer' /v Desktop /f; then
+            echo "note: no Wine Explorer\\Desktop value to remove" >&2
+        fi
+        if ! "$WINE" reg delete 'HKCU\Software\Wine\Explorer\Desktops' /v Default /f; then
+            echo "note: no Wine Explorer\\Desktops\\Default value to remove" >&2
+        fi
         echo "Wine virtual desktop disabled"
         ;;
     *)

@@ -4,7 +4,7 @@ set -euo pipefail
 # Create a Wine 7.0 (GE-Proton7) prefix for Cxbx-Reloaded and install the
 # runtime requirements from the Cxbx README (vcrun2019, d3dcompiler_47).
 
-source "$PWD/scripts/config.env"
+source "$PWD/scripts/config.sh" || exit 1
 
 WT_GE="$HOME/.steam/root/compatibilitytools.d/GE-Proton7-55"
 PREFIX="$GAMES_DIR/scghost-wine7-prefix"

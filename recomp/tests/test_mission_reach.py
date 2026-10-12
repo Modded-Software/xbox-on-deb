@@ -14,7 +14,7 @@ Run it with:
 assume the test env, so pair this with a selector that matches only this case.
 From the shell directly:
 
-    python3 recomp/tests/run.py --user-state --only a-mash
+    uv run python recomp/tests/run.py --user-state --only a-mash
 """
 from framework import Game, test
 

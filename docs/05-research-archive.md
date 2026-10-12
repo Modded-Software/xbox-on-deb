@@ -1,4 +1,4 @@
-# 05 — StarCraft: Ghost research archive
+# 05 - StarCraft: Ghost research archive
 
 Annotated index of every source gathered about **StarCraft: Ghost**'s
 development and the 2020 leak, plus what was extracted from the user's own copy
@@ -19,7 +19,7 @@ of the build.
   It navigates with a real browser, then extracts visible page text in
   64 KB chunks with `extract get-text`.
 - Website origins are enumerated from the Internet Archive CDX index for
-  `blizzard.com/ghost/*` (539 archived URLs) — captured to
+  `blizzard.com/ghost/*` (539 archived URLs) - captured to
   `res/starcraft-ghost-archive/ghost_cdx.txt`.
 - Archives are read through Wayback **raw** snapshots (`…/web/<ts>id_/<url>`),
   which serves the original bytes and avoids the injected `wombat.js` that
@@ -54,21 +54,21 @@ of the build.
 
 The game's own promotional site is fully archived. Highest-value pages:
 
-- **Press release (2002-09-20, Tokyo Game Show)** — announcement: "tactical-action
+- **Press release (2002-09-20, Tokyo Game Show)** - announcement: "tactical-action
   console game", Nova, enhanced physical and psionic abilities, Calldown
   attacks, 3rd-person camera; co-developed with Nihilistic, co-published by
   Capcom in Japan, slated **late 2003**.
   <https://web.archive.org/web/20021004122855/http://www.blizzard.com/ghost/pressrelease.shtml>
-- **F.A.Q. (2004)** — feature list: sonic-speed outmaneuver, cloak, lockdown,
+- **F.A.Q. (2004)** - feature list: sonic-speed outmaneuver, cloak, lockdown,
   Battlecruiser/Siege Tank strikes, pilotable StarCraft vehicles, Gauss Rifle
   and combat pistol, Mar Sara/Aiur, Terran/Zerg/Protoss units.
   <https://web.archive.org/web/20040701072122/http://blizzard.com/ghost/faq.shtml>
-- **F.A.Q. (2005)** — expands the promise: **12–15 h single-player**, **16-player
+- **F.A.Q. (2005)** - expands the promise: **12-15 h single-player**, **16-player
   multiplayer over Xbox Live and Battle.net**, playable **Zerg multiplayer
   units**, the **"Invasion"** mode, a new **Abaddon** level; platforms narrowed
   to **Xbox and PlayStation 2** (GameCube dropped).
   <https://web.archive.org/web/2005/http://www.blizzard.com/ghost/faq.shtml>
-- **Covert Ops** subsection — the "encyclopedia" of the vision:
+- **Covert Ops** subsection - the "encyclopedia" of the vision:
   - Psi powers: `cloak`, `speed`, `sight`/vision
   - Weapons: `assault`, `gauss`, `shotgun`, `flamethrower`, `lockdown`, `sniper`
   - Vehicles: `grizzly`, `siegetank`, `stinger`, `vulture`
@@ -77,47 +77,47 @@ The game's own promotional site is fully archived. Highest-value pages:
     StarCraft-flavoured **Capture the Base** (a.k.a. "Mobile Conflict") and
     **Invasion**
   - Story / Nova backstory
-- **Insider / Movies** — "making of" material and the 2005 gameplay,
+- **Insider / Movies** - "making of" material and the 2005 gameplay,
   multiplayer and cinematic trailers (movie downloaders archived).
 - **TGS 2003 press release**, **E3 2003 page**, **controller setup**,
   **screenshots**, **press index**.
 
 All mirrored under `text/official-*.txt` (see table below).
 
-## 2. The 2020 leak — coverage and primary teardown
+## 2. The 2020 leak - coverage and primary teardown
 
-- **Hidden Palace** — dump record: *StarCraft: Ghost (May 8, 2004 prototype)*,
+- **Hidden Palace** - dump record: *StarCraft: Ghost (May 8, 2004 prototype)*,
   dumped/released by **Finn Hillbilly**, file release date 2019-12-29, Xbox
   Dev Kit. <https://hiddenpalace.org/StarCraft:_Ghost_(May_8,_2004_prototype)>
-- **BetaArchive thread `t=40850`** — the deepest community teardown: command-line
+- **BetaArchive thread `t=40850`** - the deepest community teardown: command-line
   switches (`/devmode /console /window /tgs /level /nosound`), the NOD engine
-  lineage to *Vampire: The Masquerade – Redemption* (`masquerade.ini`), Xbox
-  build dates, the `Nova` profile unlock, `ghostsp.nsc` mission re-enabling, the
-  Win32 `Star*.exe` TGS demo lineage. <https://www.betaarchive.com/forum/viewtopic.php?t=40850>
+  lineage to *Vampire: The Masquerade - Redemption* (`masquerade.ini`), Xbox
+  build dates, the `Nova` profile switch, `ghostsp.nsc` mission re-enabling, the
+  Win32 `Star*.exe` TGS demo lineage. <https://web.archive.org/web/20211010134738/https://www.betaarchive.com/forum/viewtopic.php?f=14&t=40850>
 - **NeoGAF thread "Nihilistic Software's Starcraft Ghost 2003 build has been
-  leaked"** (stranno) — features list, resolution/128 MB notes, weapons/powers
+  leaked"** (stranno) - features list, resolution/128 MB notes, weapons/powers
   from the build. <https://www.neogaf.com/threads/nihilistic-softwares-starcraft-ghost-2003-build-has-been-leaked.1526286/>
-- **Lost Media Wiki** — leak timeline and download-link history.
+- **Lost Media Wiki** - leak timeline and download-link history.
 - **Archive.org item** `starcraftghostxbox_202002` (uploaded 2020-02-16).
 - Coverage: Kotaku, The Verge, IGN, Polygon, Engadget, VG247, DualShockers,
   GameRevolution, GamingBolt, Wccftech, Digital Trends.
 
 ## 3. Development history, interviews, postmortems
 
-- **Polygon, "StarCraft: Ghost: What went wrong" (2016)** — nine developers;
+- **Polygon, "StarCraft: Ghost: What went wrong" (2016)** - nine developers;
   the definitive postmortem (identity crisis, Strike Teams, producer churn,
   E3 2004 meeting, Nihilistic exit). <https://www.polygon.com/2016/7/5/11819438/starcraft-ghost-what-went-wrong/>
-- **MCV/DEVELOP (2016)**, **RPS (2016)**, **Screen Rant (2020)** — summaries.
+- **MCV/DEVELOP (2016)**, **RPS (2016)**, **Screen Rant (2020)** - summaries.
 - **Gamasutra/GameDeveloper "Blizzard 'Refocuses' Console Dev, Postpones
-  Starcraft Ghost" (2006)** — the indefinite-hold statement.
-- **Eurogamer** — GameCube cancellation (2005); Nihilistic exit (2004); "World
+  Starcraft Ghost" (2006)** - the indefinite-hold statement.
+- **Eurogamer** - GameCube cancellation (2005); Nihilistic exit (2004); "World
   of Warcraft killed StarCraft Ghost" (2011).
-- **Kotaku/VG247 (2011)** — Morhaime at D.I.C.E. on WoW resource decisions.
-- **GameSpot** — 2002 announcement/preview, 2004 Nihilistic-exit article.
-- **IGN** — 2003 gameplay details (moves, weapons), 2004 Nihilistic exit.
-- **Blizzplanet** — abilities, FAQ, Julian Kwasneski interview (audio/tech),
+- **Kotaku/VG247 (2011)** - Morhaime at D.I.C.E. on WoW resource decisions.
+- **GameSpot** - 2002 announcement/preview, 2004 Nihilistic-exit article.
+- **IGN** - 2003 gameplay details (moves, weapons), 2004 Nihilistic exit.
+- **Blizzplanet** - abilities, FAQ, Julian Kwasneski interview (audio/tech),
   Robert Huebner (Nihilistic) interview via Xbox Evolved.
-- **The Next-Gen/Edge archived piece** — Rob Pardo "we still believe in that
+- **The Next-Gen/Edge archived piece** - Rob Pardo "we still believe in that
   game" (2007).
 
 ## 4. Concept art, soundtrack, reference
@@ -132,16 +132,16 @@ All mirrored under `text/official-*.txt` (see table below).
 
 ## 5. Build-derived evidence (from the user's own archive)
 
-`extracted/StarCraft Ghost Xbox Finn Hillbilly/` — May 8, 2004 Nihilistic
+`extracted/StarCraft Ghost Xbox Finn Hillbilly/` - May 8, 2004 Nihilistic
 build (see [`02-inventory.md`](02-inventory.md)). Extracted to `res/.../build-text`:
 
-- `ghostsp.nsc` / `ghostsp2.nsc` — the single-player **chronicle**: full mission
+- `ghostsp.nsc` / `ghostsp2.nsc` - the single-player **chronicle**: full mission
   graph, per-mission powers/calldowns/ammo/inventory, with most entries
   commented out.
-- 171 `.nlt` text tables — tutorials, unit bios, weapon/vehicle/power
+- 171 `.nlt` text tables - tutorials, unit bios, weapon/vehicle/power
   descriptions, calldown lore (e.g. `060_Cloak.nlt`, `046_CalldownNuke.nlt`).
-- `game.nls` / `.nlu` / `.nlx` / `.nfx` string dumps — mission names, objective
-  strings, briefing/dialogue, including debug placeholders.
+- `game.nls` / `.nlu` / `.nlx` / `.nfx` string dumps - mission names, objective
+  strings, briefing/dialogue, including debug empty slots.
 - Asset manifests: 423 cutscene scripts, 91 Bink videos, 160 sound banks,
   26 level files.
 
@@ -193,7 +193,7 @@ extracted visible-text size)*
 | `text/official-weapons-gauss.txt` | official | http://www.blizzard.com/ghost/covertops/weapons/gauss.shtml?vehicleName=gauss [snapshot](https://web.archive.org/web/20060317165206id_/http://www.blizzard.com/ghost/covertops/weapons/gauss.shtml?vehicleName=gauss) | 208 |
 | `text/official-weapons-index.txt` | official | http://www.blizzard.com/ghost/covertops/weapons/ [snapshot](https://web.archive.org/web/20050521001940id_/http://www.blizzard.com/ghost/covertops/weapons/) | 262 |
 | `text/official-weapons-lockdown.txt` | official | http://www.blizzard.com/ghost/covertops/weapons/lockdown.shtml?vehicleName=lockdown [snapshot](https://web.archive.org/web/20051129033158id_/http://www.blizzard.com/ghost/covertops/weapons/lockdown.shtml?vehicleName=lockdown) | 375 |
-| `text/official-weapons-shotgun.txt` | official | http://www.blizzard.com/ghost/covertops/weapons/shotgun.shtml?vehicleName=shotgun [snapshot](https://web.archive.org/web/20060317165214id_/http://www.blizzard.com/ghost/covertops/weapons/shotgun.shtml?vehicleName=shotgun) | 354 |
+| `text/official-weapons-shotgun.txt` | official | http://www.blizzard.com/ghost/covertops/weapons/shotgun.shtml?vehicleName=shotgun [snapshot](https://web.archive.org/web/20060317165214/http://www.blizzard.com/ghost/covertops/weapons/shotgun.shtml?vehicleName=shotgun) | 354 |
 | `text/official-weapons-sniper.txt` | official | http://www.blizzard.com/ghost/covertops/weapons/sniper.shtml?vehicleName=sniper [snapshot](https://web.archive.org/web/20060317165236id_/http://www.blizzard.com/ghost/covertops/weapons/sniper.shtml?vehicleName=sniper) | 288 |
 | `text/archive-org-item.txt` | leak | https://archive.org/details/starcraftghostxbox_202002  | 4535 |
 | `text/betaarchive-40850.txt` | leak | https://www.betaarchive.com/forum/viewtopic.php?t=40850 [snapshot](https://web.archive.org/web/2020id_/https://www.betaarchive.com/forum/viewtopic.php?t=40850) | 10619 |
@@ -229,7 +229,6 @@ extracted visible-text size)*
 | `text/ign-nihilistic-exits-2004.txt` | history | https://www.ign.com/articles/2004/06/22/nihilistic-exits-starcraft-ghost  | 4243 |
 | `text/kotaku-morhaime-2011.txt` | history | https://kotaku.com/the-head-of-blizzard-explains-the-death-of-starcraft-gh-30833489 [snapshot](https://web.archive.org/web/2011id_/https://kotaku.com/the-head-of-blizzard-explains-the-death-of-starcraft-gh-30833489) | 2904 |
 | `text/mcv-2016-identity-crisis.txt` | history | https://mcvuk.com/development-news/nihilistic-swingin-ape-and-blizzard-recall-identity-crisis-that-doomed-starcraft-ghost/  | 3581 |
-| `text/n-europe-e3-2004.txt` | history | https://n-europe.com/news/e3-2004-starcraft-press-release/ [snapshot](https://web.archive.org/web/2004id_/https://n-europe.com/news/e3-2004-starcraft-press-release/) | 461 |
 | `text/polygon-2016-what-went-wrong.txt` | history | https://www.polygon.com/2016/7/5/11819438/starcraft-ghost-what-went-wrong/  | 11707 |
 | `text/rpgclassics-scghost.txt` | history | http://archive.rpgclassics.com/subsites/starcraft/scghost.shtml  | 2911 |
 | `text/rps-cancelled.txt` | history | https://www.rockpapershotgun.com/why-was-starcraft-ghost-cancelled  | 3977 |

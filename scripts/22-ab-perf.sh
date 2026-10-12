@@ -13,7 +13,7 @@
 # launches is large, so only compare runs from the same invocation.
 set -uo pipefail
 
-ROOT=/home/agent/WORKSPACE-VM/projects/xbox-on-deb
+ROOT="${REPO_ROOT:-$HOME/WORKSPACE-VM/projects/xbox-on-deb}"
 cd "$ROOT"
 PAIRS=${PAIRS:-2}
 VARIANT=${1:-}
@@ -22,8 +22,8 @@ OUT="logs/ab-perf-$(date +%Y%m%d-%H%M%S).txt"
 run_one() {
     local label=$1; shift          # remaining args: VAR=VAL assignments (none = control)
     bash scripts/16-stop-recomp.sh >> logs/ab-perf-stop.out 2>&1
-    env "$@" RECOMP_KICK_STATS=1 RECOMP_NV2A_GPU_TIMING=1 VIRTUAL_ENV="$ROOT/.venv-recomp" \
-        uv run --active python recomp/tests/run.py --user-state --only performance \
+    env "$@" RECOMP_KICK_STATS=1 RECOMP_NV2A_GPU_TIMING=1 \
+        uv run python recomp/tests/run.py --user-state --only performance \
         > "logs/ab-perf-$label.out" 2>&1
     local log counters
     log=$(readlink -f logs/latest-runtime.log)
@@ -35,6 +35,11 @@ run_one() {
         printf '  %s\n' "${counters[@]: -3}"
         echo "  desync/STALLDUMP/CRASH: $(grep -c "desync\|STALLDUMP\|\[CRASH\]" "$log")"
     } | tee -a "$OUT"
+    local rc=${PIPESTATUS[0]}
+    if [ "$rc" -ne 0 ]; then
+        echo "ab-perf: summary write failed (rc=$rc)" >&2
+        exit "$rc"
+    fi
 }
 
 for pair in $(seq 1 "$PAIRS"); do

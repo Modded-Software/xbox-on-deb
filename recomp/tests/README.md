@@ -37,24 +37,24 @@ recomp/tests/fbtool.py png <in.bmp> <out.png>    # convert an F12 capture
 A test can observe five things, which is what makes it able to say *what
 happened*, not just "no crash":
 
-1. **Input state** — `Game.wait_input()` returns the runtime's `[INPUT]`
+1. **Input state** - `Game.wait_input()` returns the runtime's `[INPUT]`
    diagnostic (window saw the key? synthesized buttons/sticks/pressure?).
    This is the `RECOMP_INPUT_DIAG=1` line, sampled once per second.
-2. **Key edges** — `Game.key_trace()` returns the window's `[KEY]` log
+2. **Key edges** - `Game.key_trace()` returns the window's `[KEY]` log
    (`RECOMP_KEY_TRACE=1`), which catches taps the 1 Hz sampler misses.
-3. **Liveness** — `Game.frame()` / `fps()` read the window caption
+3. **Liveness** - `Game.frame()` / `fps()` read the window caption
    (`Frame N`, `FPS`), so a frozen game is distinguishable from a live one.
-4. **Pixels** — `Game.capture_hash()` triggers the built-in F12 framebuffer
+4. **Pixels** - `Game.capture_hash()` triggers the built-in F12 framebuffer
    dump (`RECOMP_FB_CAPTURE`) and hashes it. Use it to assert the *scene*
    changed after input, or to fingerprint "where in the game" you are.
-5. **GPU health** — `Game.shader_failures()`, `texture_failures()` and
+5. **GPU health** - `Game.shader_failures()`, `texture_failures()` and
    `cpu_fallback_batches()` parse the periodic `[GPU-D3D11]` summary, so a
    scene that fails to compile a shader or decode a texture fails a test
    instead of just looking wrong.
 
 ## Adding a test
 
-```python
+```py
 from framework import Game, test, hold, START
 
 @test("Start pauses the game")
@@ -70,7 +70,7 @@ is `Space`=A, `E`=B, `F`=X, `R`=Y, `Shift`=Black, `Q`=White, `Control`=LT,
 `docs/08-input.md`. A is `Space`, not `Return` -- `Return` is unmapped.
 For scene checks, hash before and after:
 
-```python
+```py
 before = g.capture_hash()
 g.key("space", "press")   # A
 assert g.capture_hash() != before

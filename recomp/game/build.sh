@@ -4,12 +4,12 @@
 #   recomp/game/build.sh            # build
 #   recomp/game/build.sh clean      # wipe build/
 #
-# Parallelism defaults to the machine's core count; override with JOBS=N.
+# Parallelism uses the machine's core count by default; override with JOBS=N.
 set -euo pipefail
 
 # Hardcoded: this sandbox resolves a script's own $0 through /proc, so
 # dirname/readlink-based discovery lands in the wrong place.
-ROOT=/home/agent/WORKSPACE-VM/projects/xbox-on-deb
+ROOT="${REPO_ROOT:-$HOME/WORKSPACE-VM/projects/xbox-on-deb}"
 BUILD="$ROOT/recomp/game/build"
 JOBS="${JOBS:-$(nproc)}"
 
