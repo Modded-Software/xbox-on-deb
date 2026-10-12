@@ -12,12 +12,12 @@ a separate direction.
 ```
 recomp/
   README.md              this file
-  docs/                   research notes and the plan (read these first)
   tools/                  our scripts (symbol map, annotator, source grouping)
-  symbols/                our source-mapping files (committed)
-  config/                 seeds, annotations, fixups (committed)
+  config/                 seeds, annotations, fixups
   build/                  regenerable pipeline output (gitignored)
   src/                    generated C + manual overrides (generated is gitignored)
+  docs/                   research notes (local, gitignored)
+  symbols/                source-mapping output (local, gitignored)
 ```
 
 The `build/` directory holds output from the `xboxrecomp` toolkit
@@ -36,9 +36,8 @@ The generated C is named, annotated and grouped by original source file:
    + hand notes from `config/annotations.csv`.
 3. `tools/group_by_source.py` - one `.c` per original `.cpp`.
 
-See [docs/07-decomp-workflow.md](docs/07-decomp-workflow.md),
-[docs/10-architecture.md](docs/10-architecture.md) for the whole system, and
-[docs/11-audit.md](docs/11-audit.md) for its complexity and known problems.
+The design notes, audits, and architecture write-ups live in the local,
+undistributed `docs/` tree.
 
 ## Why this is unusually well-set-up
 
@@ -50,7 +49,7 @@ The dropped build shipped **next to its linker MAP and its PDB**:
 - The PDB maps the defining object of each symbol to its **original source file**.
 
 Recovering that mapping lets the recompiler carry real function names instead of
-synthetic ones. See [docs/04-source-map.md](docs/04-source-map.md).
+synthetic ones.
 
 ## Pipeline (run on Linux)
 
@@ -73,7 +72,6 @@ cd refs/xboxrecomp
 ## Status
 
 The recompiled `ghost.exe` builds (`make build`), boots, reaches the menus, and
-plays missions with audio and input. Open defects are in
-[docs/12-runtime-defects-audit.md](docs/12-runtime-defects-audit.md), performance
-work in [docs/20-optimisation-plan-1080p.md](docs/20-optimisation-plan-1080p.md),
-and per-task run history in `diary/`.
+plays missions with audio and input. Open defects, performance work, and
+per-task run history are tracked in the local, undistributed `docs/` and
+`diary/` trees.

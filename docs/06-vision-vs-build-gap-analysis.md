@@ -157,5 +157,5 @@ single-player foundation, before Swingin' Ape's multiplayer-and-reboot era.
   multiplayer and next-gen-era features described from 2005 onward cannot be
   assessed from this artifact.
 
-See [`07-decomp-workflow.md`](../recomp/docs/07-decomp-workflow.md) and the
-`recomp/` tree for the ongoing static-analysis effort this archive supports.
+See the `recomp/` tree for the ongoing static-analysis effort this archive
+supports.

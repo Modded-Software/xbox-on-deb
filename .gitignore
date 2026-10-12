@@ -44,6 +44,12 @@ recomp/game/framebuffer.bmp
 # Reverse-engineering notes: internal addresses/names recovered from the build.
 # Kept locally, never distributed.
 recomp/diary/
+# Recompilation research/audit docs: internal addresses, recovered symbol
+# names, section layout. Kept locally, never distributed.
+recomp/docs/
+# Manual-patch log for the generated code: reproduces lifted guest logic and
+# cites internal addresses. Kept locally, never distributed.
+recomp/game/MANUAL_PATCHES.md
 
 # Game framebuffer captures (copyrighted imagery).
 recomp/tests/baselines/captures/

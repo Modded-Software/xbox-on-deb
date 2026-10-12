@@ -185,7 +185,8 @@ technical or design questions **instead of stalling or guessing**.
     `20-regen-recomp.sh` overwrites it). Function names encode the guest VA
     (`BinkWait_4_0031BFD0` = `0x0031BFD0`); `recomp_dispatch.c` has the VA→func
     table for mapping addresses seen in a stack scan. **Every hand-edit here is
-    lost on regen - keep `recomp/game/MANUAL_PATCHES.md` up to date.**
+    lost on regen - keep the local (gitignored) `recomp/game/MANUAL_PATCHES.md`
+    patch log up to date.**
 
 ## Debugging recipe (a hang)
 
