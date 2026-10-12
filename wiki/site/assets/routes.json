@@ -1,0 +1,20 @@
+{
+  "routes": {
+    "en": [
+      "/en/",
+      "/en/campaign/",
+      "/en/colophon/",
+      "/en/development/",
+      "/en/faq/",
+      "/en/gap-analysis/",
+      "/en/media/",
+      "/en/multiplayer/",
+      "/en/people/",
+      "/en/sources/",
+      "/en/story/",
+      "/en/systems/",
+      "/en/the-leak/",
+      "/en/timeline/"
+    ]
+  }
+}

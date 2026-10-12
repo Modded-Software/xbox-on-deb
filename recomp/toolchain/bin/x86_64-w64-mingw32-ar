@@ -1,0 +1,4 @@
+#!/bin/sh
+# Archive tool. GNU binutils ar on the host understands the COFF objects zig
+# produces; no cross ar needed.
+exec /usr/bin/ar "$@"

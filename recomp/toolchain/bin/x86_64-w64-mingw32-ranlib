@@ -1,0 +1,3 @@
+#!/bin/sh
+# Archive indexer. See x86_64-w64-mingw32-ar.
+exec /usr/bin/ranlib "$@"

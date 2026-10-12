@@ -1,0 +1,5 @@
+#!/bin/sh
+# MinGW-w64 x86_64 C++ compiler, backed by the ziglang PyPI package.
+exec /home/agent/WORKSPACE-VM/projects/xbox-on-deb/.venv-recomp/bin/python -m ziglang c++ \
+    -target x86_64-windows-gnu \
+    -L/home/agent/WORKSPACE-VM/projects/xbox-on-deb/recomp/toolchain/lib "$@" -w
