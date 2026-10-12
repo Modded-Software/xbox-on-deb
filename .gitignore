@@ -12,6 +12,7 @@ logs/
 # Python
 __pycache__/
 *.pyc
+.venv/
 
 # Scratch / screenshots
 *.png

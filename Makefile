@@ -200,9 +200,8 @@ install-ci: install-deps ## CI install: deps only, no hooks
 	:
 
 
-install-deps: ## Install project dependencies
-	echo "TODO: implement per-project dependency install."
-	:
+install-deps: ## Install project dependencies: system tools, uv envs, toolkit clone
+	bash scripts/00-install-deps.sh
 
 
 install-hooks: ## Install native git hooks (root-only: root-owned, immutable)

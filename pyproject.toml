@@ -1,0 +1,20 @@
+[project]
+name = "xbox-on-deb"
+version = "0.0.0"
+description = "Static-recompilation runtime wrapper for the StarCraft: Ghost Xbox build."
+requires-python = ">=3.11"
+dependencies = [
+    "python-uinput",
+]
+
+[project.optional-dependencies]
+# Recompilation pipeline (installed into .venv-recomp): the XBE analyser and
+# the zig cross-compiler the game is built with.
+recomp = [
+    "capstone",
+    "pefile",
+    "ziglang",
+]
+
+[tool.uv]
+package = false

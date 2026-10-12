@@ -11,7 +11,9 @@
 # Override the remote with XBOXRECOMP_REPO=... if you use your own fork.
 set -eu
 
-ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+# Hardcoded: this sandbox resolves a script's own $0 through /proc, so
+# dirname/readlink-based discovery lands in the wrong place (see build.sh).
+ROOT="${REPO_ROOT:-$HOME/WORKSPACE-VM/projects/xbox-on-deb}"
 DEST="$ROOT/refs/xboxrecomp"
 REPO="${XBOXRECOMP_REPO:-git@github.com:Modded-Software/xboxrecomp.git}"
 
