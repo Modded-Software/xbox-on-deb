@@ -147,10 +147,57 @@ static void scghost_video_query(uint32_t value_index, uint32_t *value, int *hand
     fflush(stderr);
 }
 
+/* Display gamma (in-game brightness slider).
+ *
+ * tRenderOptions::SetUserBrightness -> rlMain_SetGamma -> D3DDevice_SetGammaRamp
+ * (0x2C1BD0, flags 0). SetGammaRamp copies the ramp into one of two shadow
+ * buffers in the D3D miniport (g_pMiniport = MEM32(0x2D2148)), records which
+ * one is current, and only marks it dirty; the DAC is reprogrammed later by
+ * CMiniport::ServiceQueuedFlips, and only when a queued flip retires on the
+ * buffer parity that matches. In the recompiled runtime that path almost never
+ * lines up, so the DAC (and the captured palette) saw ~2 of the slider's
+ * updates. Read the ramp D3D accepted directly instead.
+ *
+ * Miniport layout used (offsets from SetGammaRamp at 0x2C1BD0):
+ *   +0x240C           index (0/1) of the current ramp buffer
+ *   +0x1C28+0x1DC     ramp buffers, 0x300 bytes each: R[256], G[256], B[256]
+ */
+#define SCGHOST_MINIPORT_PTR_VA   0x2D2148u
+#define MINIPORT_GAMMA_CUR_IDX    0x240Cu
+#define MINIPORT_GAMMA_RAMPS      (0x1C28u + 0x1DCu)
+#define GAMMA_RAMP_BYTES          0x300u
+
+extern void xbox_GammaSetSourceHook(int (*hook)(uint8_t *out));
+
+static int scghost_gamma_source(uint8_t *out)
+{
+    uint32_t mp = MEM32(SCGHOST_MINIPORT_PTR_VA);
+    uint32_t idx, base;
+    int i;
+
+    if (mp == 0 || mp >= 0x08000000u)
+        return 0;
+    idx = MEM32(mp + MINIPORT_GAMMA_CUR_IDX);
+    if (idx > 1)
+        return 0;
+    base = mp + MINIPORT_GAMMA_RAMPS + idx * GAMMA_RAMP_BYTES;
+    /* Before D3D's first SetGammaRamp the buffer is zero; not a real ramp. */
+    if (MEM8(base + 255) == 0 && MEM8(base + 256 + 255) == 0 &&
+        MEM8(base + 512 + 255) == 0)
+        return 0;
+    for (i = 0; i < 256; i++) {
+        out[i * 3 + 0] = MEM8(base + i);
+        out[i * 3 + 1] = MEM8(base + 256 + i);
+        out[i * 3 + 2] = MEM8(base + 512 + i);
+    }
+    return 1;
+}
+
 void scghost_video_install(void)
 {
     xbox_VideoSetQueryHook(scghost_video_query);
     xbox_VideoSetAvPackHook(scghost_avpack);
+    xbox_GammaSetSourceHook(scghost_gamma_source);
 }
 
 /* Rewrite the title's 1920x1080 display-mode row so it carries the progressive
