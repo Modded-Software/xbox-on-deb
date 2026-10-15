@@ -5,11 +5,22 @@ import re
 import time
 
 try:
+    from . import tconfig
     from .procutil import _run
-    from .tconfig import CAPTURE, LOG, WINDOW_TITLE, log
+    from .tconfig import CAPTURE, WINDOW_TITLE, log
 except ImportError:
+    import tconfig
     from procutil import _run
-    from tconfig import CAPTURE, LOG, WINDOW_TITLE, log
+    from tconfig import CAPTURE, WINDOW_TITLE, log
+
+# The live runtime log path. Read `tconfig.LOG` at call time, not bound here at
+# import: the user-state launcher repoints tconfig.LOG to its own timestamped
+# log (mixins_lifecycle._start_user_state), and a statically imported copy would
+# keep reading the stale recomp_boot.log.
+
+
+def _log_path():
+    return tconfig.LOG
 
 
 class TelemetryMixin:
@@ -18,7 +29,7 @@ class TelemetryMixin:
     def mouse_move(self, dx, dy, timeout=4.0):
         """Inject relative mouse motion and wait for the input layer to report
         the synthesised right-stick value. None if nothing arrived."""
-        offset = os.path.getsize(LOG) if os.path.exists(LOG) else 0
+        offset = os.path.getsize(_log_path()) if os.path.exists(_log_path()) else 0
         self.move(dx, dy)
         deadline = time.time() + timeout
         while time.time() < deadline:
@@ -33,11 +44,11 @@ class TelemetryMixin:
         return None
 
     def mouse_trace(self):
-        with open(LOG, "r", errors="replace") as handle:
+        with open(_log_path(), "r", errors="replace") as handle:
             return [l for l in handle if "[KBM] mouse" in l]
 
     def log_offset(self):
-        return os.path.getsize(LOG) if os.path.exists(LOG) else 0
+        return os.path.getsize(_log_path()) if os.path.exists(_log_path()) else 0
 
     def log_since(self, offset, tag):
         """Lines containing `tag` appended to the boot log since `offset`."""
@@ -80,10 +91,10 @@ class TelemetryMixin:
         return int(match.group(1)) if match else None
 
     def _last_line(self, tag):
-        if not os.path.exists(LOG):
+        if not os.path.exists(_log_path()):
             return None
         last = None
-        with open(LOG, "r", errors="replace") as handle:
+        with open(_log_path(), "r", errors="replace") as handle:
             for line in handle:
                 if tag in line:
                     last = line
@@ -92,15 +103,15 @@ class TelemetryMixin:
     # -- telemetry: input state -------------------------------------------
 
     def _read_from(self, offset):
-        if not os.path.exists(LOG):
+        if not os.path.exists(_log_path()):
             return offset, ""
-        with open(LOG, "r", errors="replace") as handle:
+        with open(_log_path(), "r", errors="replace") as handle:
             handle.seek(offset)
             text = handle.read()
             return handle.tell(), text
 
     def latest_input(self):
-        with open(LOG, "r", errors="replace") as handle:
+        with open(_log_path(), "r", errors="replace") as handle:
             last = None
             for line in handle:
                 if "[INPUT]" in line:
@@ -112,7 +123,7 @@ class TelemetryMixin:
     def wait_input(self, timeout=6.0):
         """Wait for the next fresh [INPUT] sample and return it as a dict."""
         deadline = time.time() + timeout
-        offset = os.path.getsize(LOG) if os.path.exists(LOG) else 0
+        offset = os.path.getsize(_log_path()) if os.path.exists(_log_path()) else 0
         while time.time() < deadline:
             offset, text = self._read_from(offset)
             for line in text.splitlines():
@@ -133,7 +144,7 @@ class TelemetryMixin:
 
     def key_trace(self):
         """Recently arriving keys, from the window's own edge log."""
-        with open(LOG, "r", errors="replace") as handle:
+        with open(_log_path(), "r", errors="replace") as handle:
             return [l for l in handle if "[KEY]" in l]
 
     # -- telemetry: liveness / pixels -------------------------------------

@@ -90,7 +90,7 @@ The StarCraft: Ghost reference [wiki](wiki/README.md) covers the game, its devel
 | `recomp/toolchain/` | zig MinGW toolchain file and import-lib generator |
 | `refs/` | Toolkit clone and reference ports (gitignored) |
 | `scripts/` | Launch, stop, regen, profiling, capture, and older Cxbx scripts |
-| `docs/` | Leak inventory, research archive, Cxbx-era notes |
+| `docs/` | Leak inventory, research archive, Cxbx-era notes, and recomp design notes (e.g. [`docs/07-reshade-integration.md`](docs/07-reshade-integration.md)) |
 | `wiki/` | Static StarCraft: Ghost reference wiki |
 | `extracted/`, `emulator/`, `logs/` | Game data, Cxbx binaries, run logs (gitignored) |
 

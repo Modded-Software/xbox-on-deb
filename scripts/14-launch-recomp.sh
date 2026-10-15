@@ -44,6 +44,16 @@ else
     echo "Renderer: DXVK (Vulkan)"
 fi
 
+# ReShade (docs/07-reshade-integration.md, Phase 2). A ReShade proxy dropped next
+# to ghost.exe as build/dxgi.dll is loaded natively so it can hook the D3D11
+# swap chain (RECOMP_PRESENT=d3d11). "dxgi=n,b" is native-then-builtin, so an
+# ordinary run with no dxgi.dll still falls back to Wine's builtin dxgi and is
+# unaffected.
+if [ -f "$GAME_DIR/build/dxgi.dll" ]; then
+    export WINEDLLOVERRIDES="dxgi=n,b${WINEDLLOVERRIDES:+;$WINEDLLOVERRIDES}"
+    echo "ReShade: build/dxgi.dll present -> WINEDLLOVERRIDES=\"$WINEDLLOVERRIDES\""
+fi
+
 # Keyboard: stop Wine from talking to the X11 input method (IBus/XIM).
 #
 # Proton 9+ (and GE-Proton 11, which we use) turned XIM back on by default.

@@ -95,3 +95,15 @@ exceptions:
     owner: workspace-agent
     review_date: '2027-10-12'
     removal: Remove when this file stops calling struct.unpack.
+  - rule: bunlock-b
+    path: ^scripts/18-launch-user\.sh$
+    rationale: Passes the title's own compiled-in all-missions command-line switch verbatim; the token is the guest's switch string, not prose.
+    owner: workspace-agent
+    review_date: '2027-10-15'
+    removal: Remove when the launcher no longer passes the guest switch.
+  - rule: bunlocks-b
+    path: ^scripts/18-launch-user\.sh$
+    rationale: Passes the title's own compiled-in all-missions command-line switch verbatim; the token is the guest's switch string, not prose.
+    owner: workspace-agent
+    review_date: '2027-10-15'
+    removal: Remove when the launcher no longer passes the guest switch.

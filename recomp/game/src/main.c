@@ -464,5 +464,27 @@ int main(int argc, char **argv)
         }
     }
     scghost_video_install();
+
+    /* SCGHOST_SHADOWS=off|on|0..5: control the title's own dynamic shadows
+     * (shadow type, count, detail). See src/recomp_shadows.c. */
+    {
+        extern void scghost_shadows_install(void);
+        scghost_shadows_install();
+    }
+
+    /* RECOMP_PRESENT=d3d11: give the framebuffer window a D3D11/DXGI swap chain
+     * so a post-processing injector (ReShade, loaded as a dxgi.dll proxy) has
+     * IDXGISwapChain::Present to hook. The default is the built-in GDI window;
+     * see docs/07-reshade-integration.md. The install only registers a callback
+     * and suspends the GDI blit; the swap chain is created on the first flip,
+     * once the window exists. */
+    {
+        const char *present = getenv("RECOMP_PRESENT");
+        if (present && !strcmp(present, "d3d11")) {
+            extern void xbox_PresentD3D11Install(void);
+            xbox_PresentD3D11Install();
+        }
+    }
+
     return WinMain(GetModuleHandle(NULL), NULL, GetCommandLineA(), SW_SHOW);
 }

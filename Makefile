@@ -50,6 +50,13 @@ record-video: ## Record the game window + audio: make record-video [NAME=<id>]; 
 stop-video: ## Finalise the window recording -> logs/video-<NAME>.mp4
 	bash scripts/23-record-video.sh stop
 
+# Post-process a capture (VAAPI on the GPU, runs detached): drop the tail,
+# fade the picture to black, file it in Videos. make process-video [INPUT=...]
+# [TAIL=10] [FADE=2]; progress/log/pid under logs/.
+.PHONY: process-video
+process-video: ## Trim + fade-to-black a capture via VAAPI: make process-video [INPUT=path] [TAIL=10] [FADE=2]
+	bash scripts/24-process-video.sh $(INPUT) --tail $(or $(TAIL),10) --fade $(or $(FADE),2) $(if $(KEEP),--keep,) $(if $(SW_DEC),--sw-dec,)
+
 .PHONY: sessions
 sessions: ## List recorded input sessions (prefix pfx/drive_c/recomp-record-*.txt).
 	set -- $(HOME)/Games/scghost-prefix/pfx/drive_c/recomp-record-*.txt; \
@@ -163,6 +170,9 @@ help: ## List the targets.
 	echo "  record-session record input: make record-session SESSION=<id>"
 	echo "  replay-session replay input: make replay-session SESSION=<id>"
 	echo "  sessions       list recorded input sessions"
+	echo "  record-video   record window+audio: make record-video [NAME=<id>]"
+	echo "  stop-video     finalise the recording -> logs/video-<NAME>.mp4"
+	echo "  process-video  trim+fade a capture via VAAPI: make process-video [INPUT=..] [TAIL=10] [FADE=2]"
 	echo "  log            tail the latest runtime log (LINES=200)"
 	echo "  toolkit        clone/update the toolkit fork (refs/xboxrecomp)"
 	echo "  clean          remove build output"

@@ -1,4 +1,5 @@
 """Input injection and scripted controller taps for the recomp test suite."""
+import os
 import time
 
 try:

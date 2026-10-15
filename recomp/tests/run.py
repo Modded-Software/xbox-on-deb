@@ -24,6 +24,7 @@ from framework import Game
 
 # Explicit test-module imports, alphabetical so the run order is stable
 # (test_zzz_gameplay last). Each import registers its @test cases.
+import test_all_missions
 import test_audio_monitor
 import test_cloak_effect
 import test_input

@@ -2,6 +2,7 @@
 import os
 import signal
 import subprocess
+import sys
 import time
 
 try:
@@ -11,7 +12,8 @@ except ImportError:
 
 
 def _run(*args, check=True):
-    result = subprocess.run([XINJECT, *args], capture_output=True, text=True)
+    result = subprocess.run([sys.executable, XINJECT, *args],
+                            capture_output=True, text=True)
     if check and result.returncode != 0:
         raise RuntimeError(f"xinject {' '.join(args)} failed: {result.stderr.strip()}")
     return result.stdout.strip()

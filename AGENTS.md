@@ -74,6 +74,7 @@ engine via `h264_vaapi` on GPU0 by default (`VAAPI_DEVICE=` to change), plus
 ```bash
 make record-video NAME=walk1   # or: bash scripts/23-record-video.sh start walk1
 make stop-video                # -> logs/video-walk1.mp4
+make process-video INPUT=logs/video-walk1.mp4   # VAAPI: drop last 10s, fade 2s to black -> ~/Videos
 ```
 
 Runtime side: `RECOMP_INPUT_RECORD=C:\...` records; `RECOMP_INPUT_REPLAY=C:\...`
@@ -116,6 +117,7 @@ stall). Tests observe: `[INPUT]` diag, `[KEY]` trace, window caption
 | `RECOMP_INPUT_DIAG=1` | `[INPUT]` line once per second |
 | `RECOMP_KEY_TRACE=1` | `[KEY]` edge log |
 | `RECOMP_FB_CAPTURE` | F12 dumps the framebuffer |
+| `RECOMP_PRESENT=d3d11` | present through a D3D11/DXGI swap chain instead of the default GDI blit (the ReShade hook target; `recomp/game/src/present_d3d11.cpp`) |
 | `RECOMP_NV2A_NATIVE_FENCES=1`, `RECOMP_VBLANK=1` | set by default in `recomp/game/src/main.c` |
 
 `RECOMP_PEEK` grammar (see `refs/xboxrecomp/src/kernel/xbox_memory_layout.c`,
@@ -166,6 +168,18 @@ technical or design questions **instead of stalling or guessing**.
 - Scripts under `/tmp/opencode/` execute without trouble; prefer them.
 - `refs/xboxrecomp` is its own git repo; `recomp/game` builds against it via
   `XBOXRECOMP_DIR` (`recomp/game/CMakeLists.txt`).
+- **Toolkit patches carried in this repo.** Runtime fixes normally go as commits
+  on the toolkit fork (`scripts/19-setup-toolkit.sh`), but a change can instead
+  be carried here as a unified diff in `recomp/patches/*.patch`, applied to
+  `refs/xboxrecomp` pre-build by `scripts/25-apply-toolkit-patches.sh` (which
+  `recomp/game/build.sh` runs). `refs/` is gitignored, so those patch files are
+  the tracked source of truth. `bash scripts/25-apply-toolkit-patches.sh revert`
+  undoes them (needed before `make toolkit` if it complains about local
+  changes). If you hand-edit `refs/xboxrecomp` for a carried change, regenerate
+  the patch: `git -C refs/xboxrecomp diff -- <files>
+  > recomp/patches/000N-name.patch` (name only your files; the checkout may have
+  unrelated local edits). See `recomp/patches/README.md` and
+  `docs/07-reshade-integration.md`.
 
 ## Architecture map (recomp path)
 

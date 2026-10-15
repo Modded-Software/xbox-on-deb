@@ -59,9 +59,11 @@ fi
 if [ "${RECOMP_CLOAKDBG:-0}" != "0" ]; then
     EXTRA="$EXTRA RECOMP_CLOAKDBG=1"
 fi
+# RECOMP_PRESENT=d3d11 swaps the built-in GDI framebuffer blit for a D3D11/DXGI
+# swap chain (ReShade hook target); default stays GDI.
 for knob in RECOMP_NV2A_NATIVE_FENCES RECOMP_SYNC_LAG RECOMP_LAZY_FLIP \
             RECOMP_DEPTH_PUBLISH RECOMP_TEX_VALIDATE_ONCE RECOMP_SW_METHOD_DROP \
-            RECOMP_EVENT_ADOPT RECOMP_SWIZZLED_SURFACE_VIEW; do
+            RECOMP_EVENT_ADOPT RECOMP_SWIZZLED_SURFACE_VIEW RECOMP_PRESENT; do
     value=$(printenv "$knob")
     if [ -n "$value" ]; then
         EXTRA="$EXTRA $knob=$value"
@@ -99,12 +101,24 @@ fi
 # Default to 1080p; override with RESOLUTION=1280x720 (or empty for native).
 export RESOLUTION="${RESOLUTION-1920x1080}"
 
-env KBM=1 DIAG=1 RECOMP_KEY_TRACE=1 RECOMP_LOG="$RUNLOG" $EXTRA \
+# Make every single-player mission selectable in the mission-select menu (the
+# guest all-missions command-line switch marks them all available). On by
+# default for the user path so the cut The Borgo Refinery level is selectable;
+# set ALL_MISSIONS=0 (or RECOMP_CMDLINE=...) to override.
+RECOMP_CMDLINE="${RECOMP_CMDLINE-/unlock}"
+if [ "${ALL_MISSIONS:-1}" = "0" ]; then
+    RECOMP_CMDLINE=""
+fi
+export RECOMP_CMDLINE
+
+env KBM=1 DIAG=1 RECOMP_KEY_TRACE=1 RECOMP_LOG="$RUNLOG" \
+    RECOMP_CMDLINE="$RECOMP_CMDLINE" $EXTRA \
     setsid bash scripts/14-launch-recomp.sh > logs/launch.out 2>&1 &
 
 echo "launched; window title is 'StarCraft: Ghost'"
 echo "  runtime log : logs/runtime-$TS.log  (logs/latest-runtime.log)"
 echo "  launcher log: logs/launch.out"
+echo "  guest cmdline: ${RECOMP_CMDLINE:-<none>}"
 echo "  watchdog    : ${WATCH:-0}   vblank: ${VBLANK:-0}"
 if [ "${REPLAY:-0}" != "0" ]; then
     echo "  input replay: session '$SESSION'  -> $RECORD_PATH"

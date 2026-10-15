@@ -1,0 +1,31 @@
+diff --git a/src/kernel/nv2a_gpu.h b/src/kernel/nv2a_gpu.h
+index b8d804a..e073927 100644
+--- a/src/kernel/nv2a_gpu.h
++++ b/src/kernel/nv2a_gpu.h
+@@ -9,6 +9,11 @@ extern "C" {
+ #endif
+ 
+ int nv2a_gpu_available(void);
++/* The native ID3D11Device the emulator renders with (as void*; NULL until the
++ * device exists). An external presenter can borrow it so it shares the
++ * immediate context/queue with the emulator's draws -- required for a
++ * post-processing injector such as ReShade to see the scene's depth buffer. */
++void *nv2a_gpu_device(void);
+ int nv2a_gpu_compile(void);
+ void nv2a_gpu_sync(void);
+ void nv2a_gpu_wait(void);
+diff --git a/src/kernel/nv2a_gpu_d3d11.cpp b/src/kernel/nv2a_gpu_d3d11.cpp
+index 44249c2..674a68a 100644
+--- a/src/kernel/nv2a_gpu_d3d11.cpp
++++ b/src/kernel/nv2a_gpu_d3d11.cpp
+@@ -3321,4 +3321,9 @@ extern "C" int nv2a_gpu_available(void)
+         g_xbox_path_hook = nv2a_cloak_path_hook;
+     }
+     return device != nullptr;
++}
++
++extern "C" void *nv2a_gpu_device(void)
++{
++    return nv2a_gpu_available() ? device.Get() : nullptr;
+ }
+\ No newline at end of file

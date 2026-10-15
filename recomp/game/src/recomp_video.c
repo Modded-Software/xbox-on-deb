@@ -168,9 +168,17 @@ static void scghost_video_query(uint32_t value_index, uint32_t *value, int *hand
 #define GAMMA_RAMP_BYTES          0x300u
 
 extern void xbox_GammaSetSourceHook(int (*hook)(uint8_t *out));
+extern void scghost_shadows_tick(void);
 
 static int scghost_gamma_source(uint8_t *out)
 {
+    /* Per-frame tick. The gamma source hook is the only wrapper callback the
+     * runtime invokes once per presented frame on both the GDI and the external
+     * (D3D11) present paths, so the title's shadow settings (which it reloads
+     * from its own config early in startup) are re-asserted here rather than
+     * only once. See src/recomp_shadows.c. */
+    scghost_shadows_tick();
+
     uint32_t mp = MEM32(SCGHOST_MINIPORT_PTR_VA);
     uint32_t idx, base;
     int i;

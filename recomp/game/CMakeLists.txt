@@ -71,6 +71,12 @@ set(GAME_SOURCES
     src/main.c
     src/recomp_manual.c
     src/recomp_video.c
+    # Runtime control of the title's own dynamic shadows (SCGHOST_SHADOWS);
+    # see recomp_shadows.c.
+    src/recomp_shadows.c
+    # Optional D3D11/DXGI presenter (RECOMP_PRESENT=d3d11); gives the window a
+    # real swap chain for ReShade to hook. See docs/07-reshade-integration.md.
+    src/present_d3d11.cpp
     # Add game-specific sources here, e.g.:
     # src/asset_loader.c
     # src/custom_renderer.c
