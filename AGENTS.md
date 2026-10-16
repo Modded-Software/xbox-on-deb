@@ -168,18 +168,18 @@ technical or design questions **instead of stalling or guessing**.
 - Scripts under `/tmp/opencode/` execute without trouble; prefer them.
 - `refs/xboxrecomp` is its own git repo; `recomp/game` builds against it via
   `XBOXRECOMP_DIR` (`recomp/game/CMakeLists.txt`).
-- **Toolkit patches carried in this repo.** Runtime fixes normally go as commits
-  on the toolkit fork (`scripts/19-setup-toolkit.sh`), but a change can instead
-  be carried here as a unified diff in `recomp/patches/*.patch`, applied to
-  `refs/xboxrecomp` pre-build by `scripts/25-apply-toolkit-patches.sh` (which
-  `recomp/game/build.sh` runs). `refs/` is gitignored, so those patch files are
-  the tracked source of truth. `bash scripts/25-apply-toolkit-patches.sh revert`
-  undoes them (needed before `make toolkit` if it complains about local
-  changes). If you hand-edit `refs/xboxrecomp` for a carried change, regenerate
-  the patch: `git -C refs/xboxrecomp diff -- <files>
-  > recomp/patches/000N-name.patch` (name only your files; the checkout may have
-  unrelated local edits). See `recomp/patches/README.md` and
-  `docs/07-reshade-integration.md`.
+- **Runtime fixes are commits on the toolkit fork, never patches here.** Fixes to
+  `refs/xboxrecomp` go as commits on the toolkit fork
+  (`scripts/19-setup-toolkit.sh`), on the checked-out branch, and are built from
+  there. Do not carry them as `recomp/patches/*.patch`. If `make toolkit`
+  complains about local changes, commit (or stash) them.
+- **`recomp/patches/` is for game (guest) code only.** The patch mechanism under
+  `recomp/patches/*.patch` (applied on demand by
+  `scripts/25-apply-toolkit-patches.sh`; `recomp/game/build.sh` no longer applies
+  anything from that directory) is only for changes to the game's own code
+  (`recomp/game/`). Runtime/toolkit changes must not be carried as patches - see
+  the rule above. `refs/` is gitignored, so a game-code patch file is the tracked
+  source of truth for that change. See `recomp/patches/README.md`.
 
 ## Architecture map (recomp path)
 

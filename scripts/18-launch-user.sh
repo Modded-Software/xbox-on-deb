@@ -46,6 +46,18 @@ fi
 if [ "${RECOMP_APU_DIAG:-0}" != "0" ]; then
     EXTRA="$EXTRA RECOMP_APU_DIAG=1"
 fi
+if [ "${RECOMP_APU_SSL_TRACE:-0}" != "0" ]; then
+    EXTRA="$EXTRA RECOMP_APU_SSL_TRACE=1"
+fi
+if [ "${RECOMP_APU_VOICE_TRACE:-0}" != "0" ]; then
+    EXTRA="$EXTRA RECOMP_APU_VOICE_TRACE=1"
+fi
+if [ -n "${RECOMP_DISPATCH_LOCK:-}" ]; then
+    EXTRA="$EXTRA RECOMP_DISPATCH_LOCK=$RECOMP_DISPATCH_LOCK"
+fi
+if [ -n "${RECOMP_NV2A_IRQ_ACK:-}" ]; then
+    EXTRA="$EXTRA RECOMP_NV2A_IRQ_ACK=$RECOMP_NV2A_IRQ_ACK"
+fi
 # Graphics optimisation A/B knobs (see docs/20-optimisation-plan-1080p.md).
 if [ -n "${RECOMP_ASYNC_FLIP:-}" ]; then
     EXTRA="$EXTRA RECOMP_ASYNC_FLIP=$RECOMP_ASYNC_FLIP"

@@ -133,13 +133,13 @@ void scghost_shadows_tick(void)
  * dimensions (tRenderCamera::SetRenderTarget, 0x1EFD30 reads +0x34/+0x36), so
  * scaling here scales the shadow map with no other change.
  *
- * SCGHOST_SHADOW_TEX          explicit size, e.g. 512 (4x the pixels)
- * SCGHOST_SHADOW_TEX_SCALE    multiplier on the 256 default, e.g. 2 -> 512
- * Default 256 (the title's own value). Clamped to [64, 2048]. */
+ * SCGHOST_SHADOW_TEX          explicit size, e.g. 1024 (4x the pixels)
+ * SCGHOST_SHADOW_TEX_SCALE    multiplier on the 512 default, e.g. 2 -> 1024
+ * Default 512 (2x the title's own 256). Clamped to [64, 2048]. */
 uint32_t scghost_shadow_tex_size(void)
 {
     static int inited;
-    static uint32_t size = 256;
+    static uint32_t size = 512;
 
     if (!inited) {
         const char *v;
@@ -152,7 +152,7 @@ uint32_t scghost_shadow_tex_size(void)
         } else {
             v = getenv("SCGHOST_SHADOW_TEX_SCALE");
             if (v && *v && parse_long(v, &n) && n > 0)
-                size = 256u * (uint32_t)n;
+                size = 512u * (uint32_t)n;
         }
         if (size < 64)
             size = 64;

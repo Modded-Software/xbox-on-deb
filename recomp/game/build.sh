@@ -25,9 +25,7 @@ if [ ! -f "$ROOT/recomp/toolchain/lib/libd3dcompiler.a" ]; then
     bash "$ROOT/recomp/toolchain/make_import_libs.sh"
 fi
 
-# Apply the patches this repo carries against refs/xboxrecomp before building it.
-# See recomp/patches/README.md; idempotent, and a no-op when there are none.
-bash "$ROOT/scripts/25-apply-toolkit-patches.sh"
+
 
 if [ ! -f "$BUILD/CMakeCache.txt" ]; then
     cmake -S "$ROOT/recomp/game" -B "$BUILD" -G "Unix Makefiles" \
