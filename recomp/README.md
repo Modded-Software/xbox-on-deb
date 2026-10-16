@@ -34,13 +34,13 @@ The generated C is named, annotated and grouped by original source file:
 The design notes, audits, and architecture write-ups live in the local,
 undistributed `docs/` tree.
 
-## Why this is unusually well-set-up
+## Symbols
 
-The dropped build shipped **next to its linker MAP and its PDB**:
+The build shipped with its linker MAP and PDB:
 
-- `Ghost.map` resolves (by section:offset) to exactly the `Ghost.xbe` entry point
-  `0x001B3FBB` - it describes *this* XBE, not the PC build beside it.
-- It carries **24,725 real symbols**, game code included (not just the XDK).
+- `Ghost.map` resolves (by section:offset) to the `Ghost.xbe` entry point
+  `0x001B3FBB`, so it describes this XBE.
+- It carries 24,725 symbols, game code and XDK.
 - The PDB maps the defining object of each symbol to its **original source file**.
 
 Recovering that mapping lets the recompiler carry real function names instead of

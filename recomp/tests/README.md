@@ -34,8 +34,7 @@ recomp/tests/fbtool.py png <in.bmp> <out.png>    # convert an F12 capture
 
 ## Feedback channels
 
-A test can observe five things, which is what makes it able to say *what
-happened*, not just "no crash":
+A test can observe five things, so it can report *what happened*:
 
 1. **Input state** - `Game.wait_input()` returns the runtime's `[INPUT]`
    diagnostic (window saw the key? synthesized buttons/sticks/pressure?).
@@ -49,8 +48,7 @@ happened*, not just "no crash":
    changed after input, or to fingerprint "where in the game" you are.
 5. **GPU health** - `Game.shader_failures()`, `texture_failures()` and
    `cpu_fallback_batches()` parse the periodic `[GPU-D3D11]` summary, so a
-   scene that fails to compile a shader or decode a texture fails a test
-   instead of just looking wrong.
+   scene that fails to compile a shader or decode a texture fails a test.
 
 ## Adding a test
 
@@ -67,7 +65,7 @@ def start_pauses(g: Game):
 satisfies `expect` (a bitmask is ANDed), then releases. The default KBM layout
 is `Space`=A, `E`=B, `F`=X, `R`=Y, `Shift`=Black, `Q`=White, `Control`=LT,
 `Tab`=Start, `Escape`=Back; see `src/input/xinput_device.c` and
-`docs/08-input.md`. A is `Space`, not `Return` -- `Return` is unmapped.
+`docs/08-input.md`. `Return` is unmapped.
 For scene checks, hash before and after:
 
 ```py
