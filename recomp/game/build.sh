@@ -25,8 +25,6 @@ if [ ! -f "$ROOT/recomp/toolchain/lib/libd3dcompiler.a" ]; then
     bash "$ROOT/recomp/toolchain/make_import_libs.sh"
 fi
 
-
-
 if [ ! -f "$BUILD/CMakeCache.txt" ]; then
     cmake -S "$ROOT/recomp/game" -B "$BUILD" -G "Unix Makefiles" \
         -DCMAKE_TOOLCHAIN_FILE="$ROOT/recomp/toolchain/zig-windows-x64.cmake" \
