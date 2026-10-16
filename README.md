@@ -20,9 +20,10 @@ StarCraft: Ghost (the leaked May 2004 Xbox build) is the first game shipped this
 ### Quick start
 
 ```sh
-make toolkit   # clone or fast-forward the xboxrecomp fork into refs/xboxrecomp
-make build     # build ghost.exe from the recompiled sources
-make           # launch it (same as make launch); stop with make stop
+make init          # system build deps (root) + clone the toolkit into refs/xboxrecomp
+make install-deps  # provision the Python envs and check the rest of the tooling
+make build         # build ghost.exe from the recompiled sources
+make               # launch it (same as make launch); stop with make stop
 ```
 
 `make help` lists every target. The runtime log lands in `logs/latest-runtime.log`.
@@ -52,6 +53,7 @@ The runtime accepts a physical Xbox pad and a keyboard-and-mouse mapping (`KBM=1
 make record-session SESSION=<id>   # play; input is recorded
 make replay-session SESSION=<id>   # replay it without hands-on input
 make record-video NAME=<id>        # then make stop-video -> logs/video-<id>.mp4
+make process-video INPUT=logs/video-<id>.mp4   # trim, fade to black, file in ~/Videos
 ```
 
 ### Tests and performance
@@ -66,15 +68,17 @@ make ab-perf V=RECOMP_ASYNC_FLIP=0
 
 Framework: [`recomp/tests/README.md`](recomp/tests/README.md).
 
-### Cxbx-Reloaded path (older)
+### Cxbx-Reloaded path (parity reference)
 
-The first approach ran `Ghost.xbe` in Cxbx-Reloaded under GE-Proton, and the Win32 TGS demo (`Star*.exe`) directly under GE-Proton. Its scripts (`scripts/01` to `08`) still work, but boot takes about 5 minutes and the build is glitchy, which is why the project moved to recompilation. Notes: [`docs/00-overview.md`](docs/00-overview.md), [`docs/04-cxbx-wine-crash.md`](docs/04-cxbx-wine-crash.md).
+The Cxbx-Reloaded setup runs `Ghost.xbe` under GE-Proton, and the Win32 TGS demo (`Star*.exe`) directly under GE-Proton. It is kept as a reference implementation: an independently-derived emulator to compare the recompiled runtime against for parity, not a superseded first attempt. Its scripts (`scripts/01` to `08`) still work, but boot takes about 5 minutes and the build is glitchy, so it is not where the project develops. Notes: [`docs/00-overview.md`](docs/00-overview.md), [`docs/04-cxbx-wine-crash.md`](docs/04-cxbx-wine-crash.md).
 
 ## Games
 
 | Game | Build | Status | Docs |
 | --- | --- | --- | --- |
 | StarCraft: Ghost | `Ghost.xbe`, debug-type release build, 2004-05-08, XDK 5659 | Menus and missions playable with audio; runtime defects tracked in the local, undistributed `recomp/docs/` and `recomp/diary/` notes | [`docs/02-inventory.md`](docs/02-inventory.md) |
+
+The user launch selects the title's own all-missions command-line switch by default, so every single-player mission is selectable (`ALL_MISSIONS=0` disables it); `scripts/21-enable-hidden-missions.sh` enables the cut Borgo Refinery mission block.
 
 The StarCraft: Ghost reference [wiki](wiki/README.md) covers the game, its development, and the leaked build: `cd wiki && bash tools/serve.sh` serves it on `http://127.0.0.1:18082/en/`.
 
@@ -89,7 +93,7 @@ The StarCraft: Ghost reference [wiki](wiki/README.md) covers the game, its devel
 | `recomp/docs/`, `recomp/diary/` | Recompilation design notes and per-task run diaries (local, gitignored) |
 | `recomp/toolchain/` | zig MinGW toolchain file and import-lib generator |
 | `refs/` | Toolkit clone and reference ports (gitignored) |
-| `scripts/` | Launch, stop, regen, profiling, capture, and older Cxbx scripts |
+| `scripts/` | Launch, stop, regen, profiling, capture, and Cxbx parity scripts |
 | `docs/` | Leak inventory, research archive, Cxbx-era notes, and recomp design notes (e.g. [`docs/07-reshade-integration.md`](docs/07-reshade-integration.md)) |
 | `wiki/` | Static StarCraft: Ghost reference wiki |
 | `extracted/`, `emulator/`, `logs/` | Game data, Cxbx binaries, run logs (gitignored) |
