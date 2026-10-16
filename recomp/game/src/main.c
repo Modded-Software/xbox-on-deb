@@ -266,6 +266,23 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
                 _putenv_s(input_defaults[i].name, input_defaults[i].value);
         }
     }
+    /* Standalone build: select the same configuration as the user launch path
+     * (scripts/18-launch-user.sh) when the environment does not set it, so a
+     * plain run of the shipped executable reproduces the tested user path --
+     * keyboard+mouse input, 1920x1080 render, the guest all-missions switch
+     * that makes every single-player mission selectable, and the input
+     * diagnostics the ability to see a run uses. Every value stays overridable
+     * from the environment. */
+    if (!getenv("RECOMP_KBM"))
+        _putenv_s("RECOMP_KBM", "1");
+    if (!getenv("RECOMP_RESOLUTION"))
+        _putenv_s("RECOMP_RESOLUTION", "1920x1080");
+    if (!getenv("RECOMP_CMDLINE"))
+        _putenv_s("RECOMP_CMDLINE", "/unlock");
+    if (!getenv("RECOMP_INPUT_DIAG"))
+        _putenv_s("RECOMP_INPUT_DIAG", "1");
+    if (!getenv("RECOMP_KEY_TRACE"))
+        _putenv_s("RECOMP_KEY_TRACE", "1");
     if (!getenv("RECOMP_PB_EXEC"))
         _putenv_s("RECOMP_PB_EXEC", "1");
     if (!getenv("RECOMP_NV2A_NATIVE_FENCES"))

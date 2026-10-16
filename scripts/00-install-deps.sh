@@ -34,6 +34,7 @@ check() {   # check <binary> <package>
 check git          git
 check make         make
 check cmake        cmake
+check pkg-config   pkg-config
 check uv           uv
 check llvm-dlltool llvm
 check perf         linux-tools-common
@@ -41,6 +42,30 @@ check wine         wine
 check ffmpeg       ffmpeg
 check pw-record    pipewire-bin
 check gdbus        libglib2.0-bin
+
+# Native Linux build of the toolkit's runtime libraries (its OpenGL backend:
+# src/d3d/CMakeLists.txt find_package(SDL2) + pkg epoxy, src/kernel OpenSSL,
+# src/video ffmpeg). The game itself is cross-compiled for Windows via zig, so
+# WIN32 is set and none of these are configured - they are NOT needed for the
+# active path, only for building/testing the toolkit natively on Linux. Reported
+# without failing; to install, run refs/xboxrecomp/tools/linux/install_deps.sh.
+echo "== toolkit native Linux build (optional) =="
+optional_missing=0
+check_opt_pkg() {   # check_opt_pkg <pkg-config name> <package>
+    if pkg-config --exists "$1"; then
+        printf '  ok       %-12s %s\n' "$1" "$(pkg-config --modversion "$1")"
+    else
+        printf '  MISSING  %-12s install: %s\n' "$1" "$2"
+        optional_missing=1
+    fi
+}
+check_opt_pkg sdl2         libsdl2-dev
+check_opt_pkg epoxy        libepoxy-dev
+check_opt_pkg openssl      libssl-dev
+check_opt_pkg libavcodec   libavcodec-dev
+check_opt_pkg libavformat  libavformat-dev
+check_opt_pkg libavutil    libavutil-dev
+check_opt_pkg libswscale   libswscale-dev
 
 echo "== Python environments =="
 uv sync --project "$ROOT"
@@ -62,6 +87,13 @@ if ! find_ge_proton; then
 fi
 if [ ! -d "$GAME_DATA_DIR" ]; then
     echo "  MISSING  game data at $GAME_DATA_DIR (supply the extracted XBE)"
+fi
+
+if [ "$optional_missing" -ne 0 ]; then
+    echo ""
+    echo "note: the toolkit's native Linux build needs the packages above; the"
+    echo "      game cross-build (the active path) does not. Install them with:"
+    echo "        bash refs/xboxrecomp/tools/linux/install_deps.sh"
 fi
 
 if [ "$missing" -ne 0 ]; then

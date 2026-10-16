@@ -175,6 +175,12 @@ help: ## List the targets.
 	echo "  process-video  trim+fade a capture via VAAPI: make process-video [INPUT=..] [TAIL=10] [FADE=2]"
 	echo "  log            tail the latest runtime log (LINES=200)"
 	echo "  toolkit        clone/update the toolkit fork (refs/xboxrecomp)"
+	echo "  init           system-level deps + clone the toolkit into refs/xboxrecomp"
+	echo "  install        deps only (hooks separately: sudo make install-hooks)"
+	echo "  install-ci     deps only, no hooks"
+	echo "  install-deps   system tools, uv envs, toolkit clone"
+	echo "  install-hooks  install native git hooks (root-only)"
+	echo "  sync           re-run install-deps"
 	echo "  clean          remove build output"
 	echo "  help           this list"
 
@@ -197,9 +203,9 @@ preflight: ## Verify environment
 	echo "Preflight OK"
 
 
-init: ## Install system-level dependencies
-	echo "TODO: implement per-project system dependencies."
-	:
+.PHONY: init
+init: ## Install system-level deps (root) + clone the toolkit into refs/xboxrecomp.
+	bash scripts/00-init.sh
 
 
 install: install-deps ## Full install: deps (hooks install separately, root-only: sudo make install-hooks)

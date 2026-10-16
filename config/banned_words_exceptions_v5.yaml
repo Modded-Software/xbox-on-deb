@@ -107,3 +107,15 @@ exceptions:
     owner: workspace-agent
     review_date: '2027-10-15'
     removal: Remove when the launcher no longer passes the guest switch.
+  - rule: bunlock-b
+    path: ^recomp/game/src/main\.c$
+    rationale: Hard-codes the title's own compiled-in all-missions command-line switch verbatim; the token is the guest switch string, not prose.
+    owner: workspace-agent
+    review_date: '2027-10-16'
+    removal: Remove when the file no longer hard-codes the guest switch.
+  - rule: bunlocks-b
+    path: ^recomp/game/src/main\.c$
+    rationale: Hard-codes the title's own compiled-in all-missions command-line switch verbatim; the token is the guest switch string, not prose.
+    owner: workspace-agent
+    review_date: '2027-10-16'
+    removal: Remove when the file no longer hard-codes the guest switch.
