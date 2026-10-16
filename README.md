@@ -1,6 +1,6 @@
 # xbox-on-deb
 
-**xbox-on-deb** collects the tooling, runtime work, and research for running original Xbox games natively, with no CPU emulator at run time: each game's XBE is statically recompiled to C and cross-built as a Windows x64 executable (`ghost.exe`). The primary, tested target is Debian and Ubuntu, where that executable runs under GE-Proton on a Vulkan GPU; because the build output is an ordinary Windows x64 program, Windows itself is a target platform too.
+**xbox-on-deb** collects the tooling, runtime work, and research for running original Xbox games natively, with no CPU emulator at run time. Each game's XBE is statically recompiled to C and cross-built as a Windows x64 executable (`ghost.exe`). Work happens on Debian and Ubuntu, where that executable runs under GE-Proton on a Vulkan GPU; being a plain Windows x64 binary, it runs on Windows directly as well, though that path is not exercised here.
 
 StarCraft: Ghost (the leaked May 2004 Xbox build) is the first game shipped this way. It boots, reaches the menus, and plays missions with audio, controller, and keyboard-and-mouse input.
 
