@@ -1,6 +1,6 @@
 # xbox-on-deb
 
-**xbox-on-deb** collects the tooling, runtime work, and research for running original Xbox games natively, with no CPU emulator at run time. Each game's XBE is statically recompiled to C and cross-built as a Windows x64 executable (`ghost.exe`). Work happens on Debian and Ubuntu, where that executable runs under GE-Proton on a Vulkan GPU; being a plain Windows x64 binary, it runs on Windows directly as well, though that path is not exercised here.
+**xbox-on-deb** runs original Xbox games natively on Linux. Each game's XBE is statically recompiled to C and built as a Windows x64 executable that runs under GE-Proton.
 
 StarCraft: Ghost (the leaked May 2004 Xbox build) is the first game shipped this way. It boots, reaches the menus, and plays missions with audio, controller, and keyboard-and-mouse input.
 
@@ -10,7 +10,7 @@ StarCraft: Ghost (the leaked May 2004 Xbox build) is the first game shipped this
 
 ### Prerequisites
 
-- Ubuntu 24.04 or Debian with an X11 or XWayland session and a Mesa Vulkan driver (developed on Intel Arc A770, ANV). This is where everything is built and tested; the recompiled output is Windows x64 and runs on Windows with the D3D11 runtime, but Windows is not exercised here.
+- Ubuntu 24.04 or Debian with an X11 or XWayland session and a Mesa Vulkan driver (developed on Intel Arc A770, ANV).
 - GE-Proton in `~/.steam/root/compatibilitytools.d/`. The [windows-on-deb](../windows-on-deb/README.md) scripts `01` to `03` install it with Steam and the system packages.
 - `cmake`, `git`, and `uv`. The cross-compiler is zig from the `ziglang` PyPI package, configured by `recomp/toolchain/zig-windows-x64.cmake`.
 - Your own copy of the game, extracted under `extracted/` (StarCraft: Ghost: `extracted/StarCraft Ghost Xbox Finn Hillbilly/`).
@@ -32,7 +32,7 @@ make               # launch it (same as make launch); stop with make stop
 
 ### Recompilation toolkit and runtime
 
-The toolkit lives in `refs/xboxrecomp`, a separate clone of [Modded-Software/xboxrecomp](https://github.com/Modded-Software/xboxrecomp) (a fork of `sp00nznet/xboxrecomp`). Its Python pipeline parses the XBE, finds and classifies functions, recovers calling conventions, and lifts every guest function to C. Its runtime answers the Xbox kernel, memory map, NV2A GPU (on a native D3D11 backend), APU audio, and USB input in host code, so there is no CPU emulator at run time. Runtime fixes are committed to the fork, not carried as patches here.
+The toolkit lives in `refs/xboxrecomp`, a separate clone of [Modded-Software/xboxrecomp](https://github.com/Modded-Software/xboxrecomp) (a fork of `sp00nznet/xboxrecomp`). Its Python pipeline parses the XBE, finds and classifies functions, recovers calling conventions, and lifts every guest function to C. Its runtime emulates the Xbox kernel, memory map, NV2A GPU (on D3D11), APU audio, and USB input. Runtime fixes are committed to the fork.
 
 ### Per-game layer
 
@@ -43,7 +43,7 @@ make regen OUT=recomp/build/gen_fresh   # regenerate (reuses analysis)
 make gen-diff                            # regenerate and diff against the in-tree sources
 ```
 
-Corrections go in `recomp_manual.c`, `recomp/config/`, or `recomp/tools/`. Hand edits to generated code are logged locally in `recomp/game/MANUAL_PATCHES.md` (gitignored, not distributed).
+Corrections go in `recomp_manual.c`, `recomp/config/`, or `recomp/tools/`. Hand edits to generated code are logged locally in `recomp/game/MANUAL_PATCHES.md` (gitignored).
 
 ### Input, recording, and video
 
@@ -70,7 +70,7 @@ Framework: [`recomp/tests/README.md`](recomp/tests/README.md).
 
 ### Cxbx-Reloaded path (parity reference)
 
-The Cxbx-Reloaded setup runs `Ghost.xbe` under GE-Proton, and the Win32 TGS demo (`Star*.exe`) directly under GE-Proton. It is kept as a reference implementation: an independently-derived emulator to compare the recompiled runtime against for parity, not a superseded first attempt. Its scripts (`scripts/01` to `08`) still work, but boot takes about 5 minutes and the build is glitchy, so it is not where the project develops. Notes: [`docs/00-overview.md`](docs/00-overview.md), [`docs/04-cxbx-wine-crash.md`](docs/04-cxbx-wine-crash.md).
+The Cxbx-Reloaded setup runs `Ghost.xbe` under GE-Proton, and the Win32 TGS demo (`Star*.exe`) directly under GE-Proton. It is the parity reference for the recompiled runtime. Scripts: `scripts/01` to `08`. Notes: [`docs/00-overview.md`](docs/00-overview.md), [`docs/04-cxbx-wine-crash.md`](docs/04-cxbx-wine-crash.md).
 
 ## Games
 

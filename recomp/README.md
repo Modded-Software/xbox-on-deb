@@ -1,11 +1,6 @@
 # StarCraft: Ghost (Xbox) - Static Recompilation
 
-Turn the leaked `Ghost.xbe` dev build into native code instead of running it
-under Cxbx-Reloaded, whose HLE makes the boot sequence take ~5 minutes and whose
-D3D path is a dead end for this title.
-
-This directory is the project. The emulator work lives at the repo root; this is
-a separate direction.
+Recompiles the leaked `Ghost.xbe` dev build to native code.
 
 ## Layout
 
