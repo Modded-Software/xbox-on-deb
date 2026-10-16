@@ -52,6 +52,29 @@ fi
 if [ "${RECOMP_APU_VOICE_TRACE:-0}" != "0" ]; then
     EXTRA="$EXTRA RECOMP_APU_VOICE_TRACE=1"
 fi
+# Per-voice level report + solo/mute (audio investigation).
+if [ "${RECOMP_APU_VOICE_LEVELS:-0}" != "0" ]; then
+    EXTRA="$EXTRA RECOMP_APU_VOICE_LEVELS=1"
+fi
+if [ -n "${RECOMP_APU_VOICE_SOLO:-}" ]; then
+    EXTRA="$EXTRA RECOMP_APU_VOICE_SOLO=$RECOMP_APU_VOICE_SOLO"
+fi
+if [ -n "${RECOMP_APU_VOICE_MUTE:-}" ]; then
+    EXTRA="$EXTRA RECOMP_APU_VOICE_MUTE=$RECOMP_APU_VOICE_MUTE"
+fi
+# DSP engine A/B: RECOMP_APU_DSP=0 forces the passthrough mixdown.
+if [ -n "${RECOMP_APU_DSP:-}" ]; then
+    EXTRA="$EXTRA RECOMP_APU_DSP=$RECOMP_APU_DSP"
+fi
+# Per-voice HRTF filter (on by default, matching xemu; set RECOMP_APU_HRTF=0 to disable).
+if [ -n "${RECOMP_APU_HRTF:-}" ]; then
+    EXTRA="$EXTRA RECOMP_APU_HRTF=$RECOMP_APU_HRTF"
+fi
+# 3D-bin headroom A/B: RECOMP_APU_HRTF_HEADROOM=0 makes the 3D XTLK bins fall
+# back to the per-bin submix headroom instead of hrtf_headroom.
+if [ -n "${RECOMP_APU_HRTF_HEADROOM:-}" ]; then
+    EXTRA="$EXTRA RECOMP_APU_HRTF_HEADROOM=$RECOMP_APU_HRTF_HEADROOM"
+fi
 if [ -n "${RECOMP_DISPATCH_LOCK:-}" ]; then
     EXTRA="$EXTRA RECOMP_DISPATCH_LOCK=$RECOMP_DISPATCH_LOCK"
 fi
