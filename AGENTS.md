@@ -119,12 +119,40 @@ stall). Tests observe: `[INPUT]` diag, `[KEY]` trace, window caption
 | `RECOMP_FB_CAPTURE` | F12 dumps the framebuffer |
 | `RECOMP_PRESENT=d3d11` | present through a D3D11/DXGI swap chain instead of the default GDI blit (the ReShade hook target; `recomp/game/src/present_d3d11.cpp`) |
 | `RECOMP_NV2A_NATIVE_FENCES=1`, `RECOMP_VBLANK=1` | set by default in `recomp/game/src/main.c` |
+| `RECOMP_WATCH=<va>[,<va>...]` | name the guest code that writes a guest dword (page write trap; up to 8 targets, same grammar as `RECOMP_PEEK`). Costs a page fault per write |
+| `RECOMP_HANG_DUMP=1` | with the watchdog/stall dump, also write a dump |
+| `RECOMP_TEX_DUMP=<prefix>`, `RECOMP_FB_DUMP=<prefix>` | BMP per distinct texture (first use) / per draw (8 max). FB dump needs the CPU rasteriser: this title's native D3D11 path never falls back, so it writes nothing |
+| `RECOMP_CRASH_DUMP=1\|full\|0` | on a fatal fault, write a host minidump (default on: small; `full` can be GBs) |
+| `RECOMP_CRASH_RAM=1` | also write guest memory, file offset == guest VA |
+| `RECOMP_CRASH_DIR=<dir>` | where dumps go (default: beside `RECOMP_LOG`) |
+| `RECOMP_CRASH_TEST=<secs>` | fault on purpose after N s (verifies the crash/dump path) |
+
+### Guest shadow stack and time profile (profiled build)
+
+An instrumented build carries a per-thread guest call stack (a real backtrace,
+printed by a crash, the watchdog/stall dump and `RECOMP_WATCH`) and per-function
+inclusive/self time:
+
+```bash
+PROF=1 bash recomp/game/build.sh                 # -> recomp/game/build-prof/
+GHOST_BUILD=build-prof RECOMP_PROF=1 bash scripts/18-launch-user.sh
+```
+
+`RECOMP_PROF_SECS`, `RECOMP_PROF_TOP`, `RECOMP_PROF_OUT` tune the periodic
+stderr report and the CSV (default beside the log). The normal `build/` links
+the same module but enters it from nowhere, so it says so and stays a plain
+build. Runtime cost is negligible (FPS unchanged); build/launch details in
+`recomp/docs/21-debug-and-logging-tools.md`.
 
 `RECOMP_PEEK` grammar (see `refs/xboxrecomp/src/kernel/xbox_memory_layout.c`,
 `xbox_PeekSample`): comma-separated expressions. A leading `[` **dereferences**;
 `[[0x004BBC38]]+0x40` means `MEM32(MEM32(0x4BBC38)+0x40)`. Use a stable double
 deref to reach a live object (e.g. `hbink = [[0x004BBC38]]+0xA0`) because
-absolute heap addresses differ every run.
+absolute heap addresses differ every run. `RECOMP_WATCH` uses the same grammar.
+
+`RECOMP_FILE_TRACE=1` logs every guest file read (`[READ]`); it roughly doubles
+the log, so turn it off for long sessions. `scripts/logstats.py LOG` attributes
+a log's bytes to each tag and prints the diary error counts.
 
 ## How to ask Claude (Opus 5.5)
 
