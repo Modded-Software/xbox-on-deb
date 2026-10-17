@@ -15,11 +15,13 @@ import argparse
 import os
 import signal
 import sys
+import time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 
 import framework
+import tconfig
 from framework import Game
 
 # Explicit test-module imports, alphabetical so the run order is stable
@@ -48,6 +50,27 @@ signal.signal(signal.SIGINT, _on_signal)
 signal.signal(signal.SIGTERM, _on_signal)
 
 
+def _log_size():
+    try:
+        return os.path.getsize(tconfig.LOG)
+    except OSError as exc:
+        print(f"[HOLD] cannot stat {tconfig.LOG}: {exc}")
+        return -1
+
+
+def _hold(secs):
+    """Keep the game in whatever state the tests left it for `secs`, and
+    report how much the runtime log grew meanwhile (machine-readable lines)."""
+    before = _log_size()
+    t0 = time.monotonic()
+    print(f"[HOLD] start log_bytes={before} log={tconfig.LOG}", flush=True)
+    time.sleep(secs)
+    after = _log_size()
+    dt = time.monotonic() - t0
+    print(f"[HOLD] end log_bytes={after} secs={dt:.1f} "
+          f"rate_Bps={(after - before) / dt:.0f}", flush=True)
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--attach", action="store_true",
@@ -61,6 +84,10 @@ def main():
     parser.add_argument("--user-state", action="store_true",
                         help="launch the default user configuration "
                              "(scripts/18-launch-user.sh) instead of the test env")
+    parser.add_argument("--hold", type=float, default=0.0,
+                        help="keep the game running SECS after the tests, "
+                             "printing the runtime log size before and after "
+                             "(steady-state log rate; scripts/27-measure-logging.sh)")
     args = parser.parse_args()
 
     game = Game(attach=args.attach, boot_timeout=args.boot_timeout,
@@ -78,6 +105,8 @@ def main():
                     handle.write(line + "\n")
             return 0
         ok = framework.run_all(game, only=args.only)
+        if args.hold > 0:
+            _hold(args.hold)
     finally:
         game.stop()
     return 0 if ok else 1

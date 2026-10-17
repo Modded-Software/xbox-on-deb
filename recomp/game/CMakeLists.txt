@@ -64,7 +64,13 @@ add_subdirectory(${XBOXRECOMP_DIR} ${CMAKE_BINARY_DIR}/xboxrecomp)
 # without a manual re-configure. A plain GLOB is evaluated once at configure
 # time, so a newly generated file (an extra chunk, recomp_stubs_unresolved.c)
 # is left out of the build without notice and shows up as unresolved externals.
-file(GLOB RECOMP_GEN_SOURCES CONFIGURE_DEPENDS "src/recomp/gen/*.c")
+#
+# RECOMP_GEN_DIR selects a different lifted tree: the profiled build
+# (PROF=1 build.sh) points it at the copy recomp/tools/instrument_gen.py makes,
+# whose functions open with RECOMP_PROF_SCOPE.
+set(RECOMP_GEN_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src/recomp/gen" CACHE PATH
+    "Directory of the lifted C sources")
+file(GLOB RECOMP_GEN_SOURCES CONFIGURE_DEPENDS "${RECOMP_GEN_DIR}/*.c")
 
 # Core game sources
 set(GAME_SOURCES
@@ -102,7 +108,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE xboxrecomp)
 target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src
     ${CMAKE_CURRENT_SOURCE_DIR}/src/recomp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/recomp/gen
+    ${RECOMP_GEN_DIR}
     ${XBOXRECOMP_DIR}/include
     # Runtime headers main.c uses directly (ohci.h, xinput_xbox.h, apu.h,
     # recomp_icall_feedback.h) live in these subdirectories.

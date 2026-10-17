@@ -16,7 +16,9 @@ detect_ge_proton
 # built against refs/xboxrecomp.backup) be launched without touching the main
 # one -- the A/B path for pinpointing performance regressions.
 GAME_DIR="${GHOST_GAME_DIR:-$REPO_ROOT/recomp/game}"
-EXE="$GAME_DIR/build/ghost.exe"
+# GHOST_BUILD=build-prof launches the profiled build (PROF=1 build.sh).
+GHOST_BUILD="${GHOST_BUILD:-build}"
+EXE="$GAME_DIR/$GHOST_BUILD/ghost.exe"
 
 if [ ! -f "$EXE" ]; then
     echo "ERROR: $EXE not found. Build it first:"
@@ -110,4 +112,5 @@ if [ "${DIAG:-0}" != "0" ]; then
     echo "Input diagnostic: on"
 fi
 
-exec "$GE_PROTON_DIR/proton" run ./build/ghost.exe "${ARGS[@]}"
+echo "Executable: $GHOST_BUILD/ghost.exe"
+exec "$GE_PROTON_DIR/proton" run "./$GHOST_BUILD/ghost.exe" "${ARGS[@]}"

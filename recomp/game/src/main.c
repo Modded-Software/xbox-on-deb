@@ -39,6 +39,8 @@
 #include "ohci.h"
 #include "xinput_xbox.h"
 #include "apu.h"
+#include "recomp_prof.h"
+#include "crash_dump.h"
 
 /* ── Global register state (defined in xbox_memory_layout.c) ── */
 
@@ -91,6 +93,13 @@ static void print_guest_context(void *rip)
     if (SymFromAddr(GetCurrentProcess(), (DWORD64)(uintptr_t)rip, &disp, sym))
         fprintf(stderr, "  in %s+0x%llX\n",
                 sym->Name, (unsigned long long)disp);
+
+    /* The real guest call chains, in a profiled build (PROF=1): the faulting
+     * thread's and every other guest thread's, since a fault on a host
+     * helper thread is often caused by what a guest thread was doing. In an
+     * ordinary build the scan below is all there is. */
+    recomp_prof_print_stack(stderr, "  ");
+    recomp_prof_print_all_stacks(stderr, "  ");
 
     if (g_xbox_mem_offset && g_esp) {
         const uint32_t *sp =
@@ -190,6 +199,35 @@ static LONG CALLBACK veh_handler(PEXCEPTION_POINTERS ep)
             }
         }
         fflush(stderr);
+        /* Minidump beside the runtime log (RECOMP_CRASH_DUMP, default on;
+         * RECOMP_CRASH_RAM=1 adds guest memory). First crash only. */
+        xbox_CrashDump(ep, "crash", 0);
+        return EXCEPTION_CONTINUE_SEARCH;
+    }
+
+    /* The other faults that end a run. Access violations are handled above
+     * because most of them are trapped MMIO; these never are. Single-step and
+     * breakpoint are left alone: the write watch and debuggers use them. */
+    switch (ep->ExceptionRecord->ExceptionCode) {
+    case EXCEPTION_ILLEGAL_INSTRUCTION:
+    case EXCEPTION_PRIV_INSTRUCTION:
+    case EXCEPTION_INT_DIVIDE_BY_ZERO:
+    case EXCEPTION_STACK_OVERFLOW:
+    case EXCEPTION_ARRAY_BOUNDS_EXCEEDED:
+    case EXCEPTION_IN_PAGE_ERROR:
+        fprintf(stderr, "[CRASH] exception 0x%08lX at RIP=0x%llX\n",
+                (unsigned long)ep->ExceptionRecord->ExceptionCode,
+                (unsigned long long)ep->ContextRecord->Rip);
+        fprintf(stderr, "  Xbox regs: eax=0x%08X ecx=0x%08X edx=0x%08X esp=0x%08X\n",
+                g_eax, g_ecx, g_edx, g_esp);
+        fprintf(stderr, "  Xbox regs: ebx=0x%08X esi=0x%08X edi=0x%08X\n",
+                g_ebx, g_esi, g_edi);
+        print_guest_context((void *)ep->ContextRecord->Rip);
+        fflush(stderr);
+        xbox_CrashDump(ep, "crash", 0);
+        break;
+    default:
+        break;
     }
 
     return EXCEPTION_CONTINUE_SEARCH;
@@ -402,6 +440,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
                         "indirect calls will use the binary search\n");
 
     xbox_WatchdogStart();
+
+    /* RECOMP_CRASH_TEST=<secs>: fault on purpose, to exercise the crash
+     * handler and the dumps it writes. No-op otherwise. */
+    xbox_CrashTestStart();
 
     /* Step 8: Call the recompiled entry point */
     printf("\nStarting game...\n");

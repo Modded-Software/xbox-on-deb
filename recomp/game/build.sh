@@ -3,6 +3,13 @@
 #
 #   recomp/game/build.sh            # build
 #   recomp/game/build.sh clean      # wipe build/
+#   PROF=1 recomp/game/build.sh     # profiled build -> recomp/game/build-prof/
+#
+# PROF=1 builds a second exe whose every lifted function carries
+# RECOMP_PROF_SCOPE (guest shadow call stack + time profiler, see
+# refs/xboxrecomp/src/kernel/recomp_prof.h). It compiles an instrumented copy
+# of src/recomp/gen made by recomp/tools/instrument_gen.py, so the normal
+# build/ is untouched. Launch it with GHOST_BUILD=build-prof.
 #
 # Parallelism uses the machine's core count by default; override with JOBS=N.
 set -euo pipefail
@@ -12,6 +19,16 @@ set -euo pipefail
 ROOT="${REPO_ROOT:-$HOME/WORKSPACE-VM/projects/xbox-on-deb}"
 BUILD="$ROOT/recomp/game/build"
 JOBS="${JOBS:-$(nproc)}"
+CMAKE_EXTRA=()
+if [ "${PROF:-0}" != "0" ]; then
+    BUILD="$ROOT/recomp/game/build-prof"
+    PROF_GEN="$ROOT/recomp/build/gen_prof"
+    if [ "${1:-}" != "clean" ]; then
+        "$ROOT/.venv-recomp/bin/python" "$ROOT/recomp/tools/instrument_gen.py" \
+            --src "$ROOT/recomp/game/src/recomp/gen" --dst "$PROF_GEN"
+    fi
+    CMAKE_EXTRA+=(-DRECOMP_GEN_DIR="$PROF_GEN")
+fi
 
 if [ "${1:-}" = "clean" ]; then
     rm -rf "$BUILD"
@@ -28,7 +45,7 @@ fi
 if [ ! -f "$BUILD/CMakeCache.txt" ]; then
     cmake -S "$ROOT/recomp/game" -B "$BUILD" -G "Unix Makefiles" \
         -DCMAKE_TOOLCHAIN_FILE="$ROOT/recomp/toolchain/zig-windows-x64.cmake" \
-        -DCMAKE_BUILD_TYPE=Release
+        -DCMAKE_BUILD_TYPE=Release "${CMAKE_EXTRA[@]}"
 fi
 
 cmake --build "$BUILD" --target ghost -j "$JOBS"
