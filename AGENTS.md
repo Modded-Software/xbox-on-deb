@@ -157,29 +157,6 @@ absolute heap addresses differ every run. `RECOMP_WATCH` uses the same grammar.
 the log, so turn it off for long sessions. `scripts/logstats.py LOG` attributes
 a log's bytes to each tag and prints the diary error counts.
 
-## How to ask Claude (Opus 5.5)
-
-`scripts/ask-claude.sh` runs `oc` (opencode) in prompt mode against
-`claude-opus-5-5`, **detached**, streaming to a log so you can peek/interrupt:
-
-```bash
-bash scripts/ask-claude.sh "your technical or implementation question"
-bash scripts/ask-claude.sh --chat   "follow-up"       # continue the last chat (session)
-bash scripts/ask-claude.sh --session ses_XXX "..."    # continue a specific session id
-bash scripts/ask-claude.sh --last-id                  # print newest session id
-bash scripts/ask-claude.sh --peek   [LOG]   # tail the newest/given run
-bash scripts/ask-claude.sh --status          # list recent runs and whether alive
-bash scripts/ask-claude.sh --stop   [LOG]   # stop the newest/given run
-# foreground:
-bash scripts/ask-claude.sh --wait "question"
-# override model:
-ASK_CLAUDE_MODEL=workspace-gw-anthropic-coding-plan-passthrough/claude-opus-5-5 \
-  bash scripts/ask-claude.sh "..."
-```
-
-Logs/prompt/pidfiles live in `/tmp/opencode/ask-claude-*`. Use this for
-technical or design questions **instead of stalling or guessing**.
-
 ## Host tooling rules (important - commands are audited)
 
 - **No pipes to `head`/`tail`/`awk`/`sed` on the command line.** Write to a file
