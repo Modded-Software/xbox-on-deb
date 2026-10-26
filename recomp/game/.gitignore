@@ -1,5 +1,6 @@
 # Build artifacts
 build/
+build-prof/
 out/
 bin/
 *.obj
