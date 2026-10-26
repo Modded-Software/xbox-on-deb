@@ -117,6 +117,9 @@ stall). Tests observe: `[INPUT]` diag, `[KEY]` trace, window caption
 | `RECOMP_INPUT_DIAG=1` | `[INPUT]` line once per second |
 | `RECOMP_KEY_TRACE=1` | `[KEY]` edge log |
 | `RECOMP_FB_CAPTURE` | F12 dumps the framebuffer |
+| `RECOMP_FRAMETIME_GRAPH=1` | on-screen frametime graph (bar per presented frame, target line, avg/p99/max/1% low/spikes, `wait`/`present`/`draws` for the last frame, `NO FRAME` when flips stop). **F9** (or F11) toggles it live. Off by default. Summary line `[FRAMETIME]` every 5 s |
+| `RECOMP_FRAMETIME_TARGET=<ms>` | budget line and target/spike threshold for the graph (default 16.7) |
+| `RECOMP_FRAMETIME_CSV=<path>` | per-frame csv: `frame,interval_ms,wait_ms,present_ms,draws,vertices` |
 | `RECOMP_PRESENT=d3d11` | present through a D3D11/DXGI swap chain instead of the default GDI blit (the ReShade hook target; `recomp/game/src/present_d3d11.cpp`) |
 | `RECOMP_NV2A_NATIVE_FENCES=1`, `RECOMP_VBLANK=1` | set by default in `recomp/game/src/main.c` |
 | `RECOMP_WATCH=<va>[,<va>...]` | name the guest code that writes a guest dword (page write trap; up to 8 targets, same grammar as `RECOMP_PEEK`). Costs a page fault per write |

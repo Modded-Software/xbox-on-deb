@@ -36,6 +36,8 @@ extern "C" int xbox_GammaRampGet(uint8_t *out);
  * game source does not depend on the runtime's private include path. */
 extern "C" void xbox_SetPresentHook(void (*hook)(uint32_t, uint32_t, void *),
                                     void *user);
+/* Runtime frametime panel (refs/xboxrecomp/src/video/fb_overlay.c). */
+extern "C" void xbox_OverlayComposite(uint32_t *, int, int, int);
 extern "C" int xbox_FramebufferWindowSize(uint32_t *width, uint32_t *height);
 /* The emulator's native D3D11 device (refs/xboxrecomp/src/kernel/nv2a_gpu.h). */
 extern "C" void *nv2a_gpu_device(void);
@@ -259,6 +261,14 @@ static void present_frame(uint32_t fb_va, uint32_t pitch, void *user)
             memset(dst, 0, (size_t)s_w * 4);
         }
     }
+    /* Frametime panel, when the runtime's overlay is on. Composited into the
+     * mapped staging texture so it travels through the swap chain like the
+     * frame itself (and a post-processing injector sees one image). */
+    {
+        xbox_OverlayComposite((uint32_t *)map.pData, (int)s_w, (int)s_h,
+                              (int)(map.RowPitch / 4));
+    }
+
     s_ctx->Unmap(s_upload, 0);
 
     if (FAILED(s_swap->GetBuffer(0, IID_ID3D11Texture2D, (void **)&back)))
