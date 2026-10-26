@@ -91,6 +91,7 @@ struct App {
     int res_index = 3;
     bool shadow_high = true;
     bool input_kbm = true;
+    bool sound_on = true;
 };
 
 static App g;
@@ -358,6 +359,7 @@ static void load_splashes()
 
 static void start_music()
 {
+    if (!g.sound_on) return;
     const Entry *e = find_entry("assets/title.wav");
     if (!e) return;
     PlaySoundA((LPCSTR)e->data, NULL, SND_MEMORY | SND_ASYNC | SND_LOOP | SND_NODEFAULT);
@@ -366,6 +368,53 @@ static void start_music()
 static void stop_music()
 {
     PlaySoundA(NULL, NULL, 0);
+}
+
+static bool sound_hit(int x, int y)
+{
+    return x >= 566 && x < 612 && y >= 8 && y < 50;
+}
+
+static void toggle_sound()
+{
+    g.sound_on = !g.sound_on;
+    if (g.sound_on) start_music();
+    else stop_music();
+}
+
+static void draw_sound_icon(HDC dc)
+{
+    int x = 580, y = 20;
+    COLORREF c = g.sound_on ? kGold : kGoldDim;
+    HBRUSH br = CreateSolidBrush(c);
+    HPEN pen = CreatePen(PS_SOLID, 1, c);
+    HGDIOBJ ob = SelectObject(dc, br);
+    HGDIOBJ op = SelectObject(dc, pen);
+    RECT body = {x, y + 7, x + 5, y + 13};
+    FillRect(dc, &body, br);
+    POINT cone[3] = { {x + 5, y + 10}, {x + 12, y + 2}, {x + 12, y + 18} };
+    Polygon(dc, cone, 3);
+    if (g.sound_on) {
+        POINT w1[4] = { {x + 18, y + 6}, {x + 20, y + 8},
+                        {x + 20, y + 12}, {x + 18, y + 14} };
+        POINT w2[4] = { {x + 23, y + 4}, {x + 25, y + 7},
+                        {x + 25, y + 13}, {x + 23, y + 16} };
+        Polyline(dc, w1, 4);
+        Polyline(dc, w2, 4);
+    } else {
+        HPEN slash = CreatePen(PS_SOLID, 1, c);
+        HGDIOBJ os = SelectObject(dc, slash);
+        MoveToEx(dc, x + 18, y + 5, NULL);
+        LineTo(dc, x + 25, y + 15);
+        MoveToEx(dc, x + 25, y + 5, NULL);
+        LineTo(dc, x + 18, y + 15);
+        SelectObject(dc, os);
+        DeleteObject(slash);
+    }
+    SelectObject(dc, ob);
+    SelectObject(dc, op);
+    DeleteObject(br);
+    DeleteObject(pen);
 }
 
 static int splash_for(Page p)
@@ -575,6 +624,8 @@ static void paint(HWND hwnd)
                   L"Removes GhostRecomp.exe and shortcuts only.");
         draw_text(mem, g.font_small, kGoldDim, kMenuX, 240, g.demo.c_str());
     }
+
+    draw_sound_icon(mem);
 
     BitBlt(dc, 0, 0, rc.right, rc.bottom, mem, 0, 0, SRCCOPY);
     SelectObject(mem, old);
@@ -1249,6 +1300,11 @@ static LRESULT CALLBACK wnd_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
     case WM_PAINT: paint(hwnd); return 0;
     case WM_ERASEBKGND: return 1;
     case WM_LBUTTONDOWN:
+        if (sound_hit(LOWORD(lp), HIWORD(lp))) {
+            toggle_sound();
+            InvalidateRect(hwnd, NULL, FALSE);
+            return 0;
+        }
         if (g.page == PAGE_MENU) {
             int i = menu_hit(LOWORD(lp), HIWORD(lp));
             if (i >= 0 && i < kMenuN && menu_id_visible(i)) { g.menu = i; activate_menu(); }
