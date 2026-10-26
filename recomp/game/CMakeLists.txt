@@ -80,6 +80,9 @@ set(GAME_SOURCES
     # Runtime control of the title's own dynamic shadows (SCGHOST_SHADOWS);
     # see recomp_shadows.c.
     src/recomp_shadows.c
+    # Whether the mouse owns the camera (KBM direct look); the generated
+    # tSimCamera::ShouldAutoYaw consults it. See recomp_kbm.c.
+    src/recomp_kbm.c
     # Optional D3D11/DXGI presenter (RECOMP_PRESENT=d3d11); gives the window a
     # real swap chain for ReShade to hook. See docs/07-reshade-integration.md.
     src/present_d3d11.cpp

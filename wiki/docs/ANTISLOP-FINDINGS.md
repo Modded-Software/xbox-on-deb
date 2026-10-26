@@ -224,7 +224,8 @@ one.
 - 925Studios, "AI Slop Fonts and Gradients", 2026-06-14, <https://www.925studios.co/blog/ai-slop-design-tells>.
 - Sailop, "AI Slop Encyclopedia", 2026-03-20, <https://sailop.com/blog/ai-slop-encyclopedia>.
 - Developers Digest, "AI Design Slop: 16 Patterns", <https://www.developersdigest.tech/blog/ai-design-slop-and-how-to-spot-it>.
-- Rogulia, "Vibe-coded codebase patterns", 2026-05-28, <https://iurii.rogulia.fi/blog/ai-assisted-codebase-patterns>.
+- Rogulia, "Vibe-coded codebase patterns", 2026-05-28 (post no longer served by the
+  site; cited from the 2026-07 reading).
 - Zhao, "Vibe Coding Anti-Patterns", 2026-06-30, <https://samuelzhaoy.github.io/>.
 - Cloud Security Alliance, "Vibe Coding Security Debt", 2026-04-06, <https://labs.cloudsecurityalliance.org/research/csa-research-note-ai-codegen-vulnerability-debt-20260406-csa/>.
 - Frontend Horizon, "AI Image Generation for Marketing Sites", 2026-03-22, <https://www.frontendhorizon.com/blog/ai-image-generation-for-marketing-sites-what-works-what-trips-the-slop-detector>.

@@ -61,3 +61,6 @@ Makefile.scaffold-bak.*
 # is compiled on demand by scripts/11-launch-ptraceable.sh).
 *.o
 *.so
+
+# Local dependency extraction scratch (not source).
+work/

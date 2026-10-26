@@ -1,0 +1,49 @@
+Shadow-map resolution knob (feature).
+
+The title creates its shadow buffer (a 256x256 cTexture) in
+worldEffects_Startup_00036460 via cTexture::NewBlank(256, 256, 7, 0x100,
+"ShadowBuffer", 0) (0x200B40), and the same creation is duplicated in the
+sub_000364DF tail. The two width/height pushes become scghost_shadow_tex_size()
+(src/recomp_shadows.c), driven by SCGHOST_SHADOW_TEX / SCGHOST_SHADOW_TEX_SCALE
+(default 256). Safe because tRenderCamera::SetRenderTarget (0x1EFD30) takes the
+camera canvas from the texture's own +0x34/+0x36, so the shadow pass viewport
+follows.
+
+Applied by scripts/26-apply-game-patches.sh; regenerated trees lose it.
+
+diff --git a/recomp/game/src/recomp/gen/recomp_0003.c b/recomp/game/src/recomp/gen/recomp_0003.c
+--- a/recomp/game/src/recomp/gen/recomp_0003.c
++++ b/recomp/game/src/recomp/gen/recomp_0003.c
+@@ -7,6 +7,10 @@
+ #include "recomp_funcs.h"
+ #include <math.h>
+ 
++/* MANUAL PATCH (lost on regen; see recomp/game/MANUAL_PATCHES.md):
++ * shadow-map resolution knob, implemented in src/recomp_shadows.c. */
++extern uint32_t scghost_shadow_tex_size(void);
++
+ /**
+  * sub_0002E243
+  * Original: 0x0002E243 - 0x0002E3B1 (366 bytes, 96 insns)
+@@ -27312,8 +27316,8 @@
+     PUSH32(esp, 0x364740);
+     PUSH32(esp, 0x100);
+     PUSH32(esp, 7);
+-    PUSH32(esp, 0x100);
+-    PUSH32(esp, 0x100);
++    PUSH32(esp, scghost_shadow_tex_size()); /* MANUAL PATCH: height (was 0x100) */
++    PUSH32(esp, scghost_shadow_tex_size()); /* MANUAL PATCH: width (was 0x100) */
+     MEM32(0x3E8484) = eax;
+     PUSH32(esp, 0x0003651Eu); RECOMP_ABI_CALL(0x00200B40u, cTexture_NewBlank_00200B40); /* call 0x00200B40 */
+ 
+@@ -27397,8 +27401,8 @@
+     PUSH32(esp, 0x364740);
+     PUSH32(esp, 0x100);
+     PUSH32(esp, 7);
+-    PUSH32(esp, 0x100);
+-    PUSH32(esp, 0x100);
++    PUSH32(esp, scghost_shadow_tex_size()); /* MANUAL PATCH: height (was 0x100) */
++    PUSH32(esp, scghost_shadow_tex_size()); /* MANUAL PATCH: width (was 0x100) */
+     MEM32(0x3E8484) = eax;
+     PUSH32(esp, 0x0003651Eu); RECOMP_ABI_CALL(0x00200B40u, cTexture_NewBlank_00200B40); /* call 0x00200B40 */
+ 

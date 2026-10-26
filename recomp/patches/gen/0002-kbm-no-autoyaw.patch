@@ -1,0 +1,78 @@
+KBM direct look: stand the title's camera correctors down.
+
+Symptom: with RECOMP_KBM=1 the mouse look stutters the moment the player
+moves -- A/D (strafe) and W/S (forward/back) alike -- and is smooth while
+standing still.
+
+Cause: the mouse delta is written straight to the local camera's yaw/pitch once
+per pad poll (refs/xboxrecomp/src/input/xinput_device.c, kbm_state, look_direct).
+While moving, the title runs two correctors of its own and both pull the view
+back toward where the stick would have left it:
+
+  tSimCamera::UpdateYaw (0x57560) calls ShouldAutoYaw (0x55740) and then
+  rate-limits the yaw toward the movement heading (velocity at +0xB4 ->
+  ArcTan4, step *0x491CB0 * *0x361FC8 through mathTrig::LerpAngle).
+
+  tSimCamera::UpdatePitch (0x55450) recenters +0x114 toward (+0x124 + +0x104)
+  every tick.
+
+So the view advances with the mouse and is dragged back once per tick. Strafing
+shows it strongest (heading far from the view); walking forward still shows it
+because the pitch recenter is independent of the heading.
+
+Patch, three hunks in this file:
+
+1. ShouldAutoYaw returns 0 while scghost_kbm_no_autoyaw() says the mouse owns
+   the camera. Stack-safe early return: leaf function, `ret 8`, hence
+   `esp += 12`.
+2. ShouldAutoYaw's own exit path stays as generated for the gamepad case.
+3. UpdatePitch skips the moving-branch recenter (`goto loc_00055732`, the
+   ordinary return) under the same guard, so the pitch the mouse set survives
+   the tick.
+
+src/recomp_kbm.c supplies the guard: RECOMP_KBM on, RECOMP_KBM_LOOK_DIRECT on;
+RECOMP_KBM_NO_AUTOYAW=0 disables it (A/B).
+
+Applied by scripts/26-apply-game-patches.sh; regenerated trees lose it.
+
+diff --git a/recomp/game/src/recomp/gen/recomp_0006.c b/recomp/game/src/recomp/gen/recomp_0006.c
+--- a/recomp/game/src/recomp/gen/recomp_0006.c
++++ b/recomp/game/src/recomp/gen/recomp_0006.c
+@@ -7,6 +7,10 @@
+ #include "recomp_funcs.h"
+ #include <math.h>
+ 
++/* MANUAL PATCH (see recomp/game/MANUAL_PATCHES.md): KBM direct look owns the
++ * camera, so the title's stick correctors must stand down. */
++extern int scghost_kbm_no_autoyaw(void);
++
+ /**
+  * VIDSimplePlayer_startAudio_000504D0
+  * Original: 0x000504D0 - 0x000504D8 (8 bytes, 2 insns)
+@@ -16466,6 +16470,11 @@
+     if ((((uint8_t)((uint8_t)(_fa) - (uint8_t)(_fb)) >> 7) == 0)) goto loc_00055732; /* jns: not sign (positive) */
+ 
+ loc_000556C4: ;
++    /* MANUAL PATCH: KBM direct look. While moving, UpdatePitch recenters the
++     * pitch toward (+0x124 + +0x104) every tick; with the mouse owning the
++     * camera that is a second pull-back (the W/S case). Leave the pitch where
++     * the mouse put it and take the ordinary return path. */
++    if (scghost_kbm_no_autoyaw()) goto loc_00055732;
+     _fa = (uint32_t)(HI8(eax)) & 0xFFu; _fb = (uint32_t)(0) & 0xFFu;
+     _fas = (int32_t)(int8_t)(_fa); _fbs = (int32_t)(int8_t)(_fb); /* cmp HI8(eax), 0 (8-bit) */
+     _cf = 0; /* nothing borrows from zero */
+@@ -16530,6 +16539,14 @@
+     int32_t _fas = 0, _fbs = 0;
+     (void)_fa; (void)_fb; (void)_fas; (void)_fbs;
+ 
++    /* MANUAL PATCH: KBM direct look. Returning 0 here keeps UpdateYaw from
++     * turning the camera toward the movement heading between mouse polls. */
++    if (scghost_kbm_no_autoyaw()) {
++        eax = 0;
++        esp += 12;
++        return; /* ret 8 */
++    }
++
+ loc_00055740: ;
+     edx = MEM32(esp + 8);
+     _fa = (uint32_t)(HI8(edx)) & 0xFFu; _fb = (uint32_t)(0x20) & 0xFFu;

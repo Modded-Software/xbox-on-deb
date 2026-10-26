@@ -19,6 +19,15 @@ set -euo pipefail
 ROOT="${REPO_ROOT:-$HOME/WORKSPACE-VM/projects/xbox-on-deb}"
 BUILD="$ROOT/recomp/game/build"
 JOBS="${JOBS:-$(nproc)}"
+
+# Put the tracked hand-patches back into the generated tree. 20-regen-recomp.sh
+# overwrites src/recomp/gen/* and takes every manual fix with it, so this runs
+# before anything is configured -- and before the profiled copy is made, so
+# PROF=1 builds the same code. Fails loudly if a patch no longer matches.
+if [ "${1:-}" != "clean" ]; then
+    bash "$ROOT/scripts/26-apply-game-patches.sh"
+fi
+
 CMAKE_EXTRA=()
 if [ "${PROF:-0}" != "0" ]; then
     BUILD="$ROOT/recomp/game/build-prof"
