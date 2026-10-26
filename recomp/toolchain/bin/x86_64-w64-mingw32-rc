@@ -1,0 +1,26 @@
+#!/bin/sh
+# CMake invokes rc as: rc <flags> /fo <out> <in.rc>
+# zig rc treats a leading-/ path as an option unless "--" stops parsing.
+set -- "$@"
+out=""
+args=""
+while [ $# -gt 0 ]; do
+    case "$1" in
+        /fo|-fo|--fo)
+            shift
+            out="$1"
+            ;;
+        /fo*|-fo*)
+            out="${1#/fo}"
+            out="${out#-fo}"
+            ;;
+        *)
+            args="$args \"$1\""
+            ;;
+    esac
+    shift
+done
+# shellcheck disable=SC2086
+eval set -- $args
+exec "$HOME/WORKSPACE-VM/projects/xbox-on-deb/.venv-recomp/bin/python" -m ziglang rc \
+    /:output-format coff /:target x86_64 /fo "$out" -- "$@"

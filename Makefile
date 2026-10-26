@@ -93,6 +93,10 @@ gen-sync: ## Replace the in-tree generated sources with a freshly generated OUT.
 build: ## Build ghost.exe from the recompiled sources.
 	recomp/game/build.sh
 
+.PHONY: installer
+installer: ## Build the Win32 StarCraft: Ghost installer (dist/StarCraft-Ghost-Setup.exe).
+	bash scripts/28-build-installer.sh
+
 .PHONY: test
 test: ## Run the full automated test suite (launches the game).
 	$(RECOMP_PY) recomp/tests/run.py

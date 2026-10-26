@@ -1,5 +1,7 @@
 # Game data - copyrighted and very large; obtain the leak yourself.
 res/
+# Installer artwork/fonts/music supplied by the user; see recomp/installer/README.md.
+res/installer-assets/
 extracted/
 
 # Third-party emulator binaries (Cxbx-Reloaded) - fetch separately, see README.
@@ -28,6 +30,8 @@ recomp/symbols/
 # Parallel game tree for A/B'ing a second runtime (see scripts/14-launch-recomp.sh
 # GHOST_GAME_DIR); regenerable, 300+ MB of generated code and build output.
 recomp/game-backup/
+recomp/installer/build/
+dist/
 # Generated MinGW import libs (recomp/toolchain/make_import_libs.sh rebuilds them).
 recomp/toolchain/lib/
 .venv-recomp/

@@ -16,6 +16,7 @@ set(CMAKE_C_COMPILER   "${CMAKE_CURRENT_LIST_DIR}/bin/x86_64-w64-mingw32-gcc")
 set(CMAKE_CXX_COMPILER "${CMAKE_CURRENT_LIST_DIR}/bin/x86_64-w64-mingw32-g++")
 set(CMAKE_AR           "${CMAKE_CURRENT_LIST_DIR}/bin/x86_64-w64-mingw32-ar")
 set(CMAKE_RANLIB       "${CMAKE_CURRENT_LIST_DIR}/bin/x86_64-w64-mingw32-ranlib")
+set(CMAKE_RC_COMPILER  "${CMAKE_CURRENT_LIST_DIR}/bin/x86_64-w64-mingw32-rc")
 
 # Find host programs (cmake, python) on the host, not in a target root.
 set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
