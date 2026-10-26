@@ -97,6 +97,10 @@ build: ## Build ghost.exe from the recompiled sources.
 installer: ## Build the Win32 StarCraft: Ghost installer (dist/StarCraft-Ghost-Setup.exe).
 	bash scripts/28-build-installer.sh
 
+.PHONY: installer-clean
+installer-clean: ## Remove installer build output and dist artifacts.
+	rm -rf recomp/installer/build dist
+
 .PHONY: test
 test: ## Run the full automated test suite (launches the game).
 	$(RECOMP_PY) recomp/tests/run.py
@@ -163,6 +167,8 @@ help: ## List the targets.
 	echo "  gen-diff       regenerate into OUT + diff vs in-tree gen (find hand edits)"
 	echo "  gen-sync       replace in-tree gen with freshly generated OUT"
 	echo "  build          build ghost.exe"
+	echo "  installer      build dist/StarCraft-Ghost-Setup.exe"
+	echo "  installer-clean remove installer build output and dist artifacts"
 	echo "  test           run the full test suite"
 	echo "  test-input     input tests only"
 	echo "  test-mouse     mouse tests only"

@@ -26,6 +26,7 @@ static const COLORREF kGold = RGB(140, 232, 180);
 static const COLORREF kGoldHi = RGB(255, 255, 128);
 static const COLORREF kGoldDim = RGB(144, 144, 160);
 static const COLORREF kAccel = RGB(255, 255, 255);
+static const COLORREF kWarn = RGB(224, 64, 64);
 
 enum Page { PAGE_MENU, PAGE_LOCATE, PAGE_OPTIONS, PAGE_PROGRESS, PAGE_FINISH, PAGE_ABOUT, PAGE_REMOVE, PAGE_LAUNCH };
 enum Splash { SPL_MENU, SPL_LOCATE, SPL_OPTIONS, SPL_PROGRESS, SPL_FINISH, SPL_ABOUT, SPL_REPAIR, SPL_LAUNCH, SPL_COUNT };
@@ -324,11 +325,32 @@ static void load_font_mem()
     g.fontmem = AddFontMemResourceEx((void *)e->data, (DWORD)e->size, NULL, &n);
 }
 
+static Bitmap *dim_bitmap(Bitmap *src, float factor)
+{
+    if (!src) return NULL;
+    int w = (int)src->GetWidth();
+    int h = (int)src->GetHeight();
+    Bitmap *dst = new Bitmap(w, h, PixelFormat32bppARGB);
+    if (!dst || dst->GetLastStatus() != Ok) { delete dst; return src; }
+    Graphics gr(dst);
+    ColorMatrix cm = {};
+    cm.m[0][0] = factor;
+    cm.m[1][1] = factor;
+    cm.m[2][2] = factor;
+    cm.m[3][3] = 1.0f;
+    cm.m[4][4] = 1.0f;
+    ImageAttributes ia;
+    ia.SetColorMatrix(&cm);
+    gr.DrawImage(src, Rect(0, 0, w, h), 0, 0, w, h, UnitPixel, &ia);
+    delete src;
+    return dst;
+}
+
 static void load_splashes()
 {
     for (int i = 0; i < SPL_COUNT; i++) {
         const Entry *e = find_entry(kSplashName[i]);
-        if (e) g.splash[i] = bitmap_from(e->data, (size_t)e->size);
+        if (e) g.splash[i] = dim_bitmap(bitmap_from(e->data, (size_t)e->size), 0.67f);
     }
     const Entry *logo = find_entry("assets/logo.png");
     if (logo) g.logo = bitmap_from(logo->data, (size_t)logo->size);
@@ -532,6 +554,10 @@ static void paint(HWND hwnd)
         };
         for (int i = 0; i < 6; i++)
             draw_text(mem, g.font_body, kGoldHi, kMenuX, 190 + i * 22, lines[i]);
+        draw_text(mem, g.font_body, kGoldHi, kMenuX, 344,
+                  L"THIS IS AN UNOFFICIAL PROJECT");
+        draw_text(mem, g.font_small, kWarn, kMenuX, 366,
+                  L"Not affiliated with or supported by Blizzard Entertainment.");
     } else if (g.page == PAGE_LAUNCH) {
         draw_text(mem, g.font_menu, kGold, kMenuX, 150, L"Launch StarCraft: Ghost");
         draw_text(mem, g.font_small, kGoldDim, kMenuX, 198, L"Resolution");
