@@ -150,6 +150,11 @@ env KBM=1 DIAG=1 RECOMP_KEY_TRACE=1 RECOMP_LOG="$RUNLOG" \
     RECOMP_CMDLINE="$RECOMP_CMDLINE" $EXTRA \
     setsid bash scripts/14-launch-recomp.sh > logs/launch.out 2>&1 &
 
+# A scripted launch has no desktop user timestamp, so mutter leaves the fresh
+# window unfocused and Wine never sees the keyboard (the mouse still works
+# through the pointer). focus-wait.sh focuses it as soon as it maps.
+setsid bash scripts/focus-wait.sh > logs/focus.out 2>&1 &
+
 echo "launched; window title is 'StarCraft: Ghost'"
 echo "  runtime log : logs/runtime-$TS.log  (logs/latest-runtime.log)"
 echo "  launcher log: logs/launch.out"
