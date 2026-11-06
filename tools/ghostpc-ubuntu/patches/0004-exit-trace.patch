@@ -1,0 +1,86 @@
+From: xbox-on-deb
+Subject: [PATCH] GHOSTPC_UBUNTU_EXIT_TRACE: log ExitProcess/ExitThread callers
+
+A process that ends normally (exit_group(0)) leaves no trace in
+ghostpc.log, which makes "stops after loading a level" hard to tell
+apart from an idle exit. When GHOSTPC_UBUNTU_EXIT_TRACE is set, replace
+the kernel32/ntdll imports for ExitProcess, ExitThread,
+RtlExitUserProcess and RtlExitUserThread after ResolveImports with
+loggers that print the caller symbol and a stack scan, then forward to
+the real function.
+
+--- a/src/loader.cpp
++++ b/src/loader.cpp
+@@ -495,6 +495,60 @@
+     }
+ }
+ 
++// GHOSTPC_UBUNTU_EXIT_TRACE: log who calls ExitProcess (a clean game shutdown
++// otherwise leaves no trace at all). Installed on the kernel32 IAT after
++// ResolveImports, since Win32 imports are not replaced like the Xbox ones.
++typedef void (__stdcall *ExitProcessFn)(UINT);
++typedef void (__stdcall *ExitThreadFn)(DWORD);
++static ExitProcessFn g_realExitProcess;
++static ExitThreadFn g_realExitThread;
++static void __stdcall ExitTrace(UINT code) {
++    void *ra = _ReturnAddress();
++    char b[256];
++    Log("EXIT: ExitProcess(%u) from %s (%08x)", (unsigned)code,
++        SymName((uint32_t)ra, b, sizeof b), (uint32_t)ra);
++    LogStack((uint32_t)_AddressOfReturnAddress(), 24);
++    g_realExitProcess(code);
++}
++static void __stdcall ExitThreadTrace(DWORD code) {
++    void *ra = _ReturnAddress();
++    char b[256];
++    Log("EXIT: ExitThread(%u) from %s (%08x)", (unsigned)code,
++        SymName((uint32_t)ra, b, sizeof b), (uint32_t)ra);
++    LogStack((uint32_t)_AddressOfReturnAddress(), 24);
++    g_realExitThread(code);
++}
++static void HookExitTrace() {
++    auto &dir = g_nt->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT];
++    Log("exit trace: scanning imports (dir size %u)", (unsigned)dir.Size);
++    if (!dir.Size) return;
++    auto imp = (IMAGE_IMPORT_DESCRIPTOR *)(g_img + dir.VirtualAddress);
++    for (; imp->Name; imp++) {
++        const char *dll = (const char *)g_img + imp->Name;
++        if (_stricmp(dll, "kernel32.dll") && _stricmp(dll, "ntdll.dll")) continue;
++        auto oft = (IMAGE_THUNK_DATA32 *)(g_img + imp->OriginalFirstThunk);
++        auto iat = (IMAGE_THUNK_DATA32 *)(g_img + imp->FirstThunk);
++        for (; oft->u1.AddressOfData; oft++, iat++) {
++            if (oft->u1.Ordinal & IMAGE_ORDINAL_FLAG32) continue;
++            auto nm = (IMAGE_IMPORT_BY_NAME *)(g_img + oft->u1.AddressOfData);
++            const char *fn = (const char *)nm->Name;
++            void *replace = nullptr;
++            if (!strcmp(fn, "ExitProcess") || !strcmp(fn, "RtlExitUserProcess")) {
++                g_realExitProcess = (ExitProcessFn)iat->u1.Function;
++                replace = (void *)&ExitTrace;
++            } else if (!strcmp(fn, "ExitThread") || !strcmp(fn, "RtlExitUserThread")) {
++                g_realExitThread = (ExitThreadFn)iat->u1.Function;
++                replace = (void *)&ExitThreadTrace;
++            } else continue;
++            DWORD old;
++            VirtualProtect(iat, 4, PAGE_READWRITE, &old);
++            iat->u1.Function = (uint32_t)replace;
++            VirtualProtect(iat, 4, old, &old);
++            Log("exit trace: %s!%s hooked", dll, fn);
++        }
++    }
++}
++
+ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR cmd, int) {
+     InitializeCriticalSection(&g_logLock);
+     char exe[MAX_PATH];
+@@ -546,6 +600,11 @@
+     _snprintf(path, MAX_PATH, "%s\\Ghost.map", g_gameDir);
+     LoadMap(path, delta);
+     ResolveImports();
++    {
++        const char *et = getenv("GHOSTPC_UBUNTU_EXIT_TRACE");
++        Log("exit trace: env=%s", et ? et : "(off)");
++        if (et) HookExitTrace();
++    }
+     CameraInit();   // reads a prologue the hooks overwrite
+     ApplyHooks();
+     PatchIrqlReads();

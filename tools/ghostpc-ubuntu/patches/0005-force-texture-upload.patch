@@ -1,0 +1,18 @@
+From: xbox-on-deb
+Subject: [PATCH] GHOSTPC_UBUNTU_FORCE_UPLOAD: re-upload every texture each use
+
+Diagnostic for textures that never appear (Bink portraits, streamed world
+surfaces). If forcing every HostTexture() call to upload restores them, the
+dirty/hash watch is not noticing game writes through a lock pointer.
+
+--- a/src/d3d_res.cpp
++++ b/src/d3d_res.cpp
+@@ -314,6 +314,8 @@
+         } __except (EXCEPTION_EXECUTE_HANDLER) {}
+         if (x != h->hash) { h->hash = x; h->dirty = true; }
+     }
++    static bool forceUpload = getenv("GHOSTPC_UBUNTU_FORCE_UPLOAD") != nullptr;
++    if (forceUpload) h->dirty = true;
+     if (h->tex && !h->dirty) return h->tex;
+     FmtInfo fi = FI(fmt);
+     if (fi.depth) return nullptr;

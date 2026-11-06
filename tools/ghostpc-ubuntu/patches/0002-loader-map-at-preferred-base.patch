@@ -1,0 +1,34 @@
+From: xbox-on-deb
+Subject: [PATCH] keep Ghost.exe's preferred base free while reading the image
+
+--- a/src/loader.cpp
++++ b/src/loader.cpp
+@@ -131,11 +131,28 @@
+ static uint8_t *g_img;
+ 
+ static void MapImage(const char *path, int32_t *deltaOut) {
++    /* Wine's CRT heap can place the file buffer on Ghost.exe's preferred base
++     * (0x00400000) while it is read, which forces the image to relocate (fatal
++     * for the game's absolute pointers). Hold that base across the read. */
++    void *baseHold = VirtualAlloc((void *)0x00400000, 0x02000000, MEM_RESERVE, PAGE_NOACCESS);
++    {
++        MEMORY_BASIC_INFORMATION h = {};
++        VirtualQuery((void *)0x00400000, &h, sizeof h);
++        Log("image: hold=%p state=%lx type=%lx size=%lx", baseHold, (unsigned long)h.State,
++            (unsigned long)h.Type, (unsigned long)h.RegionSize);
++    }
+     std::vector<uint8_t> file = ReadFileAll(path);
+     if (file.empty()) Fatal("cannot read %s", path);
+     auto dos = (IMAGE_DOS_HEADER *)file.data();
+     auto nt = (IMAGE_NT_HEADERS32 *)(file.data() + dos->e_lfanew);
+     uint32_t want = nt->OptionalHeader.ImageBase, size = nt->OptionalHeader.SizeOfImage;
++    if (baseHold) VirtualFree(baseHold, 0, MEM_RELEASE);
++    {
++        MEMORY_BASIC_INFORMATION h = {};
++        VirtualQuery((void *)0x00400000, &h, sizeof h);
++        Log("image: after free state=%lx type=%lx size=%lx", (unsigned long)h.State,
++            (unsigned long)h.Type, (unsigned long)h.RegionSize);
++    }
+     uint8_t *img = (uint8_t *)VirtualAlloc((void *)want, size, MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+     if (!img) {
+         img = (uint8_t *)VirtualAlloc(nullptr, size, MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE);

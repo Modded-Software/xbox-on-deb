@@ -1,0 +1,57 @@
+From: xbox-on-deb
+Subject: [PATCH] mingw/clang fixes for the Ubuntu cross-build
+
+MSVC accepts implicit conversion from a function pointer to void* and lets a
+const timeval* bind to mingw's non-const select() parameter. clang does not.
+Add overloads at the three hook helpers so the call sites keep their MSVC
+spelling.
+
+--- a/src/competitive.cpp
++++ b/src/competitive.cpp
+@@ -321,6 +321,12 @@
+     FlushInstructionCache(GetCurrentProcess(), at, n);
+     return true;
+ }
++template <class A, class B> bool PatchJmp(uint8_t *at, uint8_t op, A expect, B to) {
++    return PatchJmp(at, op, (void *)expect, (void *)to);
++}
++template <class T> bool PlaceJmp(uint8_t *at, const uint8_t *expect, size_t n, T to) {
++    return PlaceJmp(at, expect, n, (void *)to);
++}
+ 
+ }   // namespace
+ 
+--- a/src/shell.cpp
++++ b/src/shell.cpp
+@@ -267,6 +267,9 @@
+     }
+ }
+ static bool RedirectCall(uint8_t *call, void *expect, void *to);
++template <class A, class B> static bool RedirectCall(uint8_t *call, A expect, B to) {
++    return RedirectCall(call, (void *)expect, (void *)to);
++}
+ static void HookProfileCreateNew() {
+     static bool done;
+     if (done) return;
+@@ -868,10 +871,10 @@
+ }
+ static void HookAimTarget() {
+     HookCalldownTicks();
+-    auto slot = [](uint32_t *at, void *to) {
++    auto slot = [](uint32_t *at, auto to) {
+         DWORD old;
+         VirtualProtect(at, 4, PAGE_READWRITE, &old);
+-        *at = (uint32_t)to;
++        *at = (uint32_t)(size_t)to;
+         VirtualProtect(at, 4, old, &old);
+     };
+     uint32_t get = SymAddr("?GetTarget@tPlayerCalldown@@UAEPAVtThing@@AAM@Z");
+--- a/src/net.cpp
++++ b/src/net.cpp
+@@ -18,5 +18,5 @@
+ XSTD(u_short, htons, 4, (u_short v)) { return htons(v); }
+ XSTD(int, recv, 16, (SOCKET s, char *b, int n, int f)) { return recv(s, b, n, f); }
+ XSTD(int, send, 16, (SOCKET s, const char *b, int n, int f)) { return send(s, b, n, f); }
+-XSTD(int, select, 20, (int n, fd_set *r, fd_set *w, fd_set *e, const timeval *t)) { return select(n, r, w, e, t); }
++XSTD(int, select, 20, (int n, fd_set *r, fd_set *w, fd_set *e, const timeval *t)) { return select(n, r, w, e, (struct timeval *)t); }
+ XSTD(int, setsockopt, 20, (SOCKET s, int l, int o, const char *v, int n)) { return setsockopt(s, l, o, v, n); }

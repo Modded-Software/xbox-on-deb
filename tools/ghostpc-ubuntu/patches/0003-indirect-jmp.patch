@@ -1,0 +1,70 @@
+From: xbox-on-deb
+Subject: [PATCH] clang asm: jump through memory via push/ret
+
+clang's -fasm-blocks lowers `jmp dword ptr [sym]` (and `jmp [sym]`) to a
+direct jump to the symbol's address, not an indirect jump through the
+pointer stored there. The jump sites then landed in .data. Push the target and
+ret instead, which clang lowers correctly.
+
+diff --git a/src/camera.cpp b/src/camera.cpp
+index 9bce9c3..c5075b4 100644
+--- a/src/camera.cpp
++++ b/src/camera.cpp
+@@ -137,3 +137,4 @@ static __declspec(naked) void UpdateCameraSniperHook() {
+         mov eax, [eax]
+-        jmp dword ptr [s_sniperCont]
++        push dword ptr [s_sniperCont]
++        ret
+     }
+diff --git a/src/competitive.cpp b/src/competitive.cpp
+index da2d429..601b75a 100644
+--- a/src/competitive.cpp
++++ b/src/competitive.cpp
+@@ -73,3 +73,4 @@ __declspec(naked) void KillCredit() {   // edi killer (tPlayer), esi victim
+         popad
+-        jmp dword ptr [g_killDone]
++        push dword ptr [g_killDone]
++        ret
+     }
+@@ -90,3 +91,4 @@ __declspec(naked) void KillCreditSpecial() {
+         popad
+-        jmp dword ptr [g_killDone]
++        push dword ptr [g_killDone]
++        ret
+     }
+@@ -144,5 +146,7 @@ __declspec(naked) void KillerCheck() {
+         mov edi, eax
+-        jmp dword ptr [g_killCredit]
++        push dword ptr [g_killCredit]
++        ret
+     none:
+-        jmp dword ptr [g_killDone]
++        push dword ptr [g_killDone]
++        ret
+     }
+diff --git a/src/debugdeath.cpp b/src/debugdeath.cpp
+index c096668..186b1d8 100644
+--- a/src/debugdeath.cpp
++++ b/src/debugdeath.cpp
+@@ -112,3 +112,4 @@ void __stdcall LogCall(int which, uint8_t *self, const uint32_t *stack) {
+         __asm popad                                                                                  \
+-        __asm jmp dword ptr [g_det + i * 12 + 8]                                                     \
++        __asm push dword ptr [g_det + i * 12 + 8]                                                     \
++        __asm ret                                                                                    \
+     }
+diff --git a/src/levelscript.cpp b/src/levelscript.cpp
+index 8f0db0b..41494f7 100644
+--- a/src/levelscript.cpp
++++ b/src/levelscript.cpp
+@@ -393,3 +393,4 @@ static __declspec(naked) void LoadWorldStub() {
+     __asm add esp, 4
+-    __asm jmp dword ptr [g_loadWorldTramp]
++    __asm push dword ptr [g_loadWorldTramp]
++    __asm ret
+ }
+@@ -420,3 +421,4 @@ static __declspec(naked) void RestoreStub() {
+     __asm pop ecx
+-    __asm jmp dword ptr [g_restoreTramp]
++    __asm push dword ptr [g_restoreTramp]
++    __asm ret
+ }
