@@ -10,6 +10,7 @@
 #include <vector>
 #include <algorithm>
 #include <cstdarg>
+#include <cstring>
 
 #pragma comment(lib, "gdiplus.lib")
 #pragma comment(lib, "winmm.lib")
@@ -77,11 +78,6 @@ struct App {
     HFONT font_small = NULL;
     ULONG_PTR gdip = 0;
     HWND ed_path = NULL;
-    HWND btn_browse = NULL;
-    HWND btn_back = NULL;
-    HWND btn_next = NULL;
-    HWND btn_cancel = NULL;
-    HWND btn_details = NULL;
     HWND chk_desk = NULL;
     HWND chk_start = NULL;
     HWND chk_launch = NULL;
@@ -357,17 +353,96 @@ static void load_splashes()
     if (logo) g.logo = bitmap_from(logo->data, (size_t)logo->size);
 }
 
+static const uint8_t *wav_chunk(const uint8_t *d, size_t n, const char *id, uint32_t *out_size);
+
+static std::vector<uint8_t> music_buf;
+
 static void start_music()
 {
     if (!g.sound_on) return;
-    const Entry *e = find_entry("assets/title.wav");
-    if (!e) return;
-    PlaySoundA((LPCSTR)e->data, NULL, SND_MEMORY | SND_ASYNC | SND_LOOP | SND_NODEFAULT);
+    if (music_buf.empty()) {
+        const Entry *e = find_entry("assets/title.wav");
+        if (!e || e->size < 44 || e->size > 0xFFFFFFFFu) return;
+        music_buf.assign(e->data, e->data + e->size);
+        uint32_t dsize = 0;
+        const uint8_t *dp = wav_chunk(music_buf.data(), music_buf.size(), "data", &dsize);
+        if (dp && dsize >= 2) {
+            size_t off = (size_t)(dp - music_buf.data());
+            size_t n = dsize / 2;
+            if (off + n * 2 <= music_buf.size()) {
+                int16_t *s = (int16_t *)(music_buf.data() + off);
+                for (size_t i = 0; i < n; i++) s[i] = (int16_t)(s[i] / 2);
+            }
+        }
+    }
+    if (music_buf.empty()) return;
+    PlaySoundA((LPCSTR)music_buf.data(), NULL, SND_MEMORY | SND_ASYNC | SND_LOOP | SND_NODEFAULT);
 }
 
 static void stop_music()
 {
     PlaySoundA(NULL, NULL, 0);
+}
+
+struct EffectReq {
+    const uint8_t *data;
+    size_t size;
+};
+
+static const uint8_t *wav_chunk(const uint8_t *d, size_t n, const char *id, uint32_t *out_size)
+{
+    if (n < 12 || memcmp(d, "RIFF", 4) != 0 || memcmp(d + 8, "WAVE", 4) != 0)
+        return NULL;
+    size_t off = 12;
+    while (off + 8 <= n) {
+        uint32_t sz = (uint32_t)d[off + 4] | ((uint32_t)d[off + 5] << 8) |
+                      ((uint32_t)d[off + 6] << 16) | ((uint32_t)d[off + 7] << 24);
+        if (memcmp(d + off, id, 4) == 0) {
+            *out_size = sz;
+            return d + off + 8;
+        }
+        off += 8 + sz + (sz & 1);
+    }
+    return NULL;
+}
+
+static DWORD WINAPI effect_thread(LPVOID param)
+{
+    EffectReq *req = (EffectReq *)param;
+    uint32_t fmt_size = 0, data_size = 0;
+    const uint8_t *fmt = wav_chunk(req->data, req->size, "fmt ", &fmt_size);
+    const uint8_t *data = wav_chunk(req->data, req->size, "data", &data_size);
+    if (!fmt || !data || fmt_size < 16 || data_size == 0) {
+        delete req;
+        return 1;
+    }
+    WAVEFORMATEX wf = {};
+    memcpy(&wf, fmt, fmt_size < sizeof(wf) ? fmt_size : sizeof(wf));
+    HWAVEOUT dev = NULL;
+    if (waveOutOpen(&dev, WAVE_MAPPER, &wf, 0, 0, CALLBACK_NULL) != MMSYSERR_NOERROR) {
+        delete req;
+        return 1;
+    }
+    WAVEHDR hdr = {};
+    hdr.lpData = (LPSTR)data;
+    hdr.dwBufferLength = data_size;
+    waveOutPrepareHeader(dev, &hdr, sizeof(hdr));
+    waveOutWrite(dev, &hdr, sizeof(hdr));
+    while ((hdr.dwFlags & WHDR_DONE) == 0) Sleep(5);
+    waveOutUnprepareHeader(dev, &hdr, sizeof(hdr));
+    waveOutClose(dev);
+    delete req;
+    return 0;
+}
+
+static void play_effect(const char *name)
+{
+    const Entry *e = find_entry(name);
+    if (!e || e->size == 0 || e->size > 0xFFFFFFFFu) return;
+    EffectReq *req = new EffectReq{ e->data, (size_t)e->size };
+    HANDLE th = CreateThread(NULL, 0, effect_thread, req, 0, NULL);
+    if (th) CloseHandle(th);
+    else delete req;
 }
 
 static bool sound_hit(int x, int y)
@@ -518,6 +593,69 @@ static void draw_accel(HDC dc, HFONT f, COLORREF c, int x, int y, const wchar_t 
     SelectObject(dc, old);
 }
 
+static const int kActionY = 436;
+
+enum Action {
+    ACT_NONE = -1,
+    ACT_BACK = 10,
+    ACT_NEXT = 11,
+    ACT_DETAILS = 12,
+    ACT_BROWSE = 13
+};
+
+static bool has_back()
+{
+    return g.page == PAGE_LOCATE || g.page == PAGE_OPTIONS || g.page == PAGE_FINISH ||
+           g.page == PAGE_ABOUT || g.page == PAGE_REMOVE || g.page == PAGE_LAUNCH;
+}
+
+static bool has_next()
+{
+    return g.page == PAGE_LOCATE || g.page == PAGE_OPTIONS ||
+           g.page == PAGE_FINISH || g.page == PAGE_REMOVE;
+}
+
+static bool has_details()
+{
+    return g.page == PAGE_PROGRESS || g.page == PAGE_FINISH;
+}
+
+static int action_hit(int x, int y)
+{
+    if (g.page == PAGE_LOCATE && x >= 494 && x < 622 && y >= 180 && y < 218)
+        return ACT_BROWSE;
+    if (y < 424 || y >= 462) return ACT_NONE;
+    if (has_back() && x >= 20 && x < 150) return ACT_BACK;
+    if (has_details() && x >= 176 && x < 300) return ACT_DETAILS;
+    if (has_next() && x >= 396 && x < 520) return ACT_NEXT;
+    return ACT_NONE;
+}
+
+static void draw_right(HDC dc, const wchar_t *s, int right, int y, int accel, int code)
+{
+    HFONT old = (HFONT)SelectObject(dc, g.font_body);
+    SIZE sz = {};
+    GetTextExtentPoint32W(dc, s, (int)wcslen(s), &sz);
+    SelectObject(dc, old);
+    draw_accel(dc, g.font_body, kGold, right - sz.cx, y, s, accel, g.menu == code);
+}
+
+static void draw_actions(HDC dc)
+{
+    if (has_back())
+        draw_accel(dc, g.font_body, kGold, kMenuX, kActionY, L"< Back", 2, g.menu == ACT_BACK);
+    if (has_details())
+        draw_accel(dc, g.font_body, kGold, 180, kActionY, L"Details >>", 0, g.menu == ACT_DETAILS);
+    if (has_next()) {
+        const wchar_t *label = L"Next >";
+        if (g.page == PAGE_OPTIONS) label = L"Install";
+        else if (g.page == PAGE_REMOVE) label = L"Remove";
+        draw_right(dc, label, 510, kActionY, 0, ACT_NEXT);
+    }
+    if (g.page == PAGE_LOCATE)
+        draw_right(dc, L"Browse...", 612, 192, 0, ACT_BROWSE);
+}
+
 static void paint(HWND hwnd)
 {
     PAINTSTRUCT ps;
@@ -625,6 +763,7 @@ static void paint(HWND hwnd)
         draw_text(mem, g.font_small, kGoldDim, kMenuX, 240, g.demo.c_str());
     }
 
+    draw_actions(mem);
     draw_sound_icon(mem);
 
     BitBlt(dc, 0, 0, rc.right, rc.bottom, mem, 0, 0, SRCCOPY);
@@ -643,28 +782,14 @@ static void layout_controls()
 {
     bool loc = g.page == PAGE_LOCATE;
     bool opt = g.page == PAGE_OPTIONS;
-    bool prog = g.page == PAGE_PROGRESS;
-    bool fin = g.page == PAGE_FINISH;
-    bool rem = g.page == PAGE_REMOVE;
     bool lau = g.page == PAGE_LAUNCH;
-    bool nav = loc || opt || fin || g.page == PAGE_ABOUT || rem || lau;
     show(g.ed_path, loc);
-    show(g.btn_browse, loc);
     show(g.chk_desk, opt);
     show(g.chk_start, opt);
     show(g.chk_launch, opt);
     show(g.cb_res, lau);
     show(g.chk_shadow, lau);
     show(g.cb_input, lau);
-    show(g.btn_details, prog || fin);
-    show(g.btn_back, nav && !prog);
-    show(g.btn_next, nav && !lau && g.page != PAGE_ABOUT);
-    show(g.btn_cancel, loc || opt || prog || rem);
-    if (loc) SetWindowTextW(g.btn_next, L"Next >");
-    else if (opt) SetWindowTextW(g.btn_next, L"Install");
-    else if (fin) SetWindowTextW(g.btn_next, L"Finish");
-    else if (rem) SetWindowTextW(g.btn_next, L"Remove");
-    else if (g.page == PAGE_ABOUT) SetWindowTextW(g.btn_next, L"Back");
     SetWindowTextW(g.ed_path, g.demo.c_str());
     SendMessageW(g.chk_desk, BM_SETCHECK, g.opt_desktop ? BST_CHECKED : BST_UNCHECKED, 0);
     SendMessageW(g.chk_start, BM_SETCHECK, g.opt_start ? BST_CHECKED : BST_UNCHECKED, 0);
@@ -801,6 +926,8 @@ static bool make_shortcut(const std::wstring &lnk, const std::wstring &target, c
     sl->SetPath(target.c_str());
     sl->SetWorkingDirectory(workdir.c_str());
     sl->SetDescription(L"StarCraft: Ghost Recompiled");
+    std::wstring ico = workdir + L"\\ghost.ico";
+    if (file_is(ico, false)) sl->SetIconLocation(ico.c_str(), 0);
     IPersistFile *pf = NULL;
     bool ok = SUCCEEDED(sl->QueryInterface(IID_IPersistFile, (void **)&pf))
         && SUCCEEDED(pf->Save(lnk.c_str(), TRUE));
@@ -905,6 +1032,11 @@ static DWORD WINAPI install_thread(LPVOID)
         CoUninitialize();
         return 1;
     }
+    g.step = L"Writing icon...";
+    if (const Entry *ico = find_entry("ghost.ico")) {
+        if (!write_file(g.demo + L"\\ghost.ico", ico->data, ico->size, ico->crc))
+            log_line(L"WARN ghost.ico write failed");
+    }
     g.step = L"Creating shortcuts...";
     g.percent = 88;
     std::wstring launcher_desktop;
@@ -913,6 +1045,7 @@ static DWORD WINAPI install_thread(LPVOID)
     std::vector<std::wstring> man;
     man.push_back(L"file=GhostRecomp.exe");
     man.push_back(L"file=GhostRecomp-Uninstall.exe");
+    man.push_back(L"file=ghost.ico");
     man.push_back(L"file=GhostRecomp.manifest");
     man.push_back(L"file=GhostRecomp-install.log");
     man.push_back(L"file=GhostRecomp-launch.sh");
@@ -964,7 +1097,6 @@ static void start_install()
     g.busy = true;
     g.log.clear();
     goto_page(PAGE_PROGRESS);
-    EnableWindow(g.btn_next, FALSE);
     HANDLE th = CreateThread(NULL, 0, install_thread, NULL, 0, NULL);
     if (th) CloseHandle(th);
 }
@@ -1265,8 +1397,9 @@ static void on_next()
     } else if (g.page == PAGE_OPTIONS) {
         start_install();
     } else if (g.page == PAGE_FINISH) {
-        if (!g.failed && g.opt_launch) launch_game();
-        PostQuitMessage(0);
+        /* Finish opens the launch page rather than starting the game blind. */
+        if (!g.failed && g.opt_launch) goto_page(PAGE_LAUNCH);
+        else PostQuitMessage(0);
     } else if (g.page == PAGE_ABOUT) {
         goto_page(PAGE_MENU);
     } else if (g.page == PAGE_REMOVE) {
@@ -1299,35 +1432,53 @@ static LRESULT CALLBACK wnd_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
     switch (msg) {
     case WM_PAINT: paint(hwnd); return 0;
     case WM_ERASEBKGND: return 1;
-    case WM_LBUTTONDOWN:
-        if (sound_hit(LOWORD(lp), HIWORD(lp))) {
+    case WM_LBUTTONDOWN: {
+        int x = LOWORD(lp), y = HIWORD(lp);
+        if (sound_hit(x, y)) {
             toggle_sound();
             InvalidateRect(hwnd, NULL, FALSE);
             return 0;
         }
         if (g.page == PAGE_MENU) {
-            int i = menu_hit(LOWORD(lp), HIWORD(lp));
-            if (i >= 0 && i < kMenuN && menu_id_visible(i)) { g.menu = i; activate_menu(); }
-        } else if (g.page == PAGE_LAUNCH) {
-            int x = LOWORD(lp), y = HIWORD(lp);
-            if (x >= 270 && x < 620 && y >= 421 && y < 461) play_game();
-        }
-        return 0;
-    case WM_MOUSEMOVE:
-        if (g.page == PAGE_MENU) {
-            int i = menu_hit(LOWORD(lp), HIWORD(lp));
+            int i = menu_hit(x, y);
             if (i >= 0 && i < kMenuN && menu_id_visible(i)) {
-                if (i != g.menu) { g.menu = i; InvalidateRect(hwnd, NULL, FALSE); }
-            } else if (g.menu != -1) {
-                g.menu = -1;
-                InvalidateRect(hwnd, NULL, FALSE);
+                g.menu = i;
+                play_effect("assets/MENU_ITEM_SELECT.wav");
+                activate_menu();
             }
-        } else if (g.page == PAGE_LAUNCH) {
-            int x = LOWORD(lp), y = HIWORD(lp);
-            int want = (x >= 270 && x < 620 && y >= 421 && y < 461) ? 100 : -1;
-            if (want != g.menu) { g.menu = want; InvalidateRect(hwnd, NULL, FALSE); }
+        } else if (g.page == PAGE_LAUNCH && x >= 270 && x < 620 && y >= 421 && y < 461) {
+            play_effect("assets/MENU_ITEM_SELECT.wav");
+            play_game();
+        } else {
+            int act = action_hit(x, y);
+            if (act != ACT_NONE) {
+                play_effect("assets/MENU_ITEM_SELECT.wav");
+                if (act == ACT_BACK) on_back();
+                else if (act == ACT_NEXT) on_next();
+                else if (act == ACT_DETAILS) toggle_log();
+                else if (act == ACT_BROWSE) browse();
+            }
         }
         return 0;
+    }
+    case WM_MOUSEMOVE: {
+        int x = LOWORD(lp), y = HIWORD(lp);
+        int want = -1;
+        if (g.page == PAGE_MENU) {
+            int i = menu_hit(x, y);
+            if (i >= 0 && i < kMenuN && menu_id_visible(i)) want = i;
+        } else if (g.page == PAGE_LAUNCH && x >= 270 && x < 620 && y >= 421 && y < 461) {
+            want = 100;
+        } else {
+            want = action_hit(x, y);
+        }
+        if (want != g.menu) {
+            g.menu = want;
+            if (want != -1) play_effect("assets/MENU_ITEM_HOVER.wav");
+            InvalidateRect(hwnd, NULL, FALSE);
+        }
+        return 0;
+    }
     case WM_KEYDOWN:
         if (g.page == PAGE_MENU) {
             if (wp == VK_DOWN) menu_step(1);
@@ -1343,18 +1494,16 @@ static LRESULT CALLBACK wnd_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
             InvalidateRect(hwnd, NULL, FALSE);
         } else if (g.page == PAGE_LAUNCH) {
             if (wp == 'Y' || wp == VK_RETURN) { play_game(); return 0; }
-            if (wp == VK_ESCAPE) on_back();
-        } else if (wp == VK_ESCAPE) on_back();
+            if (wp == 'B' || wp == VK_ESCAPE) on_back();
+        } else {
+            if (wp == 'B' && has_back()) on_back();
+            else if (wp == 'N' && has_next()) on_next();
+            else if (wp == 'D' && has_details()) toggle_log();
+            else if (wp == VK_ESCAPE) on_back();
+        }
         return 0;
     case WM_COMMAND:
-        if ((HWND)lp == g.btn_browse) browse();
-        else if ((HWND)lp == g.btn_next) on_next();
-        else if ((HWND)lp == g.btn_back) on_back();
-        else if ((HWND)lp == g.btn_cancel) {
-            if (g.busy) g.cancel = true;
-            else PostQuitMessage(0);
-        } else if ((HWND)lp == g.btn_details) toggle_log();
-        else if ((HWND)lp == g.cb_res && HIWORD(wp) == CBN_SELCHANGE) {
+        if ((HWND)lp == g.cb_res && HIWORD(wp) == CBN_SELCHANGE) {
             int v = (int)SendMessageW(g.cb_res, CB_GETCURSEL, 0, 0);
             if (v >= 0 && v < 4) { g.res_index = v; save_settings(); }
         } else if ((HWND)lp == g.chk_shadow) {
@@ -1370,7 +1519,6 @@ static LRESULT CALLBACK wnd_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
         return 0;
     case WM_APP + 2:
         g.busy = false;
-        EnableWindow(g.btn_next, TRUE);
         save_log_file();
         goto_page(PAGE_FINISH);
         return 0;
@@ -1383,14 +1531,6 @@ static LRESULT CALLBACK wnd_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
         return 0;
     }
     return DefWindowProcW(hwnd, msg, wp, lp);
-}
-
-static HWND make_btn(const wchar_t *text, int x, int y, int w, int h, HMENU id)
-{
-    HWND b = CreateWindowExW(0, L"BUTTON", text, WS_CHILD | WS_TABSTOP | BS_PUSHBUTTON,
-        x, y, w, h, g.hwnd, id, GetModuleHandleW(NULL), NULL);
-    SendMessageW(b, WM_SETFONT, (WPARAM)g.font_body, TRUE);
-    return b;
 }
 
 static HWND make_chk(const wchar_t *text, int y)
@@ -1436,6 +1576,9 @@ static int run_ui()
     wc.lpszClassName = L"SGSetup";
     wc.hCursor = LoadCursor(NULL, IDC_ARROW);
     wc.hbrBackground = (HBRUSH)GetStockObject(BLACK_BRUSH);
+    wc.hIcon = (HICON)LoadImageW(GetModuleHandleW(NULL), MAKEINTRESOURCEW(1), IMAGE_ICON,
+                                 0, 0, LR_DEFAULTSIZE | LR_SHARED);
+    if (!wc.hIcon) wc.hIcon = LoadIcon(NULL, IDI_APPLICATION);
     RegisterClassW(&wc);
 
     RECT wr = {0, 0, kW, kH};
@@ -1448,7 +1591,6 @@ static int run_ui()
     g.ed_path = CreateWindowExW(WS_EX_CLIENTEDGE, L"EDIT", L"",
         WS_CHILD | WS_TABSTOP | ES_AUTOHSCROLL, kMenuX, 190, 460, 24, g.hwnd, NULL, wc.hInstance, NULL);
     SendMessageW(g.ed_path, WM_SETFONT, (WPARAM)g.font_body, TRUE);
-    g.btn_browse = make_btn(L"Browse...", 500, 188, 110, 26, (HMENU)1);
     g.chk_desk = make_chk(L"Create desktop shortcut", 200);
     g.chk_start = make_chk(L"Create Start Menu shortcut", 230);
     g.chk_launch = make_chk(L"Launch after installation", 260);
@@ -1469,10 +1611,6 @@ static int run_ui()
     SendMessageW(g.cb_input, CB_ADDSTRING, 0, (LPARAM)L"Gamepad");
     SendMessageW(g.cb_input, CB_ADDSTRING, 0, (LPARAM)L"Keyboard + mouse");
     SendMessageW(g.cb_input, CB_SETCURSEL, g.input_kbm ? 1 : 0, 0);
-    g.btn_back = make_btn(L"< Back", kMenuX, 430, 90, 28, (HMENU)2);
-    g.btn_next = make_btn(L"Next >", 400, 430, 110, 28, (HMENU)3);
-    g.btn_cancel = make_btn(L"Cancel", 520, 430, 90, 28, (HMENU)4);
-    g.btn_details = make_btn(L"Details >>", 180, 430, 110, 28, (HMENU)5);
     layout_controls();
     ShowWindow(g.hwnd, SW_SHOW);
     UpdateWindow(g.hwnd);
@@ -1509,6 +1647,27 @@ static int run_quiet(const std::wstring &dir)
     return g.failed ? 1 : 0;
 }
 
+// Start > Run keeps what was typed last time and offers it back as an inline
+// completion. That would show the launch path before the reviewer types it, so
+// every installer run wipes the list.
+static void forget_run_history()
+{
+    HKEY k = NULL;
+    if (RegOpenKeyExW(HKEY_CURRENT_USER,
+                      L"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\RunMRU",
+                      0, KEY_ALL_ACCESS, &k) != ERROR_SUCCESS)
+        return;
+    for (;;) {
+        wchar_t name[256];
+        DWORD len = (DWORD)(sizeof(name) / sizeof(name[0]));
+        if (RegEnumKeyExW(k, 0, name, &len, NULL, NULL, NULL, NULL) != ERROR_SUCCESS)
+            break;
+        if (RegDeleteKeyW(k, name) != ERROR_SUCCESS)
+            break;
+    }
+    RegCloseKey(k);
+}
+
 int WINAPI wWinMain(HINSTANCE, HINSTANCE, LPWSTR, int)
 {
     int argc = 0;
@@ -1522,6 +1681,7 @@ int WINAPI wWinMain(HINSTANCE, HINSTANCE, LPWSTR, int)
         MessageBoxW(NULL, L"This installer package is damaged or incomplete.", kTitle, MB_ICONERROR);
         return 1;
     }
+    forget_run_history();
     CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
     int rc = quiet_dir.empty() ? run_ui() : run_quiet(quiet_dir);
     CoUninitialize();

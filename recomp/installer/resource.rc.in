@@ -1,0 +1,33 @@
+/* Resource for the installer / uninstaller: window+shell icon and version info.
+ * CMake substitutes GHOST_ICON_RESOURCE with `1 ICON "<path>"` when the icon
+ * has been generated (tools/make_icon.py).
+ *
+ * No #include: the 32-bit XP toolchain preprocesses with llvm-rc -no-preprocess
+ * (no clang on the host), so the winver.h constants are spelled numerically:
+ * FILEOS 0x40004 = VOS_NT_WINDOWS32, FILETYPE 1 = VFT_APP.
+ */
+
+@GHOST_ICON_RESOURCE@
+
+1 VERSIONINFO
+FILEVERSION 1,0,0,0
+PRODUCTVERSION 1,0,0,0
+FILEOS 0x40004
+FILETYPE 1
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904B0"
+        BEGIN
+            VALUE "CompanyName", "xbox-on-deb"
+            VALUE "FileDescription", "StarCraft: Ghost Recompiled Installer"
+            VALUE "FileVersion", "1.0.0"
+            VALUE "ProductName", "StarCraft: Ghost Recompiled"
+            VALUE "ProductVersion", "1.0.0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1200
+    END
+END

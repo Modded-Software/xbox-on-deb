@@ -50,6 +50,29 @@ record-video: ## Record the game window + audio: make record-video [NAME=<id>]; 
 stop-video: ## Finalise the window recording -> logs/video-<NAME>.mp4
 	bash scripts/23-record-video.sh stop
 
+# ── Windows XP desktop VM (QEMU/KVM) for period-correct demo footage ────
+# Put the XP SP3 ISO in ~/Games/xp-vm/xp.iso (or pass ISO=path). The desktop
+# window is titled "Windows XP", so it records with the normal video path.
+.PHONY: xp-install
+xp-install: ## Install XP SP3 in QEMU: make xp-install [ISO=path]
+	bash scripts/30-xp-vm.sh install $(ISO)
+
+.PHONY: xp
+xp: ## Boot the XP desktop VM
+	bash scripts/30-xp-vm.sh run
+
+.PHONY: xp-stop
+xp-stop: ## Power off the XP VM
+	bash scripts/30-xp-vm.sh stop
+
+.PHONY: xp-pin
+xp-pin: ## Make the XP window exactly 1:1 with the guest and non-resizable
+	bash scripts/30-xp-vm.sh pin
+
+.PHONY: xp-record
+xp-record: ## Record the XP desktop window: make xp-record [NAME=<id>]
+	TITLE="Windows XP" AUDIO_TARGET=qemu-system-i386 bash scripts/23-record-video.sh start $(NAME)
+
 # Post-process a capture (VAAPI on the GPU, runs detached): drop the tail,
 # fade the picture to black, file it in Videos. make process-video [INPUT=...]
 # [TAIL=10] [FADE=2]; progress/log/pid under logs/.
@@ -264,3 +287,7 @@ check-push: ## Pre-push quality gate
 
 clean-precommit: ## Remove pre-commit framework traces
 	$(SCRIPT_BASH) $(CI_DIR)/scripts/cleanup-precommit
+
+# Record a hands-off XP demo (boot, SC Ghost CD, installer). Ctrl-C finalises.
+xp-demo:
+	bash scripts/31-xp-demo.sh $(if $(NAME),$(NAME),xp-demo)

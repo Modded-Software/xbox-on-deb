@@ -16,6 +16,8 @@ file is missing.
 | `logo.png` | title logo, transparent PNG (1899x560 works well) |
 | `eurostile.otf` | UI font (Eurostile); a licensed commercial face is required |
 | `title.wav` | installer background music (converted to mono 22.05 kHz at build) |
+| `MENU_ITEM_HOVER.wav` | menu hover sound effect |
+| `MENU_ITEM_SELECT.wav` | menu click sound effect |
 
 Override the directory with `INSTALLER_ASSETS=<dir>` and the music file with
 `SCGHOST_TITLE_WAV=<file>`.

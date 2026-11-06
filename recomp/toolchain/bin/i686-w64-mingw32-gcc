@@ -1,0 +1,9 @@
+#!/bin/sh
+# MinGW-w64 i686 C compiler for Windows XP, backed by the ziglang PyPI package.
+# Zig 0.11 is pinned in .venv-mingw32 because newer zig links the UCRT, which
+# XP does not have; 0.11 links msvcrt.dll. The PE subsystem version is fixed up
+# afterwards by recomp/installer/tools/pe_xp.py.
+exec "$HOME/WORKSPACE-VM/projects/xbox-on-deb/.venv-mingw32/bin/python" -m ziglang cc \
+    -target x86-windows-gnu \
+    -L"$HOME/WORKSPACE-VM/projects/xbox-on-deb/recomp/toolchain/lib" \
+    -static -static-libgcc "$@" -w

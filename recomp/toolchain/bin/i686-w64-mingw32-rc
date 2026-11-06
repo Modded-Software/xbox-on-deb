@@ -1,0 +1,33 @@
+#!/bin/bash
+# i686 resource compiler: llvm-rc, then llvm-cvtres because lld-link refuses
+# raw COFF resource files (.res) and only accepts objects.
+#
+# zig 0.11 has no rc subcommand and there is no clang for llvm-rc to
+# preprocess with, so resources are compiled with -no-preprocess
+# (resource.rc.in spells the winver.h constants numerically). Only /fo needs
+# translating; llvm-rc takes the same /D and /I flags CMake emits.
+set -e
+out=""
+args=()
+while [ $# -gt 0 ]; do
+    case "$1" in
+        /fo|-fo|--fo)
+            shift
+            out="$1"
+            ;;
+        /fo*|-fo*)
+            out="${1#/fo}"
+            out="${out#-fo}"
+            ;;
+        *)
+            args+=("$1")
+            ;;
+    esac
+    shift
+done
+if [ -z "$out" ]; then
+    out="resource.res"
+fi
+tmp="${out%.*}.res"
+/usr/bin/llvm-rc -no-preprocess /fo "$tmp" "${args[@]}"
+/usr/bin/llvm-cvtres /machine:x86 /out:"$out" "$tmp"
